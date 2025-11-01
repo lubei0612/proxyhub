@@ -4,7 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { StaticProxy, ProxyStatus } from './entities/static-proxy.entity';
 import { User } from '../../user/entities/user.entity';
 import { Order, OrderType, OrderStatus } from '../../order/entities/order.entity';
-import { Transaction } from '../../billing/entities/transaction.entity';
+import { Transaction, TransactionType } from '../../billing/entities/transaction.entity';
 import { PurchaseStaticProxyDto } from './dto/purchase-static-proxy.dto';
 
 @Injectable()
