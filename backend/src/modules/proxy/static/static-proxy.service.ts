@@ -54,7 +54,7 @@ export class StaticProxyService {
    */
   async toggleAutoRenew(proxyId: string, userId: string) {
     const proxy = await this.staticProxyRepo.findOne({
-      where: { id: proxyId, userId },
+      where: { id: parseInt(proxyId), userId: parseInt(userId) },
     });
 
     if (!proxy) {
@@ -72,7 +72,7 @@ export class StaticProxyService {
    */
   async updateRemark(proxyId: string, userId: string, remark: string) {
     const proxy = await this.staticProxyRepo.findOne({
-      where: { id: proxyId, userId },
+      where: { id: parseInt(proxyId), userId: parseInt(userId) },
     });
 
     if (!proxy) {
@@ -117,7 +117,7 @@ export class StaticProxyService {
 
     try {
       // Step 1: Validate user balance
-      const user = await queryRunner.manager.findOne(User, { where: { id: userId } });
+      const user = await queryRunner.manager.findOne(User, { where: { id: parseInt(userId) } });
       if (!user) {
         throw new BadRequestException('用户不存在');
       }
@@ -139,7 +139,7 @@ export class StaticProxyService {
         // Generate mock IPs
         for (let i = 0; i < item.quantity; i++) {
           const mockIP = this.staticProxyRepo.create({
-            userId,
+            userId: parseInt(userId),
             orderNo,
             proxy985Id: Math.floor(Math.random() * 1000000),
             zone: dto.channelName,
@@ -158,7 +158,7 @@ export class StaticProxyService {
           });
 
           const savedIP = await queryRunner.manager.save(StaticProxy, mockIP);
-          allocatedIPs.push(savedIP);
+          allocatedIPs.push(...(Array.isArray(savedIP) ? savedIP : [savedIP]));
         }
 
         purchaseDetails.push({

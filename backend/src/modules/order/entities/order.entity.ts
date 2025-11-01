@@ -43,3 +43,19 @@ export class Order {
   updatedAt: Date;
 }
 
+// Export enum types
+export enum OrderType {
+  STATIC = 'static',
+  DYNAMIC = 'dynamic',
+  MOBILE = 'mobile',
+  RECHARGE = 'recharge',
+}
+
+export enum OrderStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  CANCELLED = 'cancelled',
+}
+

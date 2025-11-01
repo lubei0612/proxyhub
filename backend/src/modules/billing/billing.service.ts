@@ -22,7 +22,7 @@ export class BillingService {
    */
   async createRecharge(userId: string, amount: number, method: string) {
     const recharge = this.rechargeRepo.create({
-      userId,
+      userId: parseInt(userId),
       amount,
       method,
       status: RechargeStatus.PENDING,
@@ -37,7 +37,7 @@ export class BillingService {
    */
   async getUserRecharges(userId: string, page = 1, limit = 20) {
     const [recharges, total] = await this.rechargeRepo.findAndCount({
-      where: { userId },
+      where: { userId: parseInt(userId) },
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -91,7 +91,7 @@ export class BillingService {
 
     try {
       const recharge = await queryRunner.manager.findOne(Recharge, {
-        where: { id: rechargeId },
+        where: { id: parseInt(rechargeId) },
       });
 
       if (!recharge) {

@@ -28,6 +28,9 @@ export class User {
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   balance: number;
+  
+  @Column({ name: 'gift_balance', type: 'decimal', precision: 10, scale: 2, default: 0 })
+  gift_balance: number;
 
   @Column({ length: 20, default: 'active' })
   status: string; // 'active' | 'disabled'

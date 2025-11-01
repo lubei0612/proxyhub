@@ -15,7 +15,7 @@ export class UserService {
    * 查找用户（通过ID）
    */
   async findOne(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
+    return this.userRepository.findOne({ where: { id: parseInt(id) } });
   }
 
   /**

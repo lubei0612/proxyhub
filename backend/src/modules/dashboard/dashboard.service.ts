@@ -24,26 +24,26 @@ export class DashboardService {
    */
   async getUserOverview(userId: string) {
     // 获取用户信息
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOne({ where: { id: parseInt(userId) } });
 
     // 统计代理IP
-    const totalProxies = await this.staticProxyRepo.count({ where: { userId } });
+    const totalProxies = await this.staticProxyRepo.count({ where: { userId: parseInt(userId) } });
     const activeProxies = await this.staticProxyRepo.count({
-      where: { userId, status: ProxyStatus.ACTIVE },
+      where: { userId: parseInt(userId), status: ProxyStatus.ACTIVE },
     });
     const expiredProxies = await this.staticProxyRepo.count({
-      where: { userId, status: ProxyStatus.EXPIRED },
+      where: { userId: parseInt(userId), status: ProxyStatus.EXPIRED },
     });
 
     // 统计订单
-    const totalOrders = await this.orderRepo.count({ where: { userId } });
+    const totalOrders = await this.orderRepo.count({ where: { userId: parseInt(userId) } });
     const completedOrders = await this.orderRepo.count({
-      where: { userId, status: OrderStatus.COMPLETED },
+      where: { userId: parseInt(userId), status: OrderStatus.COMPLETED },
     });
 
     // 统计消费
     const transactions = await this.transactionRepo.find({
-      where: { userId, type: 'expense' },
+      where: { userId: parseInt(userId), type: 'expense' },
     });
     const totalSpent = transactions.reduce((sum, t) => {
       return sum + Math.abs(parseFloat(t.amount as any));

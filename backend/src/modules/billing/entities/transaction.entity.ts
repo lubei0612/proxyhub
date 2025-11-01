@@ -42,3 +42,13 @@ export class Transaction {
   createdAt: Date;
 }
 
+// Export enum types
+export enum TransactionType {
+  RECHARGE = 'recharge',
+  PURCHASE = 'purchase',
+  REFUND = 'refund',
+  COMMISSION = 'commission',
+  EXPENSE = 'expense',
+  INCOME = 'income',
+}
+

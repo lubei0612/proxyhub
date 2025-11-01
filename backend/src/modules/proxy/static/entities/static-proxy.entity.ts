@@ -46,6 +46,9 @@ export class StaticProxy {
 
   @Column({ length: 10 })
   country: string; // ISO 3166-1 alpha-2
+  
+  @Column({ name: 'country_code', length: 10, nullable: true })
+  countryCode: string; // Alias for country
 
   @Column({ name: 'country_name', length: 100 })
   countryName: string;
@@ -64,11 +67,24 @@ export class StaticProxy {
 
   @Column({ name: 'release_time_utc', type: 'timestamp', nullable: true })
   releaseTimeUtc: Date;
+  
+  @Column({ name: 'auto_renew', type: 'boolean', default: false })
+  auto_renew: boolean;
+  
+  @Column({ type: 'text', nullable: true })
+  remark: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+}
+
+// Export enum types
+export enum ProxyStatus {
+  ACTIVE = 'active',
+  RELEASED = 'released',
+  EXPIRED = 'expired',
 }
 

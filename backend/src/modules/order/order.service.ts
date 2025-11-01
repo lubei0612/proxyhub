@@ -44,7 +44,7 @@ export class OrderService {
    */
   async getOrderDetail(orderId: string, userId: string) {
     return this.orderRepo.findOne({
-      where: { id: orderId, userId },
+      where: { id: parseInt(orderId), userId: parseInt(userId) },
     });
   }
 

@@ -29,6 +29,9 @@ export class Recharge {
 
   @Column({ name: 'payment_method', length: 50 })
   paymentMethod: string; // 'alipay' | 'wechat' | 'bank'
+  
+  @Column({ length: 50, nullable: true })
+  method: string; // Alias for paymentMethod for compatibility
 
   @Column({ length: 20, default: 'pending' })
   status: string; // 'pending' | 'approved' | 'rejected'
@@ -42,7 +45,17 @@ export class Recharge {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
+  @Column({ name: 'approved_at', type: 'timestamp', nullable: true })
+  approvedAt: Date;
+
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+}
+
+// Export enum types
+export enum RechargeStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
 }
 

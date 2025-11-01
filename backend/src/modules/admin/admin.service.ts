@@ -99,7 +99,7 @@ export class AdminService {
    * 更新用户状态
    */
   async updateUserStatus(userId: string, status: string) {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOne({ where: { id: parseInt(userId) } });
     if (!user) {
       throw new Error('用户不存在');
     }
@@ -114,7 +114,7 @@ export class AdminService {
    * 更新用户角色
    */
   async updateUserRole(userId: string, role: string) {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.userRepo.findOne({ where: { id: parseInt(userId) } });
     if (!user) {
       throw new Error('用户不存在');
     }
