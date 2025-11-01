@@ -1,12 +1,12 @@
 <template>
-  <div class="login-container">
-    <el-card class="login-card">
+  <div class="register-container">
+    <el-card class="register-card">
       <h1>ProxyHub</h1>
-      <p>代理IP管理平台</p>
-      <el-form :model="loginForm" class="login-form">
+      <p>创建您的账户</p>
+      <el-form :model="registerForm" class="register-form">
         <el-form-item>
           <el-input
-            v-model="loginForm.email"
+            v-model="registerForm.email"
             placeholder="邮箱"
             type="email"
             size="large"
@@ -14,8 +14,24 @@
         </el-form-item>
         <el-form-item>
           <el-input
-            v-model="loginForm.password"
-            placeholder="密码"
+            v-model="registerForm.nickname"
+            placeholder="昵称（可选）"
+            size="large"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-input
+            v-model="registerForm.password"
+            placeholder="密码（至少8位）"
+            type="password"
+            size="large"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-input
+            v-model="confirmPassword"
+            placeholder="确认密码"
             type="password"
             size="large"
             show-password
@@ -27,15 +43,15 @@
             size="large"
             style="width: 100%"
             :loading="loading"
-            @click="handleLogin"
+            @click="handleRegister"
           >
-            登录
+            注册
           </el-button>
         </el-form-item>
       </el-form>
-      <div class="login-footer">
-        <span>还没有账号？</span>
-        <a href="/register">立即注册</a>
+      <div class="register-footer">
+        <span>已有账号？</span>
+        <a href="/login">立即登录</a>
       </div>
     </el-card>
   </div>
@@ -50,29 +66,48 @@ import { ElMessage } from 'element-plus';
 const router = useRouter();
 const userStore = useUserStore();
 
-const loginForm = reactive({
+const registerForm = reactive({
   email: '',
+  nickname: '',
   password: '',
 });
 
+const confirmPassword = ref('');
 const loading = ref(false);
 
-const handleLogin = async () => {
-  if (!loginForm.email || !loginForm.password) {
-    ElMessage.warning('请输入邮箱和密码');
+const handleRegister = async () => {
+  // 表单验证
+  if (!registerForm.email) {
+    ElMessage.warning('请输入邮箱');
+    return;
+  }
+  
+  if (!registerForm.password) {
+    ElMessage.warning('请输入密码');
+    return;
+  }
+  
+  if (registerForm.password.length < 8) {
+    ElMessage.warning('密码至少需要8位');
+    return;
+  }
+  
+  if (registerForm.password !== confirmPassword.value) {
+    ElMessage.warning('两次密码输入不一致');
     return;
   }
   
   loading.value = true;
   
   try {
-    const success = await userStore.userLogin({
-      email: loginForm.email,
-      password: loginForm.password,
+    const success = await userStore.userRegister({
+      email: registerForm.email,
+      password: registerForm.password,
+      nickname: registerForm.nickname || undefined,
     });
     
     if (success) {
-      // 登录成功，跳转到仪表盘
+      // 注册成功，跳转到仪表盘
       router.push('/dashboard');
     }
   } finally {
@@ -82,7 +117,7 @@ const handleLogin = async () => {
 </script>
 
 <style scoped lang="scss">
-.login-container {
+.register-container {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,7 +126,7 @@ const handleLogin = async () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.login-card {
+.register-card {
   width: 400px;
   text-align: center;
 
@@ -108,11 +143,11 @@ const handleLogin = async () => {
   }
 }
 
-.login-form {
+.register-form {
   margin-top: 30px;
 }
 
-.login-footer {
+.register-footer {
   margin-top: 20px;
   font-size: 14px;
 
