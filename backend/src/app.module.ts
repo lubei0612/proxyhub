@@ -9,6 +9,7 @@ import { StaticProxyModule } from './modules/proxy/static/static-proxy.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { OrderModule } from './modules/order/order.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { AdminModule } from './modules/admin/admin.module';
     BillingModule,
     OrderModule,
     AdminModule,
+    DashboardModule,
     // TODO: 其他模块将在后续添加
     // DynamicProxyModule,
   ],
