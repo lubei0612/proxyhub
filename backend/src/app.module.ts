@@ -5,6 +5,10 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
+import { StaticProxyModule } from './modules/proxy/static/static-proxy.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { OrderModule } from './modules/order/order.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -41,11 +45,12 @@ import { UserModule } from './modules/user/user.module';
     // 业务模块
     AuthModule,
     UserModule,
+    StaticProxyModule,
+    BillingModule,
+    OrderModule,
+    AdminModule,
     // TODO: 其他模块将在后续添加
-    // ProxyModule,
-    // BillingModule,
-    // OrderModule,
-    // AdminModule,
+    // DynamicProxyModule,
   ],
   controllers: [],
   providers: [],
