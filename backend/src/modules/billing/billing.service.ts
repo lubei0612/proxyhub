@@ -24,9 +24,10 @@ export class BillingService {
     const recharge = this.rechargeRepo.create({
       userId: parseInt(userId),
       amount,
+      paymentMethod: method,
       method,
       status: RechargeStatus.PENDING,
-      tradeNo: `RCH-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      orderNo: `RCH-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
     });
 
     return this.rechargeRepo.save(recharge);

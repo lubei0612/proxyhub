@@ -140,17 +140,16 @@ export class StaticProxyService {
         for (let i = 0; i < item.quantity; i++) {
           const mockIP = this.staticProxyRepo.create({
             userId: parseInt(userId),
-            orderNo,
-            proxy985Id: Math.floor(Math.random() * 1000000),
-            zone: dto.channelName,
-            purposeWeb: dto.scenario || null,
-            staticProxyType: dto.ipType,
+            channelName: dto.channelName,
             ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
             port: 10000 + Math.floor(Math.random() * 50000),
             username: `user_${Date.now()}_${i}`,
             password: Math.random().toString(36).substring(2, 15),
+            country: item.country,
             countryCode: item.country,
+            countryName: item.country,
             cityName: item.city,
+            ipType: dto.ipType,
             expireTimeUtc: new Date(Date.now() + dto.duration * 24 * 60 * 60 * 1000),
             status: ProxyStatus.ACTIVE,
             auto_renew: false,
@@ -171,24 +170,11 @@ export class StaticProxyService {
       // Step 3: Create order record
       const order = queryRunner.manager.create(Order, {
         orderNo,
-        userId,
-        type: OrderType.BUY,
+        userId: parseInt(userId),
+        type: OrderType.STATIC,
         status: OrderStatus.COMPLETED,
-        staticProxyType: dto.ipType,
-        purposeWeb: dto.scenario || null,
-        timePeriod: dto.duration,
-        total_price: totalPrice,
-        discount_price: 0,
-        pay_price: totalPrice,
-        buy_data: {
-          channelName: dto.channelName,
-          scenario: dto.scenario,
-          ipType: dto.ipType,
-          duration: dto.duration,
-          details: purchaseDetails,
-        },
-        proxyType: 'res_static', // Residential Static
-        completed_at: new Date(),
+        amount: totalPrice,
+        remark: `购买${totalQuantity}个${dto.ipType}代理IP - ${dto.channelName}`,
       });
       const savedOrder = await queryRunner.manager.save(Order, order);
 
@@ -198,13 +184,13 @@ export class StaticProxyService {
 
       // Step 5: Create billing transaction record
       const transaction = queryRunner.manager.create(Transaction, {
-        userId,
-        type: 'expense',
-        category: 'proxy_purchase',
-        amount: -totalPrice, // Negative for expense
-        relatedId: savedOrder.id,
-        relatedType: 'order',
-        description: `购买静态住宅代理IP - ${dto.channelName} (${totalQuantity} 个IP, ${dto.duration} 天)`,
+        userId: parseInt(userId),
+        transactionNo: `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        type: TransactionType.PURCHASE,
+        amount: totalPrice,
+        balanceBefore: userBalance,
+        balanceAfter: userBalance - totalPrice,
+        remark: `购买静态住宅代理IP - ${dto.channelName} (${totalQuantity} 个IP, ${dto.duration} 天)`,
       });
       await queryRunner.manager.save(Transaction, transaction);
 
