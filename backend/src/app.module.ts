@@ -3,6 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AuthModule } from './modules/auth/auth.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -36,9 +38,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     // 定时任务
     ScheduleModule.forRoot(),
 
-    // TODO: 业务模块将在后续添加
-    // AuthModule,
-    // UserModule,
+    // 业务模块
+    AuthModule,
+    UserModule,
+    // TODO: 其他模块将在后续添加
     // ProxyModule,
     // BillingModule,
     // OrderModule,
