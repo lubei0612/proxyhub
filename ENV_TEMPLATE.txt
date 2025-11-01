@@ -1,0 +1,26 @@
+# ProxyHub Environment Configuration
+# 将此文件重命名为 .env 并修改配置值
+
+DATABASE_HOST=postgres
+DATABASE_PORT=5432
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres123
+DATABASE_NAME=proxyhub
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_ACCESS_EXPIRY=2h
+JWT_REFRESH_EXPIRY=7d
+
+NODE_ENV=production
+PORT=3000
+API_PREFIX=/api/v1
+
+PROXY_API_BASE_URL=https://api.985proxy.com
+PROXY_API_KEY=your-985proxy-api-key
+
+USD_TO_CNY_RATE=7.2
+TELEGRAM_LINK=https://t.me/lubei12
+

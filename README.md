@@ -1,0 +1,219 @@
+# ProxyHub - 代理IP管理平台
+
+[![GitHub](https://img.shields.io/badge/GitHub-ProxyHub-blue)](https://github.com/lubei0612/proxyhub)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+
+ProxyHub是一个现代化的代理IP管理平台，对接985Proxy API，为用户提供动态住宅代理、静态住宅代理和移动代理服务。
+
+## ✨ 功能特性
+
+- 🔐 **用户认证系统** - JWT认证，支持注册、登录、密码找回
+- 🏠 **静态住宅代理** - 购买、管理、续费、释放IP，支持批量操作
+- 🔄 **动态住宅代理** - 多种套餐选择，按流量计费
+- 📱 **移动代理** - 敬请期待
+- 💰 **钱包充值** - 支持支付宝/微信/银行转账
+- 📊 **数据统计** - 实时监控使用情况和费用
+- 🌍 **国际化** - 支持中英文切换
+- 🛡️ **管理后台** - 用户管理、充值审核、订单管理、IP管理、数据统计
+
+## 🛠️ 技术栈
+
+### 后端
+- **框架**: NestJS 10 + TypeScript 5
+- **数据库**: PostgreSQL 15 + TypeORM
+- **缓存**: Redis 7
+- **认证**: Passport.js + JWT
+- **文档**: Swagger
+
+### 前端
+- **框架**: Vue 3.4 + TypeScript 5
+- **构建工具**: Vite 5
+- **UI组件**: Element Plus 2.5
+- **状态管理**: Pinia 2.1
+- **路由**: Vue Router 4.2
+- **图表**: ECharts 5.4
+- **国际化**: vue-i18n 9.8
+
+### 部署
+- **容器化**: Docker + Docker Compose
+- **Web服务器**: Nginx
+- **CI/CD**: GitHub Actions (TODO)
+
+## 📦 快速开始
+
+### 环境要求
+
+- Node.js 20+
+- PostgreSQL 15+
+- Redis 7+
+- Docker (可选)
+
+### 本地开发
+
+1. **克隆仓库**
+
+```bash
+git clone https://github.com/lubei0612/proxyhub.git
+cd proxyhub
+```
+
+2. **配置环境变量**
+
+```bash
+cp .env.example .env
+# 编辑 .env 文件，填写数据库、Redis等配置
+```
+
+3. **安装依赖**
+
+```bash
+# 后端
+cd backend
+npm install
+
+# 前端
+cd ../frontend
+npm install
+```
+
+4. **启动数据库（使用Docker）**
+
+```bash
+docker-compose up -d postgres redis
+```
+
+5. **运行数据库迁移**
+
+```bash
+cd backend
+npm run migration:run
+```
+
+6. **启动开发服务器**
+
+```bash
+# 后端（终端1）
+cd backend
+npm run start:dev
+
+# 前端（终端2）
+cd frontend
+npm run dev
+```
+
+7. **访问应用**
+
+- 前端: http://localhost:8080
+- 后端API: http://localhost:3000/api/v1
+- Swagger文档: http://localhost:3000/api/docs
+
+### 使用Docker部署
+
+```bash
+# 构建并启动所有服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+```
+
+## 📝 项目结构
+
+```
+proxyhub/
+├── backend/                 # 后端项目
+│   ├── src/
+│   │   ├── modules/         # 业务模块
+│   │   │   ├── auth/        # 认证模块
+│   │   │   ├── user/        # 用户模块
+│   │   │   ├── proxy/       # 代理模块
+│   │   │   ├── billing/     # 计费模块
+│   │   │   ├── order/       # 订单模块
+│   │   │   └── admin/       # 管理后台
+│   │   ├── common/          # 公共模块
+│   │   ├── config/          # 配置
+│   │   ├── database/        # 数据库迁移和种子
+│   │   └── utils/           # 工具函数
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── frontend/                # 前端项目
+│   ├── src/
+│   │   ├── api/             # API接口
+│   │   ├── assets/          # 静态资源
+│   │   ├── components/      # 组件
+│   │   ├── composables/     # 组合式函数
+│   │   ├── layouts/         # 布局
+│   │   ├── locales/         # 国际化
+│   │   ├── router/          # 路由
+│   │   ├── stores/          # 状态管理
+│   │   ├── types/           # TypeScript类型
+│   │   ├── utils/           # 工具函数
+│   │   └── views/           # 页面
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── docker-compose.yml       # Docker编排
+├── .env.example             # 环境变量模板
+└── README.md                # 项目说明
+```
+
+## 📖 文档
+
+详细文档请参阅：
+- [功能需求](./.spec-workflow/specs/proxyhub-rebuild/requirements.md)
+- [系统设计](./.spec-workflow/specs/proxyhub-rebuild/design.md)
+- [任务分解](./.spec-workflow/specs/proxyhub-rebuild/tasks.md)
+- [API文档](http://localhost:3000/api/docs)（启动后访问）
+
+## 🧪 测试
+
+```bash
+# 后端单元测试
+cd backend
+npm run test
+
+# 后端E2E测试
+npm run test:e2e
+
+# 代码覆盖率
+npm run test:cov
+```
+
+## 🚀 部署
+
+### 生产环境部署步骤
+
+1. 修改`.env`文件中的生产环境配置
+2. 构建前后端项目
+3. 使用Docker Compose部署
+4. 配置Nginx反向代理
+5. 配置SSL证书（推荐Let's Encrypt）
+
+详细部署文档：TODO
+
+## 🤝 贡献
+
+欢迎提交Issue和Pull Request！
+
+## 📄 许可证
+
+[MIT License](./LICENSE)
+
+## 👥 作者
+
+- [@lubei0612](https://github.com/lubei0612)
+
+## 📞 联系方式
+
+- Telegram: [@lubei12](https://t.me/lubei12)
+- GitHub Issues: [提交问题](https://github.com/lubei0612/proxyhub/issues)
+
+---
+
+**开发进度**: 🚧 开发中
+
+**最后更新**: 2025-11-01
