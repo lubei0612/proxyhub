@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { Order, OrderStatus } from '../order/entities/order.entity';
 import { StaticProxy, ProxyStatus } from '../proxy/static/entities/static-proxy.entity';
-import { Transaction } from '../billing/entities/transaction.entity';
+import { Transaction, TransactionType } from '../billing/entities/transaction.entity';
 
 @Injectable()
 export class DashboardService {
@@ -41,9 +41,9 @@ export class DashboardService {
       where: { userId: parseInt(userId), status: OrderStatus.COMPLETED },
     });
 
-    // 统计消费
+    // 统计消费（使用PURCHASE类型）
     const transactions = await this.transactionRepo.find({
-      where: { userId: parseInt(userId), type: 'expense' },
+      where: { userId: parseInt(userId), type: TransactionType.PURCHASE },
     });
     const totalSpent = transactions.reduce((sum, t) => {
       return sum + Math.abs(parseFloat(t.amount as any));
