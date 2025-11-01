@@ -25,6 +25,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: '0.0.0.0', // 监听所有网络接口，解决IPv6连接问题
     port: 8080,
     proxy: {
       '/api': {
