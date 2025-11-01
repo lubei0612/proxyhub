@@ -191,9 +191,12 @@ proxyhub/
 ## 📖 文档
 
 详细文档请参阅：
-- [功能需求](./.spec-workflow/specs/proxyhub-rebuild/requirements.md)
-- [系统设计](./.spec-workflow/specs/proxyhub-rebuild/design.md)
-- [任务分解](./.spec-workflow/specs/proxyhub-rebuild/tasks.md)
+- [快速启动指南](./docs/QUICK_START.md)
+- [部署指南](./docs/DEPLOYMENT.md)
+- [使用手册](./docs/HOW_TO_USE.md)
+- [功能需求](./docs/requirements.md)
+- [系统设计](./docs/design.md)
+- [任务分解](./docs/tasks.md)
 - [API文档](http://localhost:3000/api/docs)（启动后访问）
 
 ## 🧪 测试
