@@ -1,174 +1,184 @@
 <template>
-  <el-container class="admin-portal-layout">
-    <el-aside width="200px" class="sidebar">
-      <div class="logo">
-        <h2>管理后台</h2>
+  <div class="admin-layout">
+    <!-- 管理后台侧边栏 -->
+    <div class="admin-sidebar" :class="{ collapsed: isCollapsed }">
+      <div class="logo-container">
+        <h2 v-if="!isCollapsed">ProxyHub Admin</h2>
+        <h2 v-else>PA</h2>
       </div>
+
       <el-menu
-        :default-active="activeMenu"
+        :default-active="$route.path"
+        :collapse="isCollapsed"
+        background-color="#1f2937"
+        text-color="#9ca3af"
+        active-text-color="#00d9a3"
         router
-        class="sidebar-menu"
-        background-color="#001529"
-        text-color="#bfcbd9"
-        active-text-color="#409eff"
       >
-        <el-menu-item index="/admin-portal/users">
+        <el-menu-item index="/admin/dashboard">
+          <el-icon><DataLine /></el-icon>
+          <template #title>仪表盘</template>
+        </el-menu-item>
+        <el-menu-item index="/admin/users">
           <el-icon><UserFilled /></el-icon>
-          <span>用户管理</span>
+          <template #title>用户管理</template>
         </el-menu-item>
-        
-        <el-menu-item index="/admin-portal/recharges">
+        <el-menu-item index="/admin/recharges">
           <el-icon><Money /></el-icon>
-          <span>充值审核</span>
+          <template #title>充值审核</template>
         </el-menu-item>
-
-        <el-menu-item index="/admin-portal/orders">
-          <el-icon><ShoppingCart /></el-icon>
-          <span>订单管理</span>
+        <el-menu-item index="/admin/orders">
+          <el-icon><Document /></el-icon>
+          <template #title>订单管理</template>
         </el-menu-item>
-
-        <el-menu-item index="/admin-portal/ips">
-          <el-icon><Connection /></el-icon>
-          <span>IP管理</span>
-        </el-menu-item>
-
-        <el-menu-item index="/admin-portal/statistics">
-          <el-icon><DataAnalysis /></el-icon>
-          <span>数据统计</span>
-        </el-menu-item>
-
-        <el-menu-item index="/admin-portal/settings">
+        <el-menu-item index="/admin/settings">
           <el-icon><Setting /></el-icon>
-          <span>系统设置</span>
+          <template #title>系统设置</template>
         </el-menu-item>
       </el-menu>
-    </el-aside>
 
-    <el-container>
-      <el-header class="header">
-        <div class="header-left">
-          <span class="title">ProxyHub 管理系统</span>
-        </div>
-        <div class="header-right">
-          <el-button text @click="backToUserPortal">
-            <el-icon><Back /></el-icon>
-            返回用户端
-          </el-button>
-          <el-dropdown @command="handleCommand">
-            <span class="user-dropdown">
-              管理员
-              <el-icon><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-      </el-header>
+      <!-- 返回用户端按钮 -->
+      <div class="back-to-user">
+        <el-button type="primary" link @click="router.push('/dashboard')">
+          <el-icon><Back /></el-icon>
+          返回用户端
+        </el-button>
+      </div>
+    </div>
 
-      <el-main class="main-content">
+    <!-- 主内容 -->
+    <div class="admin-main" :class="{ collapsed: isCollapsed }">
+      <div class="admin-header">
+        <el-icon class="toggle-btn" @click="isCollapsed = !isCollapsed">
+          <Fold v-if="!isCollapsed" />
+          <Expand v-else />
+        </el-icon>
+        <div class="admin-title">管理后台</div>
+        <div class="admin-user">
+          <el-avatar :size="32" />
+          <span>{{ userStore.user?.email }}</span>
+        </div>
+      </div>
+
+      <div class="admin-content">
         <router-view />
-      </el-main>
-    </el-container>
-  </el-container>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import {
+  DataLine,
   UserFilled,
   Money,
-  ShoppingCart,
-  Connection,
-  DataAnalysis,
+  Document,
   Setting,
   Back,
-  ArrowDown,
+  Fold,
+  Expand,
 } from '@element-plus/icons-vue';
 
 const router = useRouter();
-const route = useRoute();
 const userStore = useUserStore();
-
-const activeMenu = computed(() => route.path);
-
-const backToUserPortal = () => {
-  router.push('/dashboard');
-};
-
-const handleCommand = (command: string) => {
-  if (command === 'logout') {
-    userStore.userLogout();
-    router.push('/admin-portal/login');
-  }
-};
+const isCollapsed = ref(false);
 </script>
 
 <style scoped lang="scss">
-.admin-portal-layout {
-  height: 100vh;
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f3f4f6;
 }
 
-.sidebar {
-  background-color: #001529;
-  color: #fff;
-  overflow-y: auto;
+.admin-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 200px;
+  background: #1f2937;
+  transition: width 0.3s;
+  display: flex;
+  flex-direction: column;
 
-  .logo {
+  &.collapsed {
+    width: 64px;
+  }
+
+  .logo-container {
     height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #002140;
+    background: #111827;
+    color: white;
 
     h2 {
-      color: #fff;
-      font-size: 18px;
       margin: 0;
+      font-size: 18px;
     }
   }
 
-  .sidebar-menu {
-    border: none;
+  .el-menu {
+    flex: 1;
+    border-right: none;
+  }
+
+  .back-to-user {
+    padding: 16px;
+    border-top: 1px solid #374151;
   }
 }
 
-.header {
+.admin-main {
+  flex: 1;
+  margin-left: 200px;
+  transition: margin-left 0.3s;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
-  border-bottom: 1px solid #e6e6e6;
-  padding: 0 20px;
+  flex-direction: column;
 
-  .header-left {
-    .title {
-      font-size: 18px;
-      font-weight: bold;
-      color: #303133;
+  &.collapsed {
+    margin-left: 64px;
+  }
+}
+
+.admin-header {
+  height: 60px;
+  background: white;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  .toggle-btn {
+    font-size: 20px;
+    cursor: pointer;
+    margin-right: 20px;
+
+    &:hover {
+      color: #00d9a3;
     }
   }
 
-  .header-right {
+  .admin-title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .admin-user {
     display: flex;
     align-items: center;
-    gap: 20px;
-
-    .user-dropdown {
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
+    gap: 8px;
   }
 }
 
-.main-content {
-  background-color: #f0f2f5;
+.admin-content {
+  flex: 1;
   padding: 20px;
   overflow-y: auto;
 }

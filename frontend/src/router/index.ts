@@ -1,198 +1,212 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import type { RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 
 const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    redirect: '/dashboard',
-  },
+  // ============================================================
+  // 公开路由（无需登录）
+  // ============================================================
   {
     path: '/login',
     name: 'Login',
     component: () => import('@/views/auth/Login.vue'),
-    meta: { title: '登录', requiresAuth: false },
+    meta: { 
+      title: '登录',
+      public: true 
+    },
   },
   {
     path: '/register',
     name: 'Register',
     component: () => import('@/views/auth/Register.vue'),
-    meta: { title: '注册', requiresAuth: false },
-  },
-  
-  // 仪表盘
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { title: '仪表盘', requiresAuth: true },
-    children: [
-      {
-        path: '',
-        component: () => import('@/views/dashboard/Index.vue'),
-      },
-    ],
+    meta: { 
+      title: '注册',
+      public: true 
+    },
   },
 
-  // 动态代理
+  // ============================================================
+  // 用户端主路由（需要登录）
+  // ============================================================
   {
-    path: '/proxy/dynamic',
+    path: '/',
     component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { requiresAuth: true },
+    redirect: '/dashboard',
     children: [
       {
-        path: 'manage',
-        name: 'DynamicProxyManage',
-        component: () => import('@/views/proxy/DynamicManage.vue'),
-        meta: { title: '动态住宅管理' },
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/dashboard/Index.vue'),
+        meta: {
+          title: '仪表盘',
+          icon: 'DataLine',
+        },
       },
+      // 代理管理
       {
-        path: 'buy',
+        path: 'proxy/dynamic/buy',
         name: 'DynamicProxyBuy',
         component: () => import('@/views/proxy/DynamicBuy.vue'),
-        meta: { title: '动态住宅选购' },
-      },
-    ],
-  },
-
-  // 静态代理
-  {
-    path: '/proxy/static',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: 'manage',
-        name: 'StaticProxyManage',
-        component: () => import('@/views/proxy/StaticManage.vue'),
-        meta: { title: '静态住宅管理' },
+        meta: {
+          title: '购买动态代理',
+          icon: 'Lightning',
+        },
       },
       {
-        path: 'buy',
+        path: 'proxy/static/buy',
         name: 'StaticProxyBuy',
         component: () => import('@/views/proxy/StaticBuy.vue'),
-        meta: { title: '静态住宅选购' },
+        meta: {
+          title: '购买静态代理',
+          icon: 'Location',
+        },
       },
-    ],
-  },
-
-  // 移动代理
-  {
-    path: '/proxy/mobile',
-    name: 'MobileProxy',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { title: '移动代理', requiresAuth: true },
-    children: [
       {
-        path: '',
-        component: () => import('@/views/proxy/MobilePlaceholder.vue'),
+        path: 'proxy/my-proxies',
+        name: 'MyProxies',
+        component: () => import('@/views/proxy/MyProxies.vue'),
+        meta: {
+          title: '我的代理',
+          icon: 'List',
+        },
       },
-    ],
-  },
-
-  // 钱包充值
-  {
-    path: '/wallet',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: 'recharge',
-        name: 'WalletRecharge',
-        component: () => import('@/views/wallet/Recharge.vue'),
-        meta: { title: '钱包充值' },
-      },
-    ],
-  },
-
-  // 账单明细
-  {
-    path: '/billing',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { requiresAuth: true },
-    children: [
+      // 订单管理
       {
         path: 'orders',
-        name: 'BillingOrders',
-        component: () => import('@/views/billing/Orders.vue'),
-        meta: { title: '订单管理' },
+        name: 'Orders',
+        component: () => import('@/views/order/Index.vue'),
+        meta: {
+          title: '订单列表',
+          icon: 'Document',
+        },
+      },
+      // 钱包
+      {
+        path: 'wallet',
+        name: 'Wallet',
+        component: () => import('@/views/wallet/Index.vue'),
+        meta: {
+          title: '我的钱包',
+          icon: 'Wallet',
+        },
       },
       {
-        path: 'transactions',
-        name: 'BillingTransactions',
+        path: 'wallet/recharge',
+        name: 'Recharge',
+        component: () => import('@/views/wallet/Recharge.vue'),
+        meta: {
+          title: '充值',
+        },
+      },
+      // 账单
+      {
+        path: 'billing',
+        name: 'Billing',
+        component: () => import('@/views/billing/Index.vue'),
+        meta: {
+          title: '账单概览',
+          icon: 'Tickets',
+        },
+      },
+      {
+        path: 'billing/transactions',
+        name: 'Transactions',
         component: () => import('@/views/billing/Transactions.vue'),
-        meta: { title: '交易明细' },
+        meta: {
+          title: '交易明细',
+        },
       },
       {
-        path: 'settlement',
-        name: 'BillingSettlement',
-        component: () => import('@/views/billing/Settlement.vue'),
-        meta: { title: '结算记录' },
+        path: 'billing/expenses',
+        name: 'Expenses',
+        component: () => import('@/views/billing/Expenses.vue'),
+        meta: {
+          title: '费用明细',
+        },
       },
-      {
-        path: 'recharge-orders',
-        name: 'RechargeOrders',
-        component: () => import('@/views/billing/RechargeOrders.vue'),
-        meta: { title: '充值订单' },
-      },
-    ],
-  },
-
-  // 我的账户
-  {
-    path: '/account',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: 'center',
-        name: 'AccountCenter',
-        component: () => import('@/views/account/Center.vue'),
-        meta: { title: '账户中心' },
-      },
-      {
-        path: 'event-log',
-        name: 'EventLog',
-        component: () => import('@/views/account/EventLog.vue'),
-        meta: { title: '事件日志' },
-      },
+      // 个人中心
       {
         path: 'profile',
         name: 'Profile',
-        component: () => import('@/views/account/Profile.vue'),
-        meta: { title: '个人中心' },
-      },
-      {
-        path: 'my-proxies',
-        name: 'MyProxies',
-        component: () => import('@/views/account/MyProxies.vue'),
-        meta: { title: '我的代理' },
+        component: () => import('@/views/profile/Index.vue'),
+        meta: {
+          title: '个人中心',
+          icon: 'User',
+        },
       },
     ],
   },
 
-  // 通知管理
+  // ============================================================
+  // 管理后台路由（需要管理员权限）
+  // ============================================================
   {
-    path: '/notifications',
-    name: 'Notifications',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { title: '通知管理', requiresAuth: true },
+    path: '/admin',
+    component: () => import('@/layouts/AdminPortalLayout.vue'),
+    redirect: '/admin/dashboard',
+    meta: { 
+      requiresAdmin: true 
+    },
     children: [
       {
-        path: '',
-        component: () => import('@/views/notifications/Index.vue'),
+        path: 'dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/admin/Dashboard.vue'),
+        meta: {
+          title: '管理仪表盘',
+          icon: 'DataLine',
+        },
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: () => import('@/views/admin/Users.vue'),
+        meta: {
+          title: '用户管理',
+          icon: 'UserFilled',
+        },
+      },
+      {
+        path: 'recharges',
+        name: 'AdminRecharges',
+        component: () => import('@/views/admin/RechargeApproval.vue'),
+        meta: {
+          title: '充值审核',
+          icon: 'Money',
+        },
+      },
+      {
+        path: 'orders',
+        name: 'AdminOrders',
+        component: () => import('@/views/admin/Orders.vue'),
+        meta: {
+          title: '订单管理',
+          icon: 'Document',
+        },
+      },
+      {
+        path: 'settings',
+        name: 'AdminSettings',
+        component: () => import('@/views/admin/Settings.vue'),
+        meta: {
+          title: '系统设置',
+          icon: 'Setting',
+        },
       },
     ],
   },
 
-  // 管理后台 - 独立访问入口
+  // ============================================================
+  // 404页面
+  // ============================================================
   {
-    path: '/admin-portal/login',
-    name: 'AdminLogin',
-    component: () => import('@/views/admin-portal/AdminPortalLogin.vue'),
-    meta: { title: '管理员登录', requiresAuth: false },
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/error/404.vue'),
+    meta: { 
+      title: '页面不存在',
+      public: true 
+    },
   },
-  // 注意：管理后台的其他页面路由需要从原项目获取后添加
 ];
 
 const router = createRouter({
@@ -200,22 +214,42 @@ const router = createRouter({
   routes,
 });
 
-// 路由守卫
-router.beforeEach((to, from, next) => {
+// ============================================================
+// 全局路由守卫
+// ============================================================
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
-  const isLoggedIn = userStore.isLoggedIn;
+  
+  // 设置页面标题
+  document.title = to.meta.title ? `${to.meta.title} - ProxyHub` : 'ProxyHub';
 
-  // 如果路由需要认证
-  if (to.meta.requiresAuth && !isLoggedIn) {
-    // 未登录，跳转到登录页
-    next('/login');
-  } else if ((to.path === '/login' || to.path === '/register') && isLoggedIn) {
-    // 已登录用户访问登录/注册页，跳转到仪表盘
-    next('/dashboard');
-  } else {
+  // 公开路由直接通过
+  if (to.meta.public) {
+    // 如果已登录访问登录页，跳转到首页
+    if (userStore.isLoggedIn && (to.name === 'Login' || to.name === 'Register')) {
+      next({ name: 'Dashboard' });
+      return;
+    }
     next();
+    return;
   }
+
+  // 检查是否登录
+  if (!userStore.isLoggedIn) {
+    next({ 
+      name: 'Login', 
+      query: { redirect: to.fullPath } 
+    });
+    return;
+  }
+
+  // 检查管理员权限
+  if (to.meta.requiresAdmin && !userStore.isAdmin) {
+    next({ name: 'Dashboard' });
+    return;
+  }
+
+  next();
 });
 
 export default router;
-

@@ -1,23 +1,24 @@
 <template>
-  <div class="dynamic-manage-page">
+  <div class="order-page">
     <el-card>
       <template #header>
-        <h3>动态代理管理</h3>
+        <h3>订单列表</h3>
       </template>
-      <el-empty description="动态代理管理功能开发中..." />
+      <el-empty description="暂无订单记录" />
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-// Dynamic proxy management page
+// Order list page
 </script>
 
 <style scoped lang="scss">
-.dynamic-manage-page {
+.order-page {
   h3 {
     margin: 0;
     font-size: 18px;
   }
 }
 </style>
+

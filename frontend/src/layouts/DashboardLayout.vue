@@ -98,6 +98,10 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人资料</el-dropdown-item>
+                <el-dropdown-item v-if="isAdmin" command="admin" divided>
+                  <el-icon><Setting /></el-icon>
+                  管理后台
+                </el-dropdown-item>
                 <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -125,6 +129,7 @@ import {
   List, 
   User, 
   Bell, 
+  Setting,
   ArrowDown 
 } from '@element-plus/icons-vue';
 
@@ -133,6 +138,7 @@ const route = useRoute();
 const userStore = useUserStore();
 
 const activeMenu = computed(() => route.path);
+const isAdmin = computed(() => userStore.isAdmin);
 const userEmail = computed(() => userStore.user?.email || '');
 const userBalance = computed(() => userStore.user?.balance || 0);
 
@@ -141,7 +147,9 @@ const handleCommand = (command: string) => {
     userStore.userLogout();
     router.push('/login');
   } else if (command === 'profile') {
-    router.push('/account/center');
+    router.push('/profile');
+  } else if (command === 'admin') {
+    router.push('/admin/dashboard');
   }
 };
 </script>

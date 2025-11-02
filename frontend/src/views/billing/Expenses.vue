@@ -1,23 +1,24 @@
 <template>
-  <div class="dynamic-manage-page">
+  <div class="expenses-page">
     <el-card>
       <template #header>
-        <h3>动态代理管理</h3>
+        <h3>费用明细</h3>
       </template>
-      <el-empty description="动态代理管理功能开发中..." />
+      <el-empty description="暂无费用记录" />
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-// Dynamic proxy management page
+// Expenses page
 </script>
 
 <style scoped lang="scss">
-.dynamic-manage-page {
+.expenses-page {
   h3 {
     margin: 0;
     font-size: 18px;
   }
 }
 </style>
+
