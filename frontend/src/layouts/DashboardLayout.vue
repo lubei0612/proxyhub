@@ -12,40 +12,88 @@
         text-color="#bfcbd9"
         active-text-color="#409eff"
       >
+        <!-- 仪表盘 -->
         <el-menu-item index="/dashboard">
-          <el-icon><HomeFilled /></el-icon>
+          <el-icon><DataAnalysis /></el-icon>
           <span>仪表盘</span>
         </el-menu-item>
         
-        <el-sub-menu index="proxy">
+        <!-- 动态住宅 -->
+        <el-sub-menu index="dynamic-proxy">
           <template #title>
             <el-icon><Connection /></el-icon>
-            <span>代理管理</span>
+            <span>动态住宅</span>
           </template>
-          <el-menu-item index="/proxy/static/buy">购买静态IP</el-menu-item>
-          <el-menu-item index="/proxy/static/manage">管理静态IP</el-menu-item>
-          <el-menu-item index="/proxy/mobile">移动代理</el-menu-item>
+          <el-menu-item index="/proxy/dynamic/manage">动态住宅管理</el-menu-item>
+          <el-menu-item index="/proxy/dynamic/buy">动态住宅选购</el-menu-item>
         </el-sub-menu>
 
+        <!-- 静态住宅 -->
+        <el-sub-menu index="static-proxy">
+          <template #title>
+            <el-icon><House /></el-icon>
+            <span>静态住宅</span>
+          </template>
+          <el-menu-item index="/proxy/static/manage">静态住宅管理</el-menu-item>
+          <el-menu-item index="/proxy/static/buy">静态住宅选购</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 移动代理（未开发） -->
+        <el-menu-item index="/proxy/mobile" disabled>
+          <el-icon><Iphone /></el-icon>
+          <span>移动代理</span>
+          <el-tag size="small" type="info" style="margin-left: 10px">未开发</el-tag>
+        </el-menu-item>
+
+        <!-- 钱包充值 -->
+        <el-menu-item index="/wallet/recharge">
+          <el-icon><Wallet /></el-icon>
+          <span>钱包充值</span>
+        </el-menu-item>
+
+        <!-- 账单明细 -->
         <el-sub-menu index="billing">
           <template #title>
-            <el-icon><Wallet /></el-icon>
-            <span>计费</span>
+            <el-icon><List /></el-icon>
+            <span>账单明细</span>
           </template>
-          <el-menu-item index="/wallet/recharge">充值</el-menu-item>
-          <el-menu-item index="/billing/orders">订单记录</el-menu-item>
-          <el-menu-item index="/billing/transactions">交易记录</el-menu-item>
+          <el-menu-item index="/billing/orders">订单管理</el-menu-item>
+          <el-menu-item index="/billing/transactions">交易明细</el-menu-item>
+          <el-menu-item index="/billing/settlement">结算记录</el-menu-item>
+          <el-menu-item index="/billing/recharge-orders">充值订单</el-menu-item>
         </el-sub-menu>
 
-        <el-menu-item index="/account/center">
-          <el-icon><User /></el-icon>
-          <span>账户中心</span>
+        <!-- 我的账户 -->
+        <el-sub-menu index="account">
+          <template #title>
+            <el-icon><User /></el-icon>
+            <span>我的账户</span>
+          </template>
+          <el-menu-item index="/account/center">账户中心</el-menu-item>
+          <el-menu-item index="/account/event-log">事件日志</el-menu-item>
+          <el-menu-item index="/account/profile">个人中心</el-menu-item>
+          <el-menu-item index="/account/my-proxies">我的代理</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 通知管理 -->
+        <el-menu-item index="/notifications">
+          <el-icon><Bell /></el-icon>
+          <span>通知管理</span>
         </el-menu-item>
 
-        <el-menu-item v-if="isAdmin" index="/admin-portal/users">
-          <el-icon><Setting /></el-icon>
-          <span>管理后台</span>
-        </el-menu-item>
+        <!-- 管理后台（仅管理员可见） -->
+        <el-sub-menu v-if="isAdmin" index="admin">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>管理后台</span>
+          </template>
+          <el-menu-item index="/admin-portal/users">用户管理</el-menu-item>
+          <el-menu-item index="/admin-portal/recharge-approval">充值审核</el-menu-item>
+          <el-menu-item index="/admin-portal/orders">订单管理</el-menu-item>
+          <el-menu-item index="/admin-portal/ip-management">IP管理</el-menu-item>
+          <el-menu-item index="/admin-portal/statistics">数据统计</el-menu-item>
+          <el-menu-item index="/admin-portal/settings">系统设置</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </el-aside>
 
@@ -82,7 +130,18 @@
 import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
-import { HomeFilled, Connection, Wallet, User, Setting, ArrowDown } from '@element-plus/icons-vue';
+import { 
+  DataAnalysis, 
+  Connection, 
+  House, 
+  Iphone, 
+  Wallet, 
+  List, 
+  User, 
+  Bell, 
+  Setting, 
+  ArrowDown 
+} from '@element-plus/icons-vue';
 
 const router = useRouter();
 const route = useRoute();
