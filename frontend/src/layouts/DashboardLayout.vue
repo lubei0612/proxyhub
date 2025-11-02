@@ -75,25 +75,11 @@
           <el-menu-item index="/account/my-proxies">我的代理</el-menu-item>
         </el-sub-menu>
 
-        <!-- 通知管理 -->
-        <el-menu-item index="/notifications">
-          <el-icon><Bell /></el-icon>
-          <span>通知管理</span>
-        </el-menu-item>
-
-        <!-- 管理后台（仅管理员可见） -->
-        <el-sub-menu v-if="isAdmin" index="admin">
-          <template #title>
-            <el-icon><Setting /></el-icon>
-            <span>管理后台</span>
-          </template>
-          <el-menu-item index="/admin-portal/users">用户管理</el-menu-item>
-          <el-menu-item index="/admin-portal/recharge-approval">充值审核</el-menu-item>
-          <el-menu-item index="/admin-portal/orders">订单管理</el-menu-item>
-          <el-menu-item index="/admin-portal/ip-management">IP管理</el-menu-item>
-          <el-menu-item index="/admin-portal/statistics">数据统计</el-menu-item>
-          <el-menu-item index="/admin-portal/settings">系统设置</el-menu-item>
-        </el-sub-menu>
+                <!-- 通知管理 -->
+                <el-menu-item index="/notifications">
+                  <el-icon><Bell /></el-icon>
+                  <span>通知管理</span>
+                </el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -139,7 +125,6 @@ import {
   List, 
   User, 
   Bell, 
-  Setting, 
   ArrowDown 
 } from '@element-plus/icons-vue';
 
@@ -148,7 +133,6 @@ const route = useRoute();
 const userStore = useUserStore();
 
 const activeMenu = computed(() => route.path);
-const isAdmin = computed(() => userStore.isAdmin);
 const userEmail = computed(() => userStore.user?.email || '');
 const userBalance = computed(() => userStore.user?.balance || 0);
 

@@ -185,50 +185,14 @@ const routes: RouteRecordRaw[] = [
     ],
   },
 
-  // 管理后台
+  // 管理后台 - 独立访问入口
   {
-    path: '/admin-portal',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
-    children: [
-      {
-        path: 'users',
-        name: 'AdminUsers',
-        component: () => import('@/views/admin-portal/Users.vue'),
-        meta: { title: '用户管理' },
-      },
-      {
-        path: 'recharge-approval',
-        name: 'AdminRechargeApproval',
-        component: () => import('@/views/admin-portal/RechargeApproval.vue'),
-        meta: { title: '充值审核' },
-      },
-      {
-        path: 'orders',
-        name: 'AdminOrders',
-        component: () => import('@/views/admin-portal/Orders.vue'),
-        meta: { title: '订单管理' },
-      },
-      {
-        path: 'ip-management',
-        name: 'AdminIPManagement',
-        component: () => import('@/views/admin-portal/IPManagement.vue'),
-        meta: { title: 'IP管理' },
-      },
-      {
-        path: 'statistics',
-        name: 'AdminStatistics',
-        component: () => import('@/views/admin-portal/Statistics.vue'),
-        meta: { title: '数据统计' },
-      },
-      {
-        path: 'settings',
-        name: 'AdminSettings',
-        component: () => import('@/views/admin-portal/Settings.vue'),
-        meta: { title: '系统设置' },
-      },
-    ],
+    path: '/admin-portal/login',
+    name: 'AdminLogin',
+    component: () => import('@/views/admin-portal/AdminPortalLogin.vue'),
+    meta: { title: '管理员登录', requiresAuth: false },
   },
+  // 注意：管理后台的其他页面路由需要从原项目获取后添加
 ];
 
 const router = createRouter({
