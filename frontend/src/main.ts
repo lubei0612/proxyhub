@@ -6,7 +6,11 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import App from './App.vue';
 import router from './router';
 // import i18n from './locales'; // TODO: 稍后添加
-import './assets/styles/global.scss'; // TODO: 稍后添加
+
+// 导入深色主题样式
+import './styles/variables.scss';
+import './styles/dark-theme.scss';
+import './assets/styles/global.scss';
 
 const app = createApp(App);
 
