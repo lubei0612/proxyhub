@@ -12,7 +12,7 @@ import { UserService } from './user.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
-@Controller('user')
+@Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -22,7 +22,15 @@ export class UserController {
    */
   @Get('profile')
   async getProfile(@CurrentUser() user: any) {
-    return this.userService.getProfile(user.userId);
+    return user;
+  }
+
+  /**
+   * 获取当前用户信息 (/me路由)
+   */
+  @Get('me')
+  async getCurrentUser(@CurrentUser() user: any) {
+    return user;
   }
 
   /**

@@ -13,7 +13,7 @@ export class DashboardController {
    */
   @Get('overview')
   async getUserOverview(@CurrentUser() user: any) {
-    return this.dashboardService.getUserOverview(user.userId);
+    return this.dashboardService.getUserOverview(user.id.toString());
   }
 
   /**
@@ -21,7 +21,7 @@ export class DashboardController {
    */
   @Get('spending-trend')
   async getSpendingTrend(@CurrentUser() user: any) {
-    return this.dashboardService.getSpendingTrend(user.userId);
+    return this.dashboardService.getSpendingTrend(user.id);
   }
 }
 

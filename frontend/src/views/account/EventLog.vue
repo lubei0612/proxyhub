@@ -1,22 +1,23 @@
 <template>
-  <div class="static-manage-container">
+  <div class="event-log-container">
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>静态住宅管理</span>
+          <span>事件日志</span>
         </div>
       </template>
-      <el-empty description="静态住宅管理功能开发中"></el-empty>
+      <el-empty description="事件日志功能开发中"></el-empty>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-// 静态住宅管理逻辑将在此处添加
+// 事件日志逻辑将在此处添加
 </script>
 
 <style scoped>
-.static-manage-container {
+.event-log-container {
   padding: 20px;
 }
 </style>
+
