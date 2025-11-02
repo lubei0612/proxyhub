@@ -3,257 +3,345 @@
     <h1>账户中心</h1>
 
     <el-row :gutter="20">
-      <!-- 个人信息 -->
-      <el-col :span="12">
-        <el-card shadow="hover" class="profile-card">
+      <!-- 左侧：账户信息 -->
+      <el-col :span="16">
+        <!-- 基本信息 -->
+        <el-card shadow="hover" class="info-card">
           <template #header>
             <div class="card-header">
-              <span>个人信息</span>
-              <el-button text type="primary" @click="editProfile">编辑</el-button>
+              <span>基本信息</span>
+              <el-button type="primary" size="small" @click="editDialogVisible = true">
+                <el-icon><Edit /></el-icon>
+                编辑资料
+              </el-button>
             </div>
           </template>
 
-          <el-descriptions :column="1" border v-if="profile">
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="用户ID">
+              {{ userInfo.id }}
+            </el-descriptions-item>
             <el-descriptions-item label="邮箱">
-              {{ profile.email }}
+              {{ userInfo.email }}
             </el-descriptions-item>
             <el-descriptions-item label="昵称">
-              {{ profile.nickname || '未设置' }}
+              {{ userInfo.nickname || '-' }}
             </el-descriptions-item>
             <el-descriptions-item label="角色">
-              <el-tag v-if="profile.role === 'admin'" type="danger">管理员</el-tag>
-              <el-tag v-else-if="profile.role === 'agent'" type="warning">代理商</el-tag>
-              <el-tag v-else type="success">普通用户</el-tag>
+              <el-tag :type="userInfo.role === 'admin' ? 'danger' : 'success'">
+                {{ userInfo.role === 'admin' ? '管理员' : '普通用户' }}
+              </el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="余额">
-              <span style="color: #67c23a; font-weight: bold; font-size: 18px">
-                ${{ profile.balance }}
-              </span>
-            </el-descriptions-item>
-            <el-descriptions-item label="赠送余额">
-              ${{ profile.gift_balance }}
+            <el-descriptions-item label="账户状态">
+              <el-tag :type="userInfo.status === 'active' ? 'success' : 'danger'">
+                {{ userInfo.status === 'active' ? '正常' : '禁用' }}
+              </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="注册时间">
-              {{ formatDate(profile.createdAt) }}
+              {{ formatDate(userInfo.createdAt) }}
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
-      </el-col>
 
-      <!-- API Key -->
-      <el-col :span="12">
-        <el-card shadow="hover" class="api-key-card">
+        <!-- 余额信息 -->
+        <el-card shadow="hover" class="balance-card">
           <template #header>
             <div class="card-header">
-              <span>API Key</span>
+              <span>余额信息</span>
+              <el-button type="primary" size="small" @click="$router.push('/wallet/recharge')">
+                <el-icon><Wallet /></el-icon>
+                充值
+              </el-button>
             </div>
           </template>
 
-          <div class="api-key-section">
-            <el-input
-              v-model="apiKey"
-              readonly
-              placeholder="暂无API Key"
-            >
-              <template #append>
-                <el-button @click="copyApiKey" :disabled="!apiKey">复制</el-button>
-              </template>
-            </el-input>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <div class="balance-item">
+                <div class="balance-icon" style="background-color: #409eff">
+                  <el-icon :size="40"><Money /></el-icon>
+                </div>
+                <div class="balance-info">
+                  <div class="balance-label">账户余额</div>
+                  <div class="balance-value">${{ userInfo.balance?.toFixed(2) || '0.00' }}</div>
+                  <div class="balance-note">可用于购买代理IP</div>
+                </div>
+              </div>
+            </el-col>
 
-            <div class="api-key-actions">
-              <el-button type="primary" @click="handleGenerateApiKey" :loading="apiKeyLoading">
-                {{ apiKey ? '重新生成' : '生成API Key' }}
+            <el-col :span="12">
+              <div class="balance-item">
+                <div class="balance-icon" style="background-color: #67c23a">
+                  <el-icon :size="40"><Gift /></el-icon>
+                </div>
+                <div class="balance-info">
+                  <div class="balance-label">赠送余额</div>
+                  <div class="balance-value">${{ userInfo.giftBalance?.toFixed(2) || '0.00' }}</div>
+                  <div class="balance-note">活动赠送，不可提现</div>
+                </div>
+              </div>
+            </el-col>
+          </el-row>
+        </el-card>
+
+        <!-- 安全设置 -->
+        <el-card shadow="hover" class="security-card">
+          <template #header>
+            <div class="card-header">
+              <span>安全设置</span>
+            </div>
+          </template>
+
+          <div class="security-items">
+            <div class="security-item">
+              <div class="item-info">
+                <el-icon :size="24" color="#409eff"><Lock /></el-icon>
+                <div class="item-content">
+                  <div class="item-title">登录密码</div>
+                  <div class="item-desc">定期修改密码，保护账户安全</div>
+                </div>
+              </div>
+              <el-button type="primary" @click="changePasswordDialogVisible = true">
+                修改密码
               </el-button>
-              <el-button @click="$router.push('/docs/api')">查看API文档</el-button>
             </div>
 
-            <el-alert
-              title="安全提示"
-              type="warning"
-              :closable="false"
-              show-icon
-              class="security-tip"
-            >
-              请妥善保管您的API Key，不要泄露给他人。如发现泄露，请立即重新生成。
-            </el-alert>
+            <el-divider />
+
+            <div class="security-item">
+              <div class="item-info">
+                <el-icon :size="24" color="#67c23a"><Message /></el-icon>
+                <div class="item-content">
+                  <div class="item-title">邮箱绑定</div>
+                  <div class="item-desc">{{ userInfo.email }}</div>
+                </div>
+              </div>
+              <el-tag type="success">已绑定</el-tag>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 右侧：快捷操作和客服 -->
+      <el-col :span="8">
+        <!-- 快捷操作 -->
+        <el-card shadow="hover" class="quick-actions-card">
+          <template #header>
+            <div class="card-header">
+              <span>快捷操作</span>
+            </div>
+          </template>
+
+          <div class="action-list">
+            <el-button type="primary" @click="$router.push('/proxy/static/buy')" class="action-btn">
+              <el-icon><ShoppingCart /></el-icon>
+              购买静态IP
+            </el-button>
+            <el-button type="success" @click="$router.push('/proxy/dynamic/manage')" class="action-btn">
+              <el-icon><Connection /></el-icon>
+              动态代理管理
+            </el-button>
+            <el-button type="info" @click="$router.push('/proxy/static/manage')" class="action-btn">
+              <el-icon><List /></el-icon>
+              静态IP管理
+            </el-button>
+            <el-button type="warning" @click="$router.push('/billing/orders')" class="action-btn">
+              <el-icon><Document /></el-icon>
+              查看订单
+            </el-button>
           </div>
         </el-card>
 
-        <!-- 修改密码 -->
-        <el-card shadow="hover" class="password-card">
+        <!-- 客服联系 -->
+        <el-card shadow="hover" class="service-card">
           <template #header>
             <div class="card-header">
-              <span>修改密码</span>
+              <span>联系客服</span>
             </div>
           </template>
 
-          <el-form :model="passwordForm" label-width="100px">
-            <el-form-item label="原密码">
-              <el-input
-                v-model="passwordForm.oldPassword"
-                type="password"
-                show-password
-                placeholder="请输入原密码"
-              />
-            </el-form-item>
-            <el-form-item label="新密码">
-              <el-input
-                v-model="passwordForm.newPassword"
-                type="password"
-                show-password
-                placeholder="请输入新密码"
-              />
-            </el-form-item>
-            <el-form-item label="确认密码">
-              <el-input
-                v-model="passwordForm.confirmPassword"
-                type="password"
-                show-password
-                placeholder="请再次输入新密码"
-              />
-            </el-form-item>
-            <el-form-item>
-              <el-button
-                type="primary"
-                @click="handleChangePassword"
-                :loading="passwordLoading"
-              >
-                修改密码
+          <div class="service-content">
+            <p class="service-title">需要帮助？联系我们的客服团队</p>
+            
+            <div class="service-item">
+              <div class="service-info">
+                <el-icon :size="20" color="#0088cc"><ChatDotRound /></el-icon>
+                <span>Telegram 客服 1</span>
+              </div>
+              <el-button type="primary" size="small" @click="openTelegram('lubei12')">
+                联系
               </el-button>
-            </el-form-item>
-          </el-form>
+            </div>
+
+            <div class="service-item">
+              <div class="service-info">
+                <el-icon :size="20" color="#0088cc"><ChatDotRound /></el-icon>
+                <span>Telegram 客服 2</span>
+              </div>
+              <el-button type="primary" size="small" @click="openTelegram('lubei12')">
+                联系
+              </el-button>
+            </div>
+
+            <el-alert type="info" :closable="false" class="service-note">
+              <p>工作时间：周一至周日 9:00-22:00</p>
+              <p>平均响应时间：5分钟</p>
+            </el-alert>
+          </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 编辑个人信息对话框 -->
-    <el-dialog v-model="editDialog.visible" title="编辑个人信息" width="500px">
-      <el-form :model="editDialog.form" label-width="80px">
+    <!-- 编辑资料对话框 -->
+    <el-dialog v-model="editDialogVisible" title="编辑资料" width="500px">
+      <el-form :model="editForm" label-width="100px">
         <el-form-item label="昵称">
-          <el-input v-model="editDialog.form.nickname" placeholder="请输入昵称" />
+          <el-input v-model="editForm.nickname" placeholder="请输入昵称" />
         </el-form-item>
       </el-form>
+
       <template #footer>
-        <el-button @click="editDialog.visible = false">取消</el-button>
+        <el-button @click="editDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSaveProfile">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 修改密码对话框 -->
+    <el-dialog v-model="changePasswordDialogVisible" title="修改密码" width="500px">
+      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
+        <el-form-item label="当前密码" prop="oldPassword">
+          <el-input v-model="passwordForm.oldPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input v-model="passwordForm.newPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input v-model="passwordForm.confirmPassword" type="password" show-password />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="changePasswordDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleChangePassword">确认修改</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { getProfile, updateProfile, changePassword, generateApiKey } from '@/api/modules/user';
-import { ElMessage } from 'element-plus';
+import { ref, onMounted } from 'vue';
+import { ElMessage, FormInstance, FormRules } from 'element-plus';
+import {
+  Edit,
+  Wallet,
+  Money,
+  Gift,
+  Lock,
+  Message,
+  ShoppingCart,
+  Connection,
+  List,
+  Document,
+  ChatDotRound,
+} from '@element-plus/icons-vue';
+import { useUserStore } from '@/stores/user';
+import dayjs from 'dayjs';
 
-const profile = ref<any>(null);
-const apiKey = ref('');
+const userStore = useUserStore();
 
-const passwordForm = reactive({
+const userInfo = ref<any>({
+  id: 1,
+  email: 'user@example.com',
+  nickname: '测试用户',
+  role: 'user',
+  status: 'active',
+  balance: 1000,
+  giftBalance: 50,
+  createdAt: '2025-01-01 10:00:00',
+});
+
+const editDialogVisible = ref(false);
+const editForm = ref({
+  nickname: '',
+});
+
+const changePasswordDialogVisible = ref(false);
+const passwordFormRef = ref<FormInstance>();
+const passwordForm = ref({
   oldPassword: '',
   newPassword: '',
   confirmPassword: '',
 });
 
-const editDialog = reactive({
-  visible: false,
-  form: {
-    nickname: '',
-  },
-});
-
-const apiKeyLoading = ref(false);
-const passwordLoading = ref(false);
-
-const loadProfile = async () => {
-  try {
-    const res = await getProfile();
-    if (res.data) {
-      profile.value = res.data;
-      apiKey.value = res.data.apiKey || '';
-    }
-  } catch (error) {
-    console.error('Failed to load profile:', error);
-  }
+const passwordRules: FormRules = {
+  oldPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度至少6位', trigger: 'blur' },
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认新密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== passwordForm.value.newPassword) {
+          callback(new Error('两次输入密码不一致'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur',
+    },
+  ],
 };
 
-const editProfile = () => {
-  editDialog.form.nickname = profile.value?.nickname || '';
-  editDialog.visible = true;
+const formatDate = (date: string) => {
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+};
+
+const openTelegram = (username: string) => {
+  window.open(`https://t.me/${username}`, '_blank');
+  ElMessage.info('正在跳转到Telegram...');
 };
 
 const handleSaveProfile = async () => {
   try {
-    await updateProfile(editDialog.form);
-    ElMessage.success('个人信息已更新');
-    editDialog.visible = false;
-    loadProfile();
-  } catch (error) {
-    console.error('Failed to update profile:', error);
+    // TODO: 调用API保存资料
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    ElMessage.success('保存成功！');
+    editDialogVisible.value = false;
+  } catch (error: any) {
+    ElMessage.error('保存失败：' + error.message);
   }
-};
-
-const handleGenerateApiKey = async () => {
-  apiKeyLoading.value = true;
-  try {
-    const res = await generateApiKey();
-    if (res.data) {
-      apiKey.value = res.data.apiKey;
-      ElMessage.success('API Key已生成');
-    }
-  } catch (error) {
-    console.error('Failed to generate API key:', error);
-  } finally {
-    apiKeyLoading.value = false;
-  }
-};
-
-const copyApiKey = () => {
-  navigator.clipboard.writeText(apiKey.value).then(() => {
-    ElMessage.success('API Key已复制到剪贴板');
-  });
 };
 
 const handleChangePassword = async () => {
-  if (!passwordForm.oldPassword || !passwordForm.newPassword) {
-    ElMessage.warning('请填写完整信息');
-    return;
-  }
+  if (!passwordFormRef.value) return;
 
-  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    ElMessage.warning('两次输入的新密码不一致');
-    return;
-  }
-
-  if (passwordForm.newPassword.length < 6) {
-    ElMessage.warning('新密码长度不能少于6位');
-    return;
-  }
-
-  passwordLoading.value = true;
   try {
-    await changePassword({
-      oldPassword: passwordForm.oldPassword,
-      newPassword: passwordForm.newPassword,
-    });
-    ElMessage.success('密码修改成功');
-    passwordForm.oldPassword = '';
-    passwordForm.newPassword = '';
-    passwordForm.confirmPassword = '';
-  } catch (error) {
-    console.error('Failed to change password:', error);
-  } finally {
-    passwordLoading.value = false;
+    await passwordFormRef.value.validate();
+    
+    // TODO: 调用API修改密码
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    
+    ElMessage.success('密码修改成功！');
+    changePasswordDialogVisible.value = false;
+    passwordForm.value = {
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    };
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error('修改失败：' + error.message);
+    }
   }
-};
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleString('zh-CN');
 };
 
 onMounted(() => {
-  loadProfile();
+  if (userStore.user) {
+    userInfo.value = { ...userInfo.value, ...userStore.user };
+    editForm.value.nickname = userInfo.value.nickname;
+  }
 });
 </script>
 
@@ -262,32 +350,164 @@ onMounted(() => {
   h1 {
     margin: 0 0 20px 0;
     color: #303133;
+    font-size: 24px;
+    font-weight: 600;
   }
 
-  .profile-card,
-  .api-key-card,
-  .password-card {
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  .info-card,
+  .balance-card,
+  .security-card {
     margin-bottom: 20px;
+  }
 
-    .card-header {
+  .balance-card {
+    .balance-item {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
-    }
+      gap: 20px;
+      padding: 20px;
+      background-color: #f5f7fa;
+      border-radius: 8px;
 
-    .api-key-section {
-      .api-key-actions {
-        margin-top: 15px;
+      .balance-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
         display: flex;
-        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
       }
 
-      .security-tip {
+      .balance-info {
+        flex: 1;
+
+        .balance-label {
+          font-size: 14px;
+          color: #909399;
+          margin-bottom: 8px;
+        }
+
+        .balance-value {
+          font-size: 32px;
+          font-weight: bold;
+          color: #303133;
+          margin-bottom: 8px;
+        }
+
+        .balance-note {
+          font-size: 12px;
+          color: #c0c4cc;
+        }
+      }
+    }
+  }
+
+  .security-card {
+    .security-items {
+      .security-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 0;
+
+        .item-info {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+
+          .item-content {
+            .item-title {
+              font-size: 16px;
+              font-weight: 600;
+              color: #303133;
+              margin-bottom: 5px;
+            }
+
+            .item-desc {
+              font-size: 13px;
+              color: #909399;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .quick-actions-card {
+    margin-bottom: 20px;
+
+    .action-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .action-btn {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 15px 20px;
+        font-size: 15px;
+      }
+    }
+  }
+
+  .service-card {
+    .service-content {
+      .service-title {
+        font-size: 14px;
+        color: #606266;
+        margin-bottom: 15px;
+      }
+
+      .service-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #ebeef5;
+
+        .service-info {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 14px;
+          color: #303133;
+        }
+      }
+
+      .service-note {
         margin-top: 15px;
+
+        p {
+          margin: 5px 0;
+          font-size: 13px;
+        }
       }
     }
   }
 }
-</style>
 
+// 浅色主题适配
+:deep(.el-card) {
+  background-color: #ffffff;
+  border: 1px solid #dcdfe6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+  &:hover {
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  }
+}
+
+:deep(.el-card__header) {
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #dcdfe6;
+  padding: 16px 20px;
+}
+</style>

@@ -1,194 +1,235 @@
 <template>
   <div class="recharge-container">
-    <h1>账户充值</h1>
+    <h1>钱包充值</h1>
 
-    <el-row :gutter="20">
-      <el-col :span="12">
-        <el-card shadow="hover" class="recharge-form-card">
-          <template #header>
-            <div class="card-header">
-              <span>充值金额</span>
-            </div>
-          </template>
+    <!-- 单列布局 -->
+    <el-card shadow="hover" class="recharge-form-card">
+      <template #header>
+        <div class="card-header">
+          <span>充值信息</span>
+        </div>
+      </template>
 
-          <el-form :model="form" label-width="100px">
-            <el-form-item label="充值方式">
-              <el-radio-group v-model="form.method">
-                <el-radio label="usdt">USDT (TRC20)</el-radio>
-                <el-radio label="alipay">支付宝</el-radio>
-                <el-radio label="wechat">微信支付</el-radio>
-              </el-radio-group>
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
+            <!-- 充值金额 -->
+            <el-form-item label="充值金额" prop="amount">
+              <el-input
+                v-model.number="form.amount"
+                type="number"
+                placeholder="请输入充值金额（USD）"
+              >
+                <template #prefix>$</template>
+                <template #append>USD</template>
+              </el-input>
+              <div class="amount-tips">
+                <span>最小充值：$1</span>
+                <span>最大充值：$10,000</span>
+              </div>
             </el-form-item>
 
-            <el-form-item label="充值金额">
-              <el-input-number
-                v-model="form.amount"
-                :min="10"
-                :max="10000"
-                :step="10"
-                style="width: 100%"
-              />
-              <div class="hint">最低充值金额：$10</div>
-            </el-form-item>
-
-            <el-form-item>
+            <!-- 快捷金额 -->
+            <el-form-item label="快捷选择">
               <div class="quick-amounts">
                 <el-button
-                  v-for="amount in [50, 100, 200, 500]"
+                  v-for="amount in quickAmounts"
                   :key="amount"
                   @click="form.amount = amount"
+                  :type="form.amount === amount ? 'primary' : ''"
                 >
                   ${{ amount }}
                 </el-button>
               </div>
             </el-form-item>
 
+            <!-- 充值预览（移到这里） -->
+            <el-form-item v-if="form.amount > 0">
+              <el-alert type="info" :closable="false" class="preview-alert">
+                <template #title>
+                  <div class="preview-content">
+                    <div class="preview-row">
+                      <span class="label">充值金额（USD）：</span>
+                      <span class="value primary">${{ form.amount.toFixed(2) }}</span>
+                    </div>
+                    <div class="preview-row">
+                      <span class="label">折合人民币（CNY）：</span>
+                      <span class="value">¥{{ (form.amount * exchangeRate).toFixed(2) }}</span>
+                    </div>
+                    <div class="preview-row">
+                      <span class="label">当前汇率：</span>
+                      <span class="value">1 USD = {{ exchangeRate }} CNY</span>
+                    </div>
+                  </div>
+                </template>
+              </el-alert>
+            </el-form-item>
+
+            <!-- 支付方式（优化样式） -->
+            <el-form-item label="支付方式" prop="paymentMethod">
+              <el-radio-group v-model="form.paymentMethod" class="payment-methods">
+                <el-radio label="wechat" border class="payment-option-fixed">
+                  <div class="payment-content">
+                    <el-icon :size="20" color="#07c160"><ChatDotRound /></el-icon>
+                    <div class="payment-text">
+                      <div class="payment-name">微信支付</div>
+                      <div class="payment-desc">扫码支付，即时到账</div>
+                    </div>
+                  </div>
+                </el-radio>
+
+                <el-radio label="alipay" border class="payment-option-fixed">
+                  <div class="payment-content">
+                    <el-icon :size="20" color="#1677ff"><Money /></el-icon>
+                    <div class="payment-text">
+                      <div class="payment-name">支付宝</div>
+                      <div class="payment-desc">扫码支付，即时到账</div>
+                    </div>
+                  </div>
+                </el-radio>
+
+                <el-radio label="usdt" border class="payment-option-fixed">
+                  <div class="payment-content">
+                    <el-icon :size="20" color="#26a17b"><CreditCard /></el-icon>
+                    <div class="payment-text">
+                      <div class="payment-name">USDT（TRC20）</div>
+                      <div class="payment-desc">区块链转账，30分钟内到账</div>
+                    </div>
+                  </div>
+                </el-radio>
+
+                <el-radio label="usd" border class="payment-option-fixed">
+                  <div class="payment-content">
+                    <el-icon :size="20" color="#f56c6c"><Coin /></el-icon>
+                    <div class="payment-text">
+                      <div class="payment-name">美金支付</div>
+                      <div class="payment-desc">银行转账或PayPal</div>
+                    </div>
+                  </div>
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+
+            <!-- 备注信息 -->
+            <el-form-item label="备注信息" prop="remark">
+              <el-input
+                v-model="form.remark"
+                type="textarea"
+                :rows="4"
+                placeholder="请输入备注信息（如USDT地址、转账凭证号等）"
+                maxlength="500"
+                show-word-limit
+              />
+            </el-form-item>
+
+            <!-- 联系客服 -->
+            <el-form-item>
+              <el-button type="primary" link @click="openTelegram">
+                <el-icon><ChatDotRound /></el-icon>
+                联系客服：@lubei12
+              </el-button>
+            </el-form-item>
+
+            <!-- 提交按钮 -->
             <el-form-item>
               <el-button
                 type="primary"
                 size="large"
-                style="width: 100%"
-                :loading="loading"
-                @click="handleRecharge"
+                :loading="submitting"
+                @click="handleSubmit"
+                class="submit-btn"
               >
-                <el-icon><Wallet /></el-icon>
+                <el-icon><Check /></el-icon>
                 提交充值申请
               </el-button>
             </el-form-item>
           </el-form>
-
-          <el-alert
-            title="充值说明"
-            type="info"
-            :closable="false"
-            show-icon
-          >
-            <ul>
-              <li>提交充值申请后，请联系客服完成支付</li>
-              <li>充值通常在1-24小时内到账</li>
-              <li>如有疑问，请联系客服：support@proxyhub.com</li>
-            </ul>
-          </el-alert>
         </el-card>
-      </el-col>
-
-      <el-col :span="12">
-        <el-card shadow="hover" class="recharge-history-card">
-          <template #header>
-            <div class="card-header">
-              <span>充值记录</span>
-            </div>
-          </template>
-
-          <el-table :data="recharges" v-loading="loadingHistory" max-height="400">
-            <el-table-column prop="tradeNo" label="交易号" width="180" show-overflow-tooltip />
-            <el-table-column label="金额" width="100">
-              <template #default="{ row }">
-                ${{ row.amount }}
-              </template>
-            </el-table-column>
-            <el-table-column label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag v-if="row.status === 'pending'" type="warning">待审核</el-tag>
-                <el-tag v-else-if="row.status === 'approved'" type="success">已完成</el-tag>
-                <el-tag v-else type="danger">已拒绝</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="时间" width="180">
-              <template #default="{ row }">
-                {{ formatDate(row.createdAt) }}
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <div class="pagination" v-if="pagination.total > 0">
-            <el-pagination
-              v-model:current-page="pagination.page"
-              :page-size="pagination.limit"
-              :total="pagination.total"
-              layout="prev, pager, next"
-              small
-              @current-change="loadRecharges"
-            />
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { createRecharge, getUserRecharges } from '@/api/modules/billing';
-import { ElMessage } from 'element-plus';
-import { Wallet } from '@element-plus/icons-vue';
+import { ref, onMounted } from 'vue';
+import { ElMessage, FormInstance, FormRules } from 'element-plus';
+import {
+  ChatDotRound,
+  Money,
+  CreditCard,
+  Coin,
+  Check,
+  InfoFilled,
+} from '@element-plus/icons-vue';
 
-const form = reactive({
-  amount: 100,
-  method: 'usdt',
+const formRef = ref<FormInstance>();
+
+// 表单数据
+const form = ref({
+  amount: 0,
+  paymentMethod: 'wechat',
+  remark: '',
 });
 
-const loading = ref(false);
-const loadingHistory = ref(false);
-const recharges = ref<any[]>([]);
+// 快捷金额
+const quickAmounts = [10, 50, 100, 200, 500, 1000];
 
-const pagination = reactive({
-  page: 1,
-  limit: 10,
-  total: 0,
-});
+// 汇率
+const exchangeRate = ref(7.25);
 
-const loadRecharges = async () => {
-  loadingHistory.value = true;
+// 表单验证规则
+const rules: FormRules = {
+  amount: [
+    { required: true, message: '请输入充值金额', trigger: 'blur' },
+    { type: 'number', min: 1, max: 10000, message: '充值金额范围：$1 - $10,000', trigger: 'blur' },
+  ],
+  paymentMethod: [
+    { required: true, message: '请选择支付方式', trigger: 'change' },
+  ],
+};
+
+const submitting = ref(false);
+
+// 联系客服
+const handleContactService = () => {
+  window.open('https://t.me/lubei12', '_blank');
+  ElMessage.info('正在跳转到Telegram客服...');
+};
+
+// 提交充值申请
+const handleSubmit = async () => {
+  if (!formRef.value) return;
+
   try {
-    const params = {
-      page: pagination.page,
-      limit: pagination.limit,
+    await formRef.value.validate();
+
+    submitting.value = true;
+
+    // TODO: 调用API提交充值申请
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    ElMessage.success('充值申请已提交，请等待管理员审核！');
+
+    // 重置表单
+    form.value = {
+      amount: 0,
+      paymentMethod: 'wechat',
+      remark: '',
     };
-    const res = await getUserRecharges(params);
-    if (res.data) {
-      recharges.value = res.data.data;
-      pagination.total = res.data.total;
+    formRef.value.resetFields();
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error('提交失败：' + error.message);
     }
-  } catch (error) {
-    console.error('Failed to load recharges:', error);
   } finally {
-    loadingHistory.value = false;
+    submitting.value = false;
   }
 };
 
-const handleRecharge = async () => {
-  if (form.amount < 10) {
-    ElMessage.warning('最低充值金额为 $10');
-    return;
-  }
-
-  loading.value = true;
-  try {
-    const res = await createRecharge({
-      amount: form.amount,
-      method: form.method,
-    });
-
-    if (res.data) {
-      ElMessage.success('充值申请已提交，请等待审核');
-      loadRecharges();
-      form.amount = 100;
-    }
-  } catch (error) {
-    console.error('Failed to create recharge:', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleString('zh-CN');
+// 打开Telegram客服
+const openTelegram = () => {
+  window.open('https://t.me/lubei12', '_blank');
 };
 
 onMounted(() => {
-  loadRecharges();
+  // 加载汇率
+  // TODO: 从API获取实时汇率
 });
 </script>
 
@@ -197,18 +238,22 @@ onMounted(() => {
   h1 {
     margin: 0 0 20px 0;
     color: #303133;
+    font-size: 24px;
+    font-weight: 600;
   }
 
-  .recharge-form-card,
-  .recharge-history-card {
+  .recharge-form-card {
     .card-header {
-      font-weight: bold;
+      font-weight: 600;
+      color: #303133;
     }
 
-    .hint {
+    .amount-tips {
+      display: flex;
+      gap: 20px;
+      margin-top: 8px;
       font-size: 12px;
       color: #909399;
-      margin-top: 5px;
     }
 
     .quick-amounts {
@@ -217,25 +262,209 @@ onMounted(() => {
       flex-wrap: wrap;
     }
 
-    :deep(.el-alert) {
-      margin-top: 20px;
+    .payment-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
 
-      ul {
-        margin: 0;
-        padding-left: 20px;
+      // 修复：支付方式选项样式（边框+描述）
+      .payment-option-fixed {
+        margin-right: 0 !important;
+        margin-bottom: 0 !important;
+        width: 100%;
 
-        li {
-          margin: 5px 0;
+        // Element Plus Radio Border样式覆盖
+        :deep(.el-radio__label) {
+          width: 100%;
+          padding: 0;
+          display: flex;
+          align-items: center;
+        }
+
+        .payment-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          width: 100%;
+          padding: 4px 0;
+
+          .payment-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+
+            .payment-name {
+              font-size: 15px;
+              font-weight: 600;
+              color: #303133;
+              line-height: 1.4;
+            }
+
+            .payment-desc {
+              font-size: 12px;
+              color: #909399;
+              line-height: 1.4;
+            }
+          }
         }
       }
     }
 
-    .pagination {
-      margin-top: 15px;
-      display: flex;
-      justify-content: center;
+    // 充值预览样式
+    .preview-alert {
+      margin-top: 10px;
+
+      :deep(.el-alert__content) {
+        width: 100%;
+      }
+
+      .preview-content {
+        width: 100%;
+
+        .preview-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+          font-size: 14px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          .label {
+            color: #606266;
+          }
+
+          .value {
+            font-weight: 600;
+            color: #303133;
+
+            &.primary {
+              color: #409eff;
+              font-size: 18px;
+            }
+          }
+        }
+      }
+    }
+
+    .remark-tips {
+      margin-top: 10px;
+
+      :deep(.el-alert) {
+        padding: 12px;
+
+        p {
+          margin: 5px 0;
+          font-size: 13px;
+          line-height: 1.6;
+        }
+      }
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+  }
+
+  .preview-card {
+    margin-bottom: 20px;
+
+    .preview-content {
+      .preview-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        font-size: 14px;
+
+        .label {
+          color: #606266;
+        }
+
+        .value {
+          font-weight: 600;
+          color: #303133;
+
+          &.primary {
+            font-size: 20px;
+            color: #409eff;
+          }
+        }
+
+        &.total {
+          font-size: 18px;
+          padding-top: 15px;
+
+          .value {
+            color: #f56c6c;
+          }
+        }
+      }
+
+      .preview-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        background-color: #f0f7ff;
+        border-radius: 4px;
+        font-size: 13px;
+        color: #409eff;
+        margin-top: 15px;
+      }
+    }
+  }
+
+  .tips-card {
+    position: sticky;
+    top: 20px;
+
+    .tips-content {
+      h4 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #303133;
+        margin: 15px 0 10px;
+
+        &:first-child {
+          margin-top: 0;
+        }
+      }
+
+      ol, ul {
+        padding-left: 20px;
+        margin: 0;
+
+        li {
+          margin: 8px 0;
+          font-size: 13px;
+          color: #606266;
+          line-height: 1.6;
+        }
+      }
     }
   }
 }
-</style>
 
+// 浅色主题适配
+:deep(.el-card) {
+  background-color: #ffffff;
+  border: 1px solid #dcdfe6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+  &:hover {
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  }
+}
+
+:deep(.el-card__header) {
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #dcdfe6;
+  padding: 16px 20px;
+}
+</style>

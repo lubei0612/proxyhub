@@ -9,9 +9,14 @@ async function bootstrap() {
   // 全局前缀
   app.setGlobalPrefix('api/v1');
 
-  // CORS
+  // CORS - 允许 localhost 和 127.0.0.1
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:8080',
+    origin: [
+      'http://localhost:8080',
+      'http://127.0.0.1:8080',
+      'http://localhost:8081',
+      'http://127.0.0.1:8081',
+    ],
     credentials: true,
   });
 

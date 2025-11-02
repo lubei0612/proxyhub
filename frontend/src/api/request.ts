@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus';
 
 // 创建axios实例
 const request: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: '/api/v1', // 硬编码相对路径，经过Vite代理
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

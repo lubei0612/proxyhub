@@ -58,7 +58,13 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+      JWT_ACCESS_TOKEN_EXPIRATION: ${JWT_ACCESS_EXPIRY:-2h}
+      JWT_REFRESH_TOKEN_EXPIRATION: ${JWT_REFRESH_EXPIRY:-7d}
       PORT: 3000
+      API_PREFIX: /api/v1
+      PROXY_985_API_KEY: ${PROXY_985_API_KEY}
+      PROXY_985_BASE_URL: ${PROXY_985_BASE_URL:-https://open-api.985proxy.com}
+      PROXY_985_ZONE: ${PROXY_985_ZONE}
     ports:
       - "3000:3000"
     depends_on:

@@ -61,65 +61,52 @@
       </el-col>
     </el-row>
 
-    <!-- 快速操作 -->
-    <el-row :gutter="20" class="quick-actions">
-      <el-col :span="24">
+    <!-- 第一行：条形图 + 饼图 -->
+    <el-row :gutter="20" class="chart-row">
+      <!-- 流量概况 - 条形图（竖向） -->
+      <el-col :span="12">
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>快速操作</span>
+              <span>网络使用流量概况 - 条形统计图</span>
+              <span class="header-note">（基于UTC时间）</span>
             </div>
           </template>
-          <div class="action-buttons">
-            <el-button type="primary" @click="$router.push('/proxy/static/buy')">
-              <el-icon><Plus /></el-icon>
-              购买静态IP
-            </el-button>
-            <el-button type="success" @click="$router.push('/wallet/recharge')">
-              <el-icon><Wallet /></el-icon>
-              充值余额
-            </el-button>
-            <el-button type="info" @click="$router.push('/proxy/static/manage')">
-              <el-icon><List /></el-icon>
-              管理代理
-            </el-button>
-            <el-button type="warning" @click="$router.push('/billing/orders')">
-              <el-icon><Document /></el-icon>
-              查看订单
-            </el-button>
+          <div class="chart-wrapper">
+            <v-chart :option="barChartOption" :autoresize="true" style="height: 350px" />
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 网络请求 - 饼图 -->
+      <el-col :span="12">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>网络请求分布</span>
+              <span class="header-note">（基于UTC时间）</span>
+            </div>
+          </template>
+          <div class="chart-wrapper">
+            <v-chart :option="pieChartOption" :autoresize="true" style="height: 350px" />
           </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 消费趋势图表 -->
+    <!-- 第二行：折线图（4条曲线） -->
     <el-row :gutter="20" class="chart-row">
       <el-col :span="24">
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
-              <span>最近7天消费趋势</span>
+              <span>使用流量概况 - 折线统计图</span>
+              <span class="header-note">（最近7天，基于UTC时间）</span>
             </div>
           </template>
-          <div class="chart-container" v-if="spendingTrend.length > 0">
-            <div class="simple-chart">
-              <div
-                v-for="(item, index) in spendingTrend"
-                :key="index"
-                class="chart-bar"
-              >
-                <div
-                  class="bar"
-                  :style="{ height: getBarHeight(item.amount) + '%' }"
-                ></div>
-                <div class="bar-label">
-                  <div class="amount">${{ item.amount }}</div>
-                  <div class="date">{{ formatDate(item.date) }}</div>
-                </div>
-              </div>
-            </div>
+          <div class="chart-wrapper">
+            <v-chart :option="lineChartOption" :autoresize="true" style="height: 400px" />
           </div>
-          <el-empty v-else description="暂无数据" />
         </el-card>
       </el-col>
     </el-row>
@@ -127,21 +114,221 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { getDashboardOverview, getSpendingTrend } from '@/api/modules/dashboard';
+import { ref, onMounted, computed } from 'vue';
+import { getDashboardOverview } from '@/api/modules/dashboard';
+import VChart from 'vue-echarts';
+import { use } from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import { BarChart, PieChart, LineChart } from 'echarts/charts';
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+} from 'echarts/components';
 import {
   Connection,
   CircleCheckFilled,
   ShoppingCart,
   Money,
-  Plus,
-  Wallet,
-  List,
-  Document,
 } from '@element-plus/icons-vue';
 
+// 注册ECharts组件
+use([
+  CanvasRenderer,
+  BarChart,
+  PieChart,
+  LineChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent,
+]);
+
 const overview = ref<any>({});
-const spendingTrend = ref<any[]>([]);
+const usageData = ref<any>({
+  dc: [],
+  mobile: [],
+  res_rotating: [],
+  res_static: [],
+});
+
+// 条形图配置（竖向）
+const barChartOption = computed(() => ({
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: { type: 'shadow' },
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    containLabel: true,
+  },
+  xAxis: {
+    type: 'category',
+    data: ['数据中心', '移动代理', '动态住宅', '双ISP静态'],
+    axisLabel: {
+      color: '#606266',
+    },
+  },
+  yAxis: {
+    type: 'value',
+    name: '流量 (GB)',
+    axisLabel: {
+      color: '#606266',
+    },
+  },
+  series: [
+    {
+      name: '流量使用',
+      type: 'bar',
+      data: [
+        { value: 12.5, itemStyle: { color: '#f56c6c' } },   // dc - 红色
+        { value: 8.3, itemStyle: { color: '#67c23a' } },    // mobile - 绿色
+        { value: 15.7, itemStyle: { color: '#9b59b6' } },   // res_rotating - 紫色
+        { value: 10.2, itemStyle: { color: '#409eff' } },   // res_static - 蓝色
+      ],
+      barWidth: '50%',
+    },
+  ],
+}));
+
+// 饼图配置
+const pieChartOption = computed(() => ({
+  tooltip: {
+    trigger: 'item',
+    formatter: '{b}: {c} ({d}%)',
+  },
+  legend: {
+    orient: 'vertical',
+    right: '10%',
+    top: 'center',
+    textStyle: {
+      color: '#606266',
+    },
+  },
+  series: [
+    {
+      name: '网络请求',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      center: ['40%', '50%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2,
+      },
+      label: {
+        show: false,
+        position: 'center',
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 20,
+          fontWeight: 'bold',
+        },
+      },
+      labelLine: {
+        show: false,
+      },
+      data: [
+        { value: 3500, name: 'HTTP请求', itemStyle: { color: '#409eff' } },
+        { value: 2800, name: 'HTTPS请求', itemStyle: { color: '#67c23a' } },
+        { value: 1200, name: 'WebSocket', itemStyle: { color: '#e6a23c' } },
+        { value: 800, name: '其他', itemStyle: { color: '#909399' } },
+      ],
+    },
+  ],
+}));
+
+// 折线图配置（4条曲线）
+const lineChartOption = computed(() => {
+  const dates = ['10-27', '10-28', '10-29', '10-30', '10-31', '11-01', '11-02'];
+  
+  return {
+    tooltip: {
+      trigger: 'axis',
+    },
+    legend: {
+      data: ['数据中心 (DC)', '移动代理 (Mobile)', '动态住宅 (Res Rotating)', '双ISP静态 (Res Static)'],
+      textStyle: {
+        color: '#606266',
+      },
+      top: 10,
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '60px',
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates,
+      axisLabel: {
+        color: '#606266',
+      },
+    },
+    yAxis: {
+      type: 'value',
+      name: '流量 (GB)',
+      axisLabel: {
+        color: '#606266',
+      },
+    },
+    series: [
+      {
+        name: '数据中心 (DC)',
+        type: 'line',
+        smooth: true,
+        data: [0.5, 0.8, 0.3, 0.6, 0.4, 0.7, 0.5],
+        itemStyle: { color: '#f56c6c' },
+        areaStyle: {
+          opacity: 0.1,
+          color: '#f56c6c',
+        },
+      },
+      {
+        name: '移动代理 (Mobile)',
+        type: 'line',
+        smooth: true,
+        data: [0.3, 0.5, 0.4, 0.6, 0.5, 0.8, 0.6],
+        itemStyle: { color: '#67c23a' },
+        areaStyle: {
+          opacity: 0.1,
+          color: '#67c23a',
+        },
+      },
+      {
+        name: '动态住宅 (Res Rotating)',
+        type: 'line',
+        smooth: true,
+        data: [0.7, 0.9, 0.6, 0.8, 0.7, 1.0, 0.8],
+        itemStyle: { color: '#9b59b6' },
+        areaStyle: {
+          opacity: 0.1,
+          color: '#9b59b6',
+        },
+      },
+      {
+        name: '双ISP静态 (Res Static)',
+        type: 'line',
+        smooth: true,
+        data: [0.4, 0.6, 0.5, 0.7, 0.6, 0.9, 0.7],
+        itemStyle: { color: '#409eff' },
+        areaStyle: {
+          opacity: 0.1,
+          color: '#409eff',
+        },
+      },
+    ],
+  };
+});
 
 const loadOverview = async () => {
   try {
@@ -154,30 +341,8 @@ const loadOverview = async () => {
   }
 };
 
-const loadSpendingTrend = async () => {
-  try {
-    const res = await getSpendingTrend();
-    if (res.data) {
-      spendingTrend.value = res.data;
-    }
-  } catch (error) {
-    console.error('Failed to load spending trend:', error);
-  }
-};
-
-const getBarHeight = (amount: string) => {
-  const maxAmount = Math.max(...spendingTrend.value.map((item) => parseFloat(item.amount)));
-  return maxAmount > 0 ? (parseFloat(amount) / maxAmount) * 100 : 0;
-};
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return `${date.getMonth() + 1}/${date.getDate()}`;
-};
-
 onMounted(() => {
   loadOverview();
-  loadSpendingTrend();
 });
 </script>
 
@@ -186,6 +351,8 @@ onMounted(() => {
   h1 {
     margin: 0 0 20px 0;
     color: #303133;
+    font-size: 24px;
+    font-weight: 600;
   }
 
   .stats-row {
@@ -226,63 +393,48 @@ onMounted(() => {
     }
   }
 
-  .quick-actions {
-    margin-bottom: 20px;
-
-    .action-buttons {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-  }
-
   .chart-row {
     margin-bottom: 20px;
   }
 
-  .chart-container {
-    padding: 20px 0;
-  }
-
-  .simple-chart {
+  .card-header {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-around;
-    height: 200px;
-    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    color: #303133;
 
-    .chart-bar {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-
-      .bar {
-        width: 100%;
-        background: linear-gradient(to top, #409eff, #66b1ff);
-        border-radius: 4px 4px 0 0;
-        min-height: 5px;
-        transition: height 0.3s;
-      }
-
-      .bar-label {
-        margin-top: 10px;
-        text-align: center;
-
-        .amount {
-          font-size: 14px;
-          font-weight: bold;
-          color: #303133;
-        }
-
-        .date {
-          font-size: 12px;
-          color: #909399;
-          margin-top: 5px;
-        }
-      }
+    .header-note {
+      font-size: 12px;
+      color: #909399;
+      font-weight: normal;
     }
   }
+
+  .chart-wrapper {
+    padding: 10px;
+    min-height: 350px;
+  }
+}
+
+// 浅色主题适配
+:deep(.el-card) {
+  background-color: #ffffff;
+  border: 1px solid #dcdfe6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  
+  &:hover {
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  }
+}
+
+:deep(.el-card__header) {
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #dcdfe6;
+  padding: 16px 20px;
+}
+
+:deep(.el-card__body) {
+  padding: 20px;
 }
 </style>

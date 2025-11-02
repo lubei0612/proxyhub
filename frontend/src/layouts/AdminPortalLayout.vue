@@ -35,6 +35,10 @@
           <el-icon><Setting /></el-icon>
           <template #title>系统设置</template>
         </el-menu-item>
+        <el-menu-item index="/admin/price-overrides">
+          <el-icon><Money /></el-icon>
+          <template #title>价格覆盖管理</template>
+        </el-menu-item>
       </el-menu>
 
       <!-- 返回用户端按钮 -->
@@ -91,7 +95,9 @@ const isCollapsed = ref(false);
 .admin-layout {
   display: flex;
   min-height: 100vh;
+  max-height: 100vh;
   background: #f3f4f6;
+  overflow: hidden;
 }
 
 .admin-sidebar {
@@ -104,6 +110,7 @@ const isCollapsed = ref(false);
   transition: width 0.3s;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 
   &.collapsed {
     width: 64px;
@@ -181,6 +188,8 @@ const isCollapsed = ref(false);
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+  overflow-x: hidden;
+  height: 0; // 关键：配合flex布局，确保overflow生效
 }
 </style>
 

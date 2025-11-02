@@ -18,9 +18,12 @@ NODE_ENV=production
 PORT=3000
 API_PREFIX=/api/v1
 
-PROXY_API_BASE_URL=https://api.985proxy.com
-PROXY_API_KEY=your-985proxy-api-key
+# 985Proxy API Configuration
+PROXY_985_API_KEY=ne_hj06qomI-bmVfaGowNnFvbUk0YzIzMTc2MTQ1Nzk1Mw==
+PROXY_985_BASE_URL=https://open-api.985proxy.com
+PROXY_985_ZONE=your_zone_id_here
 
+# System Configuration
 USD_TO_CNY_RATE=7.2
 TELEGRAM_LINK=https://t.me/lubei12
 

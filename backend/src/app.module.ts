@@ -10,6 +10,9 @@ import { BillingModule } from './modules/billing/billing.module';
 import { OrderModule } from './modules/order/order.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { PricingModule } from './modules/pricing/pricing.module';
+import { Proxy985Module } from './modules/proxy985/proxy985.module';
+import { EventLogModule } from './modules/event-log/event-log.module';
 
 @Module({
   imports: [
@@ -51,6 +54,9 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     OrderModule,
     AdminModule,
     DashboardModule,
+    PricingModule,
+    Proxy985Module,
+    EventLogModule,
     // TODO: 其他模块将在后续添加
     // DynamicProxyModule,
   ],

@@ -276,6 +276,15 @@ const routes: RouteRecordRaw[] = [
           icon: 'Setting',
         },
       },
+      {
+        path: 'price-overrides',
+        name: 'AdminPriceOverrides',
+        component: () => import('@/views/admin/PriceOverrides.vue'),
+        meta: {
+          title: '价格覆盖管理',
+          icon: 'Money',
+        },
+      },
     ],
   },
 

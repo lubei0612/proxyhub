@@ -1,27 +1,28 @@
-// ProxyHub 深色主题配色变量
+// ProxyHub 浅色主题配色变量
 // 基于985Proxy风格设计
 
 // ============================================================
-// 背景颜色
+// 背景颜色（浅色主题）
 // ============================================================
-$dark-bg-primary: #1a1a1a;        // 主背景色
-$dark-bg-secondary: #2a2a2a;      // 次要背景色
-$dark-bg-card: #2d3748;            // 卡片背景色
-$dark-bg-hover: #3d4758;           // 悬停背景色
+$bg-primary: #f5f7fa;              // 主背景色（浅灰）
+$bg-secondary: #f0f2f5;            // 次要背景色
+$bg-card: #ffffff;                 // 卡片背景色（白色）
+$bg-hover: #f5f7fa;                // 悬停背景色
 
 // ============================================================
 // 边框颜色
 // ============================================================
-$dark-border: #4a5568;             // 主边框色
-$dark-border-light: #718096;       // 浅边框色
+$border-color: #dcdfe6;            // 主边框色
+$border-light: #e4e7ed;            // 浅边框色
+$border-lighter: #ebeef5;          // 更浅边框色
 
 // ============================================================
 // 文字颜色
 // ============================================================
-$dark-text-primary: #ffffff;       // 主文字色
-$dark-text-secondary: #a0aec0;     // 次要文字色
-$dark-text-muted: #718096;         // 弱文字色
-$dark-text-disabled: #4a5568;      // 禁用文字色
+$text-primary: #303133;            // 主文字色（深灰）
+$text-regular: #606266;            // 常规文字色
+$text-secondary: #909399;          // 次要文字色
+$text-placeholder: #c0c4cc;        // 占位文字色
 
 // ============================================================
 // 主题色
@@ -30,17 +31,25 @@ $primary-color: #409eff;           // 主色（蓝色）
 $primary-light: #66b1ff;           // 浅主色
 $primary-dark: #3a8ee6;            // 深主色
 
-$success-color: #00e676;           // 成功色（绿色）
-$success-light: #69f0ae;
+$success-color: #67c23a;           // 成功色（绿色）
+$success-light: #85ce61;
 
-$warning-color: #ff9800;           // 警告色（橙色）
-$warning-light: #ffb74d;
+$warning-color: #e6a23c;           // 警告色（橙色）
+$warning-light: #ebb563;
 
-$danger-color: #f44336;            // 危险色（红色）
-$danger-light: #ff6b6b;
+$danger-color: #f56c6c;            // 危险色（红色）
+$danger-light: #f78989;
 
-$info-color: #448aff;              // 信息色（蓝色）
-$info-light: #82b1ff;
+$info-color: #909399;              // 信息色（灰色）
+$info-light: #b1b3b8;
+
+// ============================================================
+// 图表配色（4条曲线）
+// ============================================================
+$chart-dc: #f56c6c;                // 数据中心（红色）
+$chart-mobile: #67c23a;            // 移动代理（绿色）
+$chart-rotating: #9b59b6;          // 动态住宅（紫色）
+$chart-static: #409eff;            // 双ISP静态（蓝色）
 
 // ============================================================
 // 图表渐变色
@@ -52,12 +61,12 @@ $gradient-pink: linear-gradient(135deg, #ff4081 0%, #ff80ab 100%);
 $gradient-orange: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
 
 // ============================================================
-// 阴影
+// 阴影（浅色主题）
 // ============================================================
-$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-$shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-$shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 4px 20px 0 rgba(0, 0, 0, 0.15);
+$shadow-xl: 0 8px 30px 0 rgba(0, 0, 0, 0.2);
 
 // ============================================================
 // 边框圆角
@@ -105,4 +114,5 @@ $z-index-modal-backdrop: 1040;
 $z-index-modal: 1050;
 $z-index-popover: 1060;
 $z-index-tooltip: 1070;
+
 
