@@ -11,7 +11,7 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || 'http://localhost:8080',
     credentials: true,
   });
 
@@ -28,16 +28,37 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('ProxyHub API')
     .setDescription('ProxyHub代理IP管理平台API文档')
-    .setVersion('1.0')
-    .addBearerAuth()
+    .setVersion('1.0.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'access-token',
+    )
+    .addTag('Auth', '认证相关接口')
+    .addTag('User', '用户相关接口')
+    .addTag('Proxy', '代理相关接口')
+    .addTag('Billing', '账单相关接口')
+    .addTag('Order', '订单相关接口')
+    .addTag('Admin', '管理员相关接口')
+    .addTag('Dashboard', '仪表盘相关接口')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('api', app, document);
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`🚀 Application is running on: http://localhost:${port}/api/v1`);
-  console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
+  console.log(`
+========================================
+  ProxyHub Backend Started!
+========================================
+  API Server: http://localhost:${port}/api/v1
+  API Docs:   http://localhost:${port}/api
+  Environment: ${process.env.NODE_ENV || 'development'}
+========================================
+  `);
 }
 bootstrap();
 

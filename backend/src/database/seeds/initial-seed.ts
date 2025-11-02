@@ -15,42 +15,44 @@ async function runSeed() {
 
     // 创建管理员用户
     const adminExists = await userRepository.findOne({
-      where: { email: 'admin@proxy.com' },
+      where: { email: 'admin@example.com' },
     });
 
     if (!adminExists) {
-      const hashedPassword = await bcrypt.hash('admin123456', 10);
+      const hashedPassword = await bcrypt.hash('admin123', 10);
       const admin = userRepository.create({
-        email: 'admin@proxy.com',
+        email: 'admin@example.com',
         password: hashedPassword,
         nickname: '系统管理员',
         role: 'admin',
-        balance: 0,
+        balance: 10000, // 赠送10000美元测试余额
+        gift_balance: 0,
         status: 'active',
       });
       await userRepository.save(admin);
-      console.log('✅ 管理员用户创建成功：admin@proxy.com / admin123456');
+      console.log('✅ 管理员用户创建成功：admin@example.com / admin123（余额：$10000）');
     } else {
       console.log('ℹ️  管理员用户已存在');
     }
 
     // 创建测试用户
     const testUserExists = await userRepository.findOne({
-      where: { email: 'test@test.com' },
+      where: { email: 'user@example.com' },
     });
 
     if (!testUserExists) {
-      const hashedPassword = await bcrypt.hash('test123456', 10);
+      const hashedPassword = await bcrypt.hash('password123', 10);
       const testUser = userRepository.create({
-        email: 'test@test.com',
+        email: 'user@example.com',
         password: hashedPassword,
         nickname: '测试用户',
         role: 'user',
         balance: 1000, // 赠送1000美元测试余额
+        gift_balance: 0,
         status: 'active',
       });
       await userRepository.save(testUser);
-      console.log('✅ 测试用户创建成功：test@test.com / test123456（余额：$1000）');
+      console.log('✅ 测试用户创建成功：user@example.com / password123（余额：$1000）');
     } else {
       console.log('ℹ️  测试用户已存在');
     }
@@ -96,8 +98,8 @@ async function runSeed() {
 
     console.log('\n🎉 种子数据初始化完成！');
     console.log('\n📝 登录信息：');
-    console.log('管理员：admin@proxy.com / admin123456');
-    console.log('测试用户：test@test.com / test123456（余额：$1000）\n');
+    console.log('管理员：admin@example.com / admin123（余额：$10000）');
+    console.log('普通用户：user@example.com / password123（余额：$1000）\n');
 
     await dataSource.destroy();
   } catch (error) {
