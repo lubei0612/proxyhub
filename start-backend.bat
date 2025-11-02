@@ -1,25 +1,16 @@
 @echo off
+chcp 65001 >nul
 echo ========================================
-echo [2/3] 启动后端服务 (NestJS)
+echo Starting Backend Service (NestJS)
 echo ========================================
-echo.
-
 cd backend
-
-echo 🔨 使用 npm.cmd 启动开发服务器...
-echo 注意：此窗口将保持打开并显示后端日志
+start "ProxyHub Backend" cmd /k "npm.cmd run start:dev"
 echo.
-
-REM 关键：使用 npm.cmd 而不是 npm 来避免PowerShell执行策略问题
-npm.cmd run start:dev
-
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo ❌ 后端启动失败！
-    echo 请检查上方错误信息
-    cd ..
-    pause
-    exit /b 1
-)
-
+echo Waiting for backend to start...
+timeout /t 30 /nobreak > NUL
+echo.
+echo Backend started!
+echo Backend: http://localhost:3000
+echo.
 cd ..
+exit /b 0

@@ -1,26 +1,15 @@
 @echo off
+chcp 65001 >nul
 echo ========================================
-echo [1/3] 启动数据库服务 (PostgreSQL + Redis)
+echo Starting Database Services
 echo ========================================
+docker-compose up -d
 echo.
-
-REM 启动Docker服务
-docker-compose -f docker-compose.dev.yml up -d
-
-if %ERRORLEVEL% NEQ 0 (
-    echo ❌ Docker启动失败！
-    echo 请确保Docker Desktop已启动
-    pause
-    exit /b 1
-)
-
-echo.
-echo ⏳ 等待数据库就绪 (15秒)...
+echo Waiting for database to be ready...
 timeout /t 15 /nobreak > NUL
-
 echo.
-echo ✅ 数据库服务已启动！
+echo Database services started!
 echo PostgreSQL: localhost:5432
 echo Redis: localhost:6379
 echo.
-pause
+exit /b 0

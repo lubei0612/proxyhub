@@ -1,25 +1,19 @@
 @echo off
+chcp 65001 >nul
 echo ========================================
-echo [3/3] 启动前端服务 (Vue 3 + Vite)
+echo Starting Frontend Service (Vue 3)
 echo ========================================
-echo.
-
 cd frontend
-
-echo 🔨 使用 npm.cmd 启动开发服务器...
-echo 注意：此窗口将保持打开并显示前端日志
+start "ProxyHub Frontend" cmd /k "npm.cmd run dev"
 echo.
-
-REM 关键：使用 npm.cmd 而不是 npm 来避免PowerShell执行策略问题
-npm.cmd run dev
-
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo ❌ 前端启动失败！
-    echo 请检查上方错误信息
-    cd ..
-    pause
-    exit /b 1
-)
-
+echo Waiting for frontend to start...
+timeout /t 20 /nobreak > NUL
+echo.
+echo Frontend started!
+echo Frontend: http://localhost:8080
+echo.
+echo Opening browser...
+start http://localhost:8080
+echo.
 cd ..
+exit /b 0
