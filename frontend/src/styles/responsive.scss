@@ -1,0 +1,361 @@
+/**
+ * 移动端响应式样式工具
+ * 断点定义:
+ * - xs: < 576px (手机)
+ * - sm: 576px - 768px (小屏手机)
+ * - md: 768px - 992px (平板)
+ * - lg: 992px - 1200px (小屏电脑)
+ * - xl: > 1200px (大屏电脑)
+ */
+
+// ==================== 断点变量 ====================
+$breakpoint-xs: 576px;
+$breakpoint-sm: 768px;
+$breakpoint-md: 992px;
+$breakpoint-lg: 1200px;
+
+// ==================== Mixins ====================
+
+// 手机端 (< 576px)
+@mixin xs {
+  @media (max-width: $breakpoint-xs) {
+    @content;
+  }
+}
+
+// 小屏手机 (< 768px)
+@mixin sm {
+  @media (max-width: $breakpoint-sm) {
+    @content;
+  }
+}
+
+// 平板 (< 992px)
+@mixin md {
+  @media (max-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+// 小屏电脑 (< 1200px)
+@mixin lg {
+  @media (max-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+// ==================== 全局响应式样式 ====================
+
+// 移动端隐藏
+.mobile-hidden {
+  @include sm {
+    display: none !important;
+  }
+}
+
+// 桌面端隐藏
+.desktop-hidden {
+  display: none !important;
+  
+  @include sm {
+    display: block !important;
+  }
+}
+
+// 响应式文字大小
+.text-responsive {
+  font-size: 16px;
+  
+  @include sm {
+    font-size: 14px;
+  }
+  
+  @include xs {
+    font-size: 12px;
+  }
+}
+
+// 响应式容器
+.container-responsive {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  
+  @include sm {
+    padding: 0 15px;
+  }
+  
+  @include xs {
+    padding: 0 10px;
+  }
+}
+
+// 响应式卡片
+.card-responsive {
+  padding: 24px;
+  
+  @include sm {
+    padding: 16px;
+  }
+  
+  @include xs {
+    padding: 12px;
+  }
+}
+
+// 响应式表格
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  @include sm {
+    font-size: 12px;
+    
+    .el-table__header th,
+    .el-table__body td {
+      padding: 8px 0;
+    }
+  }
+}
+
+// 响应式Grid布局
+.grid-responsive {
+  display: grid;
+  gap: 20px;
+  
+  // 桌面：4列
+  grid-template-columns: repeat(4, 1fr);
+  
+  // 小屏电脑：3列
+  @include lg {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  // 平板：2列
+  @include md {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  // 手机：1列
+  @include sm {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
+
+// 响应式Flex布局
+.flex-responsive {
+  display: flex;
+  gap: 20px;
+  
+  @include sm {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+
+// 响应式按钮组
+.button-group-responsive {
+  display: flex;
+  gap: 10px;
+  
+  @include sm {
+    flex-direction: column;
+    
+    .el-button {
+      width: 100%;
+    }
+  }
+}
+
+// 响应式表单
+.form-responsive {
+  .el-form-item {
+    margin-bottom: 18px;
+  }
+  
+  @include sm {
+    .el-form-item__label {
+      text-align: left;
+      width: 100% !important;
+      margin-bottom: 5px;
+    }
+    
+    .el-form-item__content {
+      margin-left: 0 !important;
+    }
+  }
+}
+
+// 响应式统计卡片
+.stat-card-responsive {
+  padding: 20px;
+  
+  @include sm {
+    padding: 15px;
+    
+    .stat-value {
+      font-size: 24px !important;
+    }
+    
+    .stat-label {
+      font-size: 12px !important;
+    }
+  }
+}
+
+// 响应式筛选区域
+.filter-section-responsive {
+  .el-row {
+    @include sm {
+      .el-col {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 10px;
+      }
+    }
+  }
+}
+
+// 响应式分页
+.pagination-responsive {
+  @include sm {
+    .el-pagination {
+      justify-content: center;
+      
+      // 简化移动端分页
+      .el-pagination__sizes,
+      .el-pagination__jump {
+        display: none;
+      }
+    }
+  }
+}
+
+// 响应式Dialog
+.dialog-responsive {
+  @include sm {
+    .el-dialog {
+      width: 95% !important;
+      margin: 20px auto !important;
+    }
+  }
+}
+
+// 响应式Drawer
+.drawer-responsive {
+  @include sm {
+    .el-drawer {
+      width: 85% !important;
+    }
+  }
+}
+
+// 响应式Header
+.header-responsive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  
+  @include sm {
+    padding: 0 15px;
+    
+    .header-left,
+    .header-right {
+      gap: 10px;
+    }
+    
+    .balance {
+      display: none;
+    }
+  }
+  
+  @include xs {
+    .welcome {
+      display: none;
+    }
+  }
+}
+
+// 响应式Sidebar
+.sidebar-responsive {
+  @include md {
+    width: 64px !important;
+    
+    .el-menu {
+      :deep(.el-menu-item),
+      :deep(.el-sub-menu__title) {
+        padding: 0 20px !important;
+      }
+      
+      :deep(span) {
+        display: none;
+      }
+    }
+  }
+  
+  @include sm {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    
+    &.show {
+      transform: translateX(0);
+    }
+  }
+}
+
+// 响应式主内容区
+.main-content-responsive {
+  padding: 24px;
+  
+  @include sm {
+    padding: 15px;
+  }
+  
+  @include xs {
+    padding: 10px;
+  }
+}
+
+// 移动端遮罩层
+.mobile-mask {
+  display: none;
+  
+  @include sm {
+    &.show {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+  }
+}
+
+// 汉堡菜单按钮
+.hamburger-menu {
+  display: none;
+  
+  @include sm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    
+    .el-icon {
+      font-size: 24px;
+    }
+  }
+}
+

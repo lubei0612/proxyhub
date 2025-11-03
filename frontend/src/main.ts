@@ -10,6 +10,7 @@ import i18n from './locales';
 // 导入浅色主题样式
 import './styles/variables.scss';
 import './assets/styles/global.scss';
+import './styles/responsive.scss';
 
 // 导入flag-icons国旗图标CSS
 import 'flag-icons/css/flag-icons.min.css';
