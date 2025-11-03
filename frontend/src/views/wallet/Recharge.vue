@@ -120,12 +120,28 @@
               />
             </el-form-item>
 
-            <!-- 联系客服 -->
-            <el-form-item>
-              <el-button type="primary" link @click="openTelegram">
-                <el-icon><ChatDotRound /></el-icon>
-                联系客服：@lubei12
-              </el-button>
+            <!-- 联系客服（卡片样式，双客服） -->
+            <el-form-item label="联系客服">
+              <el-alert type="info" :closable="false" class="customer-service-alert">
+                <template #default>
+                  <div class="service-content">
+                    <div class="service-header">
+                      <el-icon :size="20"><Service /></el-icon>
+                      <span>需要帮助？联系我们的客服团队</span>
+                    </div>
+                    <div class="service-buttons">
+                      <el-button type="primary" @click="openTelegram('lubei12')">
+                        <el-icon><ChatDotRound /></el-icon>
+                        客服1: @lubei12
+                      </el-button>
+                      <el-button type="success" @click="openTelegram('proxyhub_support')">
+                        <el-icon><ChatDotRound /></el-icon>
+                        客服2: @proxyhub_support
+                      </el-button>
+                    </div>
+                  </div>
+                </template>
+              </el-alert>
             </el-form-item>
 
             <!-- 提交按钮 -->
@@ -156,6 +172,7 @@ import {
   Coin,
   Check,
   InfoFilled,
+  Service,
 } from '@element-plus/icons-vue';
 
 const formRef = ref<FormInstance>();
@@ -223,8 +240,9 @@ const handleSubmit = async () => {
 };
 
 // 打开Telegram客服
-const openTelegram = () => {
-  window.open('https://t.me/lubei12', '_blank');
+const openTelegram = (username: string = 'lubei12') => {
+  window.open(`https://t.me/${username}`, '_blank');
+  ElMessage.info(`正在打开Telegram联系 @${username}...`);
 };
 
 onMounted(() => {
@@ -490,5 +508,37 @@ onMounted(() => {
   background-color: #f5f7fa;
   border-bottom: 1px solid #dcdfe6;
   padding: 16px 20px;
+}
+
+// 客服联系卡片样式
+.customer-service-alert {
+  border-radius: 8px;
+  
+  :deep(.el-alert__content) {
+    width: 100%;
+  }
+
+  .service-content {
+    .service-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--el-text-color-primary);
+      margin-bottom: 12px;
+    }
+
+    .service-buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+
+      .el-button {
+        flex: 1;
+        min-width: 180px;
+      }
+    }
+  }
 }
 </style>

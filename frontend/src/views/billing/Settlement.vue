@@ -243,7 +243,8 @@ const loadData = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const mockData = [
+    // 完整的Mock数据（包含所有数据用于筛选）
+    const allMockData = [
       {
         id: 1,
         settlementId: 'STL202511',
@@ -295,10 +296,35 @@ const loadData = async () => {
       },
     ];
 
-    settlementList.value = mockData;
-    pagination.value.total = mockData.length;
+    // 应用筛选条件（前端筛选Mock数据）
+    let filteredData = [...allMockData];
+
+    // 按状态筛选
+    if (filters.value.status) {
+      filteredData = filteredData.filter((item) => item.status === filters.value.status);
+    }
+
+    // 按日期范围筛选（筛选结算周期）
+    if (filters.value.dateRange && filters.value.dateRange.length === 2) {
+      const [startDate, endDate] = filters.value.dateRange;
+      filteredData = filteredData.filter((item) => {
+        const itemStart = dayjs(item.startDate);
+        const filterStart = dayjs(startDate);
+        const filterEnd = dayjs(endDate);
+        return itemStart.isBetween(filterStart, filterEnd, null, '[]');
+      });
+    }
+
+    // 应用分页
+    const start = (pagination.value.page - 1) * pagination.value.pageSize;
+    const end = start + pagination.value.pageSize;
+    settlementList.value = filteredData.slice(start, end);
+    pagination.value.total = filteredData.length;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + error.message);
+    console.error('加载结算记录失败:', error);
+    ElMessage.error('加载失败：' + (error.message || '请稍后重试'));
+    settlementList.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }
