@@ -1,87 +1,231 @@
 <template>
-  <div class="price-overrides-container">
+  <div class="price-override-container">
     <h1>价格覆盖管理</h1>
 
-    <el-card shadow="hover" class="overrides-card">
+    <el-card shadow="hover" class="price-card">
       <template #header>
         <div class="card-header">
-          <span>国家/城市级别价格设置</span>
-          <el-button type="primary" @click="openCreateDialog">
+          <span>自定义价格配置</span>
+          <el-button type="primary" @click="showAddDialog">
             <el-icon><Plus /></el-icon>
             新增价格覆盖
           </el-button>
         </div>
       </template>
 
-      <!-- 筛选 -->
-      <div class="filter-section">
-        <el-row :gutter="15">
+      <!-- 产品卡片展示 -->
+      <div class="product-cards">
+        <el-row :gutter="20">
+          <!-- 韩国普通IP -->
           <el-col :span="6">
-            <el-select v-model="filters.productType" placeholder="产品类型" clearable @change="loadData">
-              <el-option label="全部" value="" />
-              <el-option label="普通IP" value="static_shared" />
-              <el-option label="原生IP" value="static_premium" />
-            </el-select>
+            <div class="product-card">
+              <div class="product-header">
+                <img src="/flags/1x1/kr.svg" class="flag-large" />
+                <div class="product-title">
+                  <h3>韩国</h3>
+                  <span class="product-type">普通IP</span>
+                </div>
+              </div>
+              <div class="product-price">
+                <div class="price-label">30天价格</div>
+                <div class="price-value">
+                  $<input
+                    type="number"
+                    v-model.number="prices.korea.shared"
+                    @blur="updatePrice('korea', 'shared')"
+                    class="price-input"
+                  />
+                </div>
+              </div>
+              <el-button type="primary" size="small" @click="resetPrice('korea', 'shared')">
+                重置为默认
+              </el-button>
+            </div>
           </el-col>
+
+          <!-- 韩国原生IP -->
           <el-col :span="6">
-            <el-button type="primary" @click="loadData">
-              <el-icon><Search /></el-icon>
-              搜索
-            </el-button>
-            <el-button @click="resetFilters">
-              <el-icon><Refresh /></el-icon>
-              重置
-            </el-button>
+            <div class="product-card">
+              <div class="product-header">
+                <img src="/flags/1x1/kr.svg" class="flag-large" />
+                <div class="product-title">
+                  <h3>韩国</h3>
+                  <span class="product-type native">原生IP</span>
+                </div>
+              </div>
+              <div class="product-price">
+                <div class="price-label">30天价格</div>
+                <div class="price-value">
+                  $<input
+                    type="number"
+                    v-model.number="prices.korea.native"
+                    @blur="updatePrice('korea', 'native')"
+                    class="price-input"
+                  />
+                </div>
+              </div>
+              <el-button type="primary" size="small" @click="resetPrice('korea', 'native')">
+                重置为默认
+              </el-button>
+            </div>
+          </el-col>
+
+          <!-- 日本普通IP -->
+          <el-col :span="6">
+            <div class="product-card">
+              <div class="product-header">
+                <img src="/flags/1x1/jp.svg" class="flag-large" />
+                <div class="product-title">
+                  <h3>日本</h3>
+                  <span class="product-type">普通IP</span>
+                </div>
+              </div>
+              <div class="product-price">
+                <div class="price-label">30天价格</div>
+                <div class="price-value">
+                  $<input
+                    type="number"
+                    v-model.number="prices.japan.shared"
+                    @blur="updatePrice('japan', 'shared')"
+                    class="price-input"
+                  />
+                </div>
+              </div>
+              <el-button type="primary" size="small" @click="resetPrice('japan', 'shared')">
+                重置为默认
+              </el-button>
+            </div>
+          </el-col>
+
+          <!-- 日本原生IP -->
+          <el-col :span="6">
+            <div class="product-card">
+              <div class="product-header">
+                <img src="/flags/1x1/jp.svg" class="flag-large" />
+                <div class="product-title">
+                  <h3>日本</h3>
+                  <span class="product-type native">原生IP</span>
+                </div>
+              </div>
+              <div class="product-price">
+                <div class="price-label">30天价格</div>
+                <div class="price-value">
+                  $<input
+                    type="number"
+                    v-model.number="prices.japan.native"
+                    @blur="updatePrice('japan', 'native')"
+                    class="price-input"
+                  />
+                </div>
+              </div>
+              <el-button type="primary" size="small" @click="resetPrice('japan', 'native')">
+                重置为默认
+              </el-button>
+            </div>
+          </el-col>
+
+          <!-- 新加坡普通IP -->
+          <el-col :span="6">
+            <div class="product-card">
+              <div class="product-header">
+                <img src="/flags/1x1/sg.svg" class="flag-large" />
+                <div class="product-title">
+                  <h3>新加坡</h3>
+                  <span class="product-type">普通IP</span>
+                </div>
+              </div>
+              <div class="product-price">
+                <div class="price-label">30天价格</div>
+                <div class="price-value">
+                  $<input
+                    type="number"
+                    v-model.number="prices.singapore.shared"
+                    @blur="updatePrice('singapore', 'shared')"
+                    class="price-input"
+                  />
+                </div>
+              </div>
+              <el-button type="primary" size="small" @click="resetPrice('singapore', 'shared')">
+                重置为默认
+              </el-button>
+            </div>
+          </el-col>
+
+          <!-- 新加坡原生IP -->
+          <el-col :span="6">
+            <div class="product-card">
+              <div class="product-header">
+                <img src="/flags/1x1/sg.svg" class="flag-large" />
+                <div class="product-title">
+                  <h3>新加坡</h3>
+                  <span class="product-type native">原生IP</span>
+                </div>
+              </div>
+              <div class="product-price">
+                <div class="price-label">30天价格</div>
+                <div class="price-value">
+                  $<input
+                    type="number"
+                    v-model.number="prices.singapore.native"
+                    @blur="updatePrice('singapore', 'native')"
+                    class="price-input"
+                  />
+                </div>
+              </div>
+              <el-button type="primary" size="small" @click="resetPrice('singapore', 'native')">
+                重置为默认
+              </el-button>
+            </div>
+          </el-col>
+
+          <!-- 默认价格 -->
+          <el-col :span="6">
+            <div class="product-card default">
+              <div class="product-header">
+                <el-icon :size="48" color="#909399"><Setting /></el-icon>
+                <div class="product-title">
+                  <h3>默认价格</h3>
+                  <span class="product-type">其他国家</span>
+                </div>
+              </div>
+              <div class="product-price">
+                <div class="price-label">普通IP (30天)</div>
+                <div class="price-value">$5.00</div>
+              </div>
+              <div class="product-price">
+                <div class="price-label">原生IP (30天)</div>
+                <div class="price-value">$8.00</div>
+              </div>
+            </div>
           </el-col>
         </el-row>
       </div>
 
-      <!-- 覆盖价格列表 -->
-      <el-table :data="overrideList" v-loading="loading" style="width: 100%">
-        <el-table-column label="ID" prop="id" width="80" />
-        
-        <el-table-column label="产品类型" width="120">
+      <!-- 价格覆盖历史列表 -->
+      <el-divider />
+      <h3>价格覆盖历史</h3>
+
+      <el-table :data="overrideList" v-loading="loading" stripe style="width: 100%">
+        <el-table-column type="index" label="#" width="60" />
+
+        <el-table-column label="国家" width="150">
           <template #default="{ row }">
-            <el-tag :type="getProductTypeTag(row.priceConfigId)">
-              {{ getProductTypeName(row.priceConfigId) }}
+            <img :src="`/flags/1x1/${row.countryCode.toLowerCase()}.svg`" class="flag-icon" />
+            {{ row.country }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="IP类型" width="120">
+          <template #default="{ row }">
+            <el-tag :type="row.ipType === 'native' ? 'success' : ''">
+              {{ row.ipType === 'native' ? '原生IP' : '普通IP' }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column label="国家代码" prop="countryCode" width="100">
+        <el-table-column label="30天价格" width="120">
           <template #default="{ row }">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <img :src="getFlagUrl(row.countryCode)" style="width: 24px; height: 18px; border-radius: 2px;" />
-              {{ row.countryCode }}
-            </div>
-          </template>
-        </el-table-column>
-        
-        <el-table-column label="城市" width="150">
-          <template #default="{ row }">
-            {{ row.cityName || '-' }}
-          </template>
-        </el-table-column>
-
-        <el-table-column label="覆盖价格" width="120">
-          <template #default="{ row }">
-            <el-text type="success" style="font-size: 16px; font-weight: 600">
-              ${{ parseFloat(row.overridePrice).toFixed(2) }}/月
-            </el-text>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.isActive ? 'success' : 'danger'">
-              {{ row.isActive ? '启用' : '禁用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="创建时间" width="180">
-          <template #default="{ row }">
-            {{ formatDate(row.createdAt) }}
+            <span class="price-display">${{ row.price.toFixed(2) }}</span>
           </template>
         </el-table-column>
 
@@ -91,11 +235,20 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="更新人" width="150">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="openEditDialog(row)">
-              编辑
-            </el-button>
+            {{ row.updatedBy || 'Admin' }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="备注" min-width="200">
+          <template #default="{ row }">
+            {{ row.remark || '-' }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="100" fixed="right">
+          <template #default="{ row }">
             <el-button type="danger" size="small" @click="deleteOverride(row)">
               删除
             </el-button>
@@ -117,49 +270,46 @@
       </div>
     </el-card>
 
-    <!-- 创建/编辑对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="dialogMode === 'create' ? '新增价格覆盖' : '编辑价格覆盖'"
-      width="500px"
-    >
-      <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
-        <el-form-item label="产品类型" prop="productType">
-          <el-select v-model="form.productType" placeholder="请选择产品类型" :disabled="dialogMode === 'edit'">
-            <el-option label="普通IP" value="static_shared" />
-            <el-option label="原生IP" value="static_premium" />
+    <!-- 新增价格覆盖对话框 -->
+    <el-dialog v-model="addDialogVisible" title="新增价格覆盖" width="500px">
+      <el-form :model="addForm" :rules="addRules" ref="addFormRef" label-width="100px">
+        <el-form-item label="国家" prop="country">
+          <el-select v-model="addForm.country" placeholder="选择国家" filterable>
+            <el-option label="韩国" value="korea" />
+            <el-option label="日本" value="japan" />
+            <el-option label="新加坡" value="singapore" />
+            <el-option label="美国" value="us" />
+            <el-option label="英国" value="uk" />
+            <el-option label="德国" value="germany" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="国家代码" prop="countryCode">
-          <el-input v-model="form.countryCode" placeholder="如：US, JP, KR" :disabled="dialogMode === 'edit'" maxlength="2" />
-          <div class="form-tip">ISO 3166-1 alpha-2 两位国家代码（大写）</div>
+        <el-form-item label="IP类型" prop="ipType">
+          <el-radio-group v-model="addForm.ipType">
+            <el-radio label="shared">普通IP</el-radio>
+            <el-radio label="native">原生IP</el-radio>
+          </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="城市名称">
-          <el-input v-model="form.cityName" placeholder="可选，如：Tokyo, Seoul" :disabled="dialogMode === 'edit'" />
-          <div class="form-tip">留空则为国家级覆盖，填写则为城市级覆盖</div>
+        <el-form-item label="30天价格" prop="price">
+          <el-input-number v-model="addForm.price" :min="1" :max="1000" :precision="2" />
+          <span style="margin-left: 10px">USD</span>
         </el-form-item>
 
-        <el-form-item label="覆盖价格" prop="overridePrice">
-          <el-input-number
-            v-model="form.overridePrice"
-            :min="0"
-            :step="0.5"
-            :precision="2"
+        <el-form-item label="备注" prop="remark">
+          <el-input
+            v-model="addForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="备注说明（可选）"
           />
-          <span class="unit">USD/月</span>
-        </el-form-item>
-
-        <el-form-item label="状态">
-          <el-switch v-model="form.isActive" active-text="启用" inactive-text="禁用" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          {{ dialogMode === 'create' ? '创建' : '保存' }}
+        <el-button @click="addDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmAdd" :loading="submitting">
+          确定
         </el-button>
       </template>
     </el-dialog>
@@ -168,207 +318,235 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { Plus, Search, Refresh } from '@element-plus/icons-vue';
-import request from '@/api/request';
+import { ElMessage, ElMessageBox, FormInstance } from 'element-plus';
+import { Plus, Setting } from '@element-plus/icons-vue';
+import dayjs from 'dayjs';
 
-// 数据
+// 价格数据
+const prices = ref({
+  korea: {
+    shared: 5.0,
+    native: 8.0,
+  },
+  japan: {
+    shared: 5.0,
+    native: 8.0,
+  },
+  singapore: {
+    shared: 5.0,
+    native: 8.0,
+  },
+});
+
+// 默认价格
+const defaultPrices = {
+  shared: 5.0,
+  native: 8.0,
+};
+
 const overrideList = ref<any[]>([]);
 const loading = ref(false);
-const dialogVisible = ref(false);
-const dialogMode = ref<'create' | 'edit'>('create');
-const submitting = ref(false);
-const priceConfigs = ref<any[]>([]);
 
-// 分页
 const pagination = ref({
   page: 1,
   pageSize: 20,
   total: 0,
 });
 
-// 筛选
-const filters = ref({
-  productType: '',
+// 新增对话框
+const addDialogVisible = ref(false);
+const addFormRef = ref<FormInstance>();
+const submitting = ref(false);
+
+const addForm = ref({
+  country: '',
+  ipType: 'shared',
+  price: 5.0,
+  remark: '',
 });
 
-// 表单
-const form = ref({
-  id: 0,
-  productType: 'static_shared',
-  countryCode: '',
-  cityName: '',
-  overridePrice: 10,
-  isActive: true,
-});
-
-const formRef = ref();
-
-const rules = {
-  productType: [{ required: true, message: '请选择产品类型', trigger: 'change' }],
-  countryCode: [
-    { required: true, message: '请输入国家代码', trigger: 'blur' },
-    { pattern: /^[A-Z]{2}$/, message: '国家代码必须是2位大写字母', trigger: 'blur' },
-  ],
-  overridePrice: [{ required: true, message: '请输入价格', trigger: 'blur' }],
-};
-
-// 获取国旗URL
-const getFlagUrl = (code: string) => {
-  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
-};
-
-// 获取产品类型名称
-const getProductTypeName = (priceConfigId: number) => {
-  const config = priceConfigs.value.find((c) => c.id === priceConfigId);
-  if (!config) return '未知';
-  return config.productType === 'static_premium' ? '原生IP' : '普通IP';
-};
-
-// 获取产品类型标签颜色
-const getProductTypeTag = (priceConfigId: number) => {
-  const config = priceConfigs.value.find((c) => c.id === priceConfigId);
-  if (!config) return '';
-  return config.productType === 'static_premium' ? 'warning' : 'primary';
-};
-
-// 加载价格配置
-const loadPriceConfigs = async () => {
-  try {
-    const response = await request.get('/price/configs');
-    priceConfigs.value = response.data || [];
-  } catch (error: any) {
-    console.error('Failed to load price configs:', error);
-  }
+const addRules = {
+  country: [{ required: true, message: '请选择国家', trigger: 'change' }],
+  ipType: [{ required: true, message: '请选择IP类型', trigger: 'change' }],
+  price: [{ required: true, message: '请输入价格', trigger: 'blur' }],
 };
 
 // 加载数据
 const loadData = async () => {
   loading.value = true;
   try {
-    const params: any = {};
-    if (filters.value.productType) {
-      params.productType = filters.value.productType;
-    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const response = await request.get('/price/overrides', { params });
-    const list = response.data || [];
-    
-    // 分页处理
-    pagination.value.total = list.length;
-    const start = (pagination.value.page - 1) * pagination.value.pageSize;
-    const end = start + pagination.value.pageSize;
-    overrideList.value = list.slice(start, end);
+    // Mock数据 - 实际应该调用API
+    const mockData = [
+      {
+        id: 1,
+        country: '韩国',
+        countryCode: 'KR',
+        ipType: 'native',
+        price: 8.0,
+        updatedAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        updatedBy: 'Admin',
+        remark: '热门国家原生IP',
+      },
+      {
+        id: 2,
+        country: '日本',
+        countryCode: 'JP',
+        ipType: 'native',
+        price: 8.0,
+        updatedAt: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
+        updatedBy: 'Admin',
+        remark: '热门国家原生IP',
+      },
+      {
+        id: 3,
+        country: '新加坡',
+        countryCode: 'SG',
+        ipType: 'native',
+        price: 8.0,
+        updatedAt: dayjs().subtract(2, 'day').format('YYYY-MM-DD HH:mm:ss'),
+        updatedBy: 'Admin',
+        remark: '热门国家原生IP',
+      },
+    ];
+
+    overrideList.value = mockData;
+    pagination.value.total = mockData.length;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + (error.response?.data?.message || error.message));
+    ElMessage.error('加载失败：' + error.message);
   } finally {
     loading.value = false;
   }
 };
 
-// 重置筛选
-const resetFilters = () => {
-  filters.value.productType = '';
-  pagination.value.page = 1;
-  loadData();
-};
+// 更新价格
+const updatePrice = async (country: string, ipType: string) => {
+  const price = (prices.value as any)[country][ipType];
 
-// 打开创建对话框
-const openCreateDialog = () => {
-  dialogMode.value = 'create';
-  form.value = {
-    id: 0,
-    productType: 'static_shared',
-    countryCode: '',
-    cityName: '',
-    overridePrice: 10,
-    isActive: true,
-  };
-  dialogVisible.value = true;
-};
-
-// 打开编辑对话框
-const openEditDialog = (row: any) => {
-  dialogMode.value = 'edit';
-  const config = priceConfigs.value.find((c) => c.id === row.priceConfigId);
-  form.value = {
-    id: row.id,
-    productType: config?.productType || 'static_shared',
-    countryCode: row.countryCode,
-    cityName: row.cityName || '',
-    overridePrice: parseFloat(row.overridePrice),
-    isActive: row.isActive,
-  };
-  dialogVisible.value = true;
-};
-
-// 提交
-const handleSubmit = async () => {
   try {
-    await formRef.value?.validate();
-  } catch {
-    return;
-  }
+    // TODO: 调用API更新价格
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
-  submitting.value = true;
-  try {
-    if (dialogMode.value === 'create') {
-      await request.post('/price/overrides', form.value);
-      ElMessage.success('创建成功');
-    } else {
-      await request.put(`/price/overrides/${form.value.id}`, {
-        overridePrice: form.value.overridePrice,
-        isActive: form.value.isActive,
-      });
-      ElMessage.success('更新成功');
-    }
-
-    dialogVisible.value = false;
+    ElMessage.success(`${getCountryName(country)}${ipType === 'native' ? '原生' : '普通'}IP价格已更新为$${price.toFixed(2)}`);
     loadData();
   } catch (error: any) {
-    ElMessage.error(error.response?.data?.message || '操作失败');
-  } finally {
-    submitting.value = false;
+    ElMessage.error('更新失败：' + error.message);
   }
 };
 
-// 删除
-const deleteOverride = async (row: any) => {
+// 重置价格
+const resetPrice = async (country: string, ipType: string) => {
   try {
     await ElMessageBox.confirm(
-      `确认删除 ${row.countryCode}${row.cityName ? '/' + row.cityName : ''} 的价格覆盖？`,
-      '确认删除',
+      `确定要重置${getCountryName(country)}${ipType === 'native' ? '原生' : '普通'}IP价格为默认值吗？`,
+      '确认重置',
       {
-        confirmButtonText: '确认',
+        confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
       }
     );
 
-    await request.delete(`/price/overrides/${row.id}`);
-    ElMessage.success('删除成功');
+    (prices.value as any)[country][ipType] = (defaultPrices as any)[ipType];
+
+    // TODO: 调用API删除价格覆盖
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    ElMessage.success('价格已重置为默认值');
     loadData();
   } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败：' + (error.response?.data?.message || error.message));
+      ElMessage.error('重置失败：' + error.message);
+    }
+  }
+};
+
+// 显示新增对话框
+const showAddDialog = () => {
+  addForm.value = {
+    country: '',
+    ipType: 'shared',
+    price: 5.0,
+    remark: '',
+  };
+  addDialogVisible.value = true;
+};
+
+// 确认新增
+const confirmAdd = async () => {
+  if (!addFormRef.value) return;
+
+  await addFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        submitting.value = true;
+
+        // TODO: 调用API新增价格覆盖
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        ElMessage.success('新增成功！');
+        addDialogVisible.value = false;
+        loadData();
+      } catch (error: any) {
+        ElMessage.error('新增失败：' + error.message);
+      } finally {
+        submitting.value = false;
+      }
+    }
+  });
+};
+
+// 删除覆盖
+const deleteOverride = async (row: any) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除${row.country}${row.ipType === 'native' ? '原生' : '普通'}IP的价格覆盖吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    // TODO: 调用API删除
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    ElMessage.success('删除成功！');
+    loadData();
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败：' + error.message);
     }
   }
 };
 
 // 格式化日期
 const formatDate = (date: string) => {
-  if (!date) return '-';
-  return new Date(date).toLocaleString('zh-CN');
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+};
+
+// 获取国家名称
+const getCountryName = (country: string) => {
+  const nameMap: Record<string, string> = {
+    korea: '韩国',
+    japan: '日本',
+    singapore: '新加坡',
+    us: '美国',
+    uk: '英国',
+    germany: '德国',
+  };
+  return nameMap[country] || country;
 };
 
 onMounted(() => {
-  loadPriceConfigs();
   loadData();
 });
 </script>
 
 <style scoped lang="scss">
-.price-overrides-container {
+.price-override-container {
   h1 {
     margin: 0 0 20px 0;
     color: #303133;
@@ -376,7 +554,7 @@ onMounted(() => {
     font-weight: 600;
   }
 
-  .overrides-card {
+  .price-card {
     .card-header {
       display: flex;
       align-items: center;
@@ -385,56 +563,135 @@ onMounted(() => {
       color: #303133;
     }
 
-    .filter-section {
-      margin-bottom: 20px;
+    .product-cards {
+      margin-bottom: 30px;
+
+      .product-card {
+        padding: 24px;
+        background: #fff;
+        border: 2px solid #e4e7ed;
+        border-radius: 12px;
+        transition: all 0.3s;
+        margin-bottom: 20px;
+
+        &:hover {
+          border-color: #409eff;
+          box-shadow: 0 2px 12px rgba(64, 158, 255, 0.2);
+        }
+
+        &.default {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          color: #fff;
+
+          .product-title h3,
+          .product-type,
+          .price-label,
+          .price-value {
+            color: #fff;
+          }
+        }
+
+        .product-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 20px;
+
+          .flag-large {
+            width: 48px;
+            height: 48px;
+            margin-right: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+
+          .product-title {
+            h3 {
+              margin: 0;
+              font-size: 18px;
+              font-weight: 600;
+              color: #303133;
+            }
+
+            .product-type {
+              display: inline-block;
+              padding: 2px 8px;
+              background: #e4e7ed;
+              color: #606266;
+              border-radius: 4px;
+              font-size: 12px;
+              margin-top: 4px;
+
+              &.native {
+                background: #67c23a;
+                color: #fff;
+              }
+            }
+          }
+        }
+
+        .product-price {
+          margin-bottom: 16px;
+
+          .price-label {
+            font-size: 12px;
+            color: #909399;
+            margin-bottom: 4px;
+          }
+
+          .price-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #409eff;
+            display: flex;
+            align-items: baseline;
+
+            .price-input {
+              width: 80px;
+              font-size: 24px;
+              font-weight: 600;
+              color: #409eff;
+              border: none;
+              border-bottom: 2px solid #dcdfe6;
+              outline: none;
+              text-align: right;
+              padding: 0 4px;
+
+              &:focus {
+                border-bottom-color: #409eff;
+              }
+
+              /* 移除number input的箭头 */
+              &::-webkit-inner-spin-button,
+              &::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+              }
+            }
+          }
+        }
+      }
     }
-  }
 
-  .form-tip {
-    font-size: 12px;
-    color: #909399;
-    margin-top: 5px;
-  }
+    .flag-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+      vertical-align: middle;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
 
-  .unit {
-    margin-left: 10px;
-    color: #909399;
-  }
+    .price-display {
+      color: #409eff;
+      font-weight: 600;
+    }
 
-  .pagination-container {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-  }
-}
-
-// 浅色主题适配
-:deep(.el-card) {
-  background-color: #ffffff;
-  border: 1px solid #dcdfe6;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-
-  &:hover {
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  }
-}
-
-:deep(.el-card__header) {
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #dcdfe6;
-  padding: 16px 20px;
-}
-
-:deep(.el-table) {
-  color: #606266;
-
-  th {
-    background-color: #f5f7fa;
-    color: #303133;
-  }
-
-  tr:hover > td {
-    background-color: #f5f7fa;
+    .pagination-container {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
   }
 }
 </style>
