@@ -273,13 +273,22 @@ onMounted(() => {
         margin-right: 0 !important;
         margin-bottom: 0 !important;
         width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
 
         // Element Plus Radio Border样式覆盖
         :deep(.el-radio__label) {
           width: 100%;
+          max-width: 100%;
           padding: 0;
           display: flex;
           align-items: center;
+          overflow: hidden;
+        }
+
+        :deep(.el-radio.is-bordered) {
+          padding: 12px 16px;
+          height: auto;
         }
 
         .payment-content {
@@ -287,24 +296,39 @@ onMounted(() => {
           align-items: center;
           gap: 12px;
           width: 100%;
+          max-width: 100%;
           padding: 4px 0;
+          box-sizing: border-box;
+
+          .el-icon {
+            flex-shrink: 0;
+          }
 
           .payment-text {
             display: flex;
             flex-direction: column;
             gap: 2px;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
 
             .payment-name {
               font-size: 15px;
               font-weight: 600;
               color: #303133;
               line-height: 1.4;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
             }
 
             .payment-desc {
               font-size: 12px;
               color: #909399;
               line-height: 1.4;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
             }
           }
         }

@@ -86,10 +86,10 @@
     <el-container>
       <el-header class="header">
         <div class="header-left">
-          <span class="welcome">欢迎回来！</span>
+          <span class="welcome">欢迎回来，{{ userName }}！</span>
         </div>
         <div class="header-right">
-          <span class="balance">余额: ${{ userBalance }}</span>
+          <span class="balance">余额: ${{ userBalance.toFixed(2) }}</span>
           <el-dropdown @command="handleCommand">
             <span class="user-dropdown">
               {{ userEmail }}
@@ -140,14 +140,15 @@ const userStore = useUserStore();
 const activeMenu = computed(() => route.path);
 const isAdmin = computed(() => userStore.isAdmin);
 const userEmail = computed(() => userStore.user?.email || '');
+const userName = computed(() => userStore.user?.nickname || userStore.user?.email?.split('@')[0] || '用户');
 const userBalance = computed(() => userStore.user?.balance || 0);
 
-const handleCommand = (command: string) => {
+const handleCommand = async (command: string) => {
   if (command === 'logout') {
-    userStore.userLogout();
+    await userStore.logout();
     router.push('/login');
   } else if (command === 'profile') {
-    router.push('/profile');
+    router.push('/account/profile');
   } else if (command === 'admin') {
     router.push('/admin/dashboard');
   }
