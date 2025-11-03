@@ -4,8 +4,15 @@ import enUS from '../locales/en-US';
 
 // 从本地存储获取语言设置，默认为中文
 const getDefaultLocale = () => {
-  const savedLocale = localStorage.getItem('locale');
-  return savedLocale || 'zh-CN';
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedLocale = localStorage.getItem('locale');
+      return savedLocale || 'zh-CN';
+    }
+  } catch (error) {
+    console.warn('localStorage not available:', error);
+  }
+  return 'zh-CN';
 };
 
 const i18n = createI18n({
