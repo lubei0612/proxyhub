@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, Like } from 'typeorm';
 import { StaticProxy, ProxyStatus } from './entities/static-proxy.entity';
 import { User } from '../../user/entities/user.entity';
 import { Order, OrderType, OrderStatus } from '../../order/entities/order.entity';
@@ -27,10 +27,30 @@ export class StaticProxyService {
    * 获取用户的静态代理列表
    */
   async getUserProxies(userId: string, page = 1, limit = 20, filters?: any) {
-    const where: any = { userId };
+    const where: any = { userId: parseInt(userId) };
     
+    // 应用筛选条件
     if (filters?.status) {
       where.status = filters.status;
+    }
+    if (filters?.ip) {
+      where.ip = Like(`%${filters.ip}%`);
+    }
+    if (filters?.channel) {
+      where.channelName = filters.channel;
+    }
+    if (filters?.country) {
+      where.country = filters.country;
+    }
+    if (filters?.city) {
+      where.cityName = filters.city;
+    }
+    if (filters?.nodeId) {
+      // nodeId存储在remark或单独字段，这里暂时使用Like查询remark
+      where.remark = Like(`%${filters.nodeId}%`);
+    }
+    if (filters?.ipType) {
+      where.ipType = filters.ipType;
     }
 
     const [proxies, total] = await this.staticProxyRepo.findAndCount({
@@ -41,7 +61,7 @@ export class StaticProxyService {
     });
 
     return {
-      data: proxies,
+      list: proxies,
       total,
       page,
       limit,

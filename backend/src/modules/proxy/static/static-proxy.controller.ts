@@ -27,8 +27,22 @@ export class StaticProxyController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
     @Query('status') status?: string,
+    @Query('ip') ip?: string,
+    @Query('channel') channel?: string,
+    @Query('country') country?: string,
+    @Query('city') city?: string,
+    @Query('nodeId') nodeId?: string,
+    @Query('ipType') ipType?: string,
   ) {
-    const filters = status ? { status } : undefined;
+    const filters: any = {};
+    if (status) filters.status = status;
+    if (ip) filters.ip = ip;
+    if (channel) filters.channel = channel;
+    if (country) filters.country = country;
+    if (city) filters.city = city;
+    if (nodeId) filters.nodeId = nodeId;
+    if (ipType) filters.ipType = ipType;
+    
     return this.staticProxyService.getUserProxies(user.id, page, limit, filters);
   }
 
