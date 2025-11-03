@@ -45,9 +45,6 @@ export class Recharge {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Column({ name: 'approved_at', type: 'timestamp', nullable: true })
-  approvedAt: Date;
-
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

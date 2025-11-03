@@ -106,8 +106,8 @@ export class BillingService {
       if (approved) {
         // 批准充值
         recharge.status = RechargeStatus.APPROVED;
-        recharge.approvedAt = new Date();
-        recharge.remark = remark || '';
+        // Note: approved_at column doesn't exist in database, using updated_at instead
+        recharge.adminRemark = remark || '审核通过';
 
         // 更新用户余额
         const user = await queryRunner.manager.findOne(User, {
@@ -118,8 +118,12 @@ export class BillingService {
           throw new NotFoundException('用户不存在');
         }
 
+        // 确保所有数值都转换为number类型
         const currentBalance = parseFloat(user.balance as any) || 0;
-        user.balance = (currentBalance + recharge.amount).toFixed(2) as any;
+        const rechargeAmount = parseFloat(recharge.amount as any) || 0;
+        const newBalance = currentBalance + rechargeAmount;
+        
+        user.balance = newBalance.toFixed(2) as any;
         await queryRunner.manager.save(User, user);
 
         // 创建交易记录
@@ -127,10 +131,10 @@ export class BillingService {
           userId: recharge.userId,
           type: TransactionType.INCOME,
           category: 'recharge',
-          amount: recharge.amount,
+          amount: rechargeAmount,
           relatedId: recharge.id,
           relatedType: 'recharge',
-          description: `充值 - ${recharge.method}`,
+          description: `充值 - ${recharge.paymentMethod || recharge.method}`,
         });
         await queryRunner.manager.save(Transaction, transaction);
       } else {
