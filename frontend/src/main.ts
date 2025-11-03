@@ -11,6 +11,9 @@ import i18n from './i18n';
 import './styles/variables.scss';
 import './assets/styles/global.scss';
 
+// 导入flag-icons国旗图标CSS
+import 'flag-icons/css/flag-icons.min.css';
+
 const app = createApp(App);
 
 // Pinia状态管理

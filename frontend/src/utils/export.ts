@@ -1,117 +1,226 @@
 /**
- * 导出工具类
- * 支持CSV和TXT格式导出
+ * Export Utility for Static Proxy Data
+ * Provides functions to export proxy data in CSV and TXT formats
  */
 
-/**
- * 导出为CSV格式
- * @param data 数据数组
- * @param headers 表头数组
- * @param filename 文件名（不含扩展名）
- */
-export function exportToCSV(data: any[], headers: string[], filename: string) {
-  try {
-    // 构建CSV内容
-    const csvRows: string[] = [];
-    
-    // 添加表头
-    csvRows.push(headers.join(','));
-    
-    // 添加数据行
-    data.forEach((row) => {
-      const values = headers.map((header) => {
-        const value = row[header] || '';
-        // 处理包含逗号、换行符或引号的值
-        const escaped = String(value).replace(/"/g, '""');
-        return `"${escaped}"`;
-      });
-      csvRows.push(values.join(','));
-    });
-    
-    // 创建Blob
-    const csvContent = '\uFEFF' + csvRows.join('\n'); // 添加BOM以支持中文
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    
-    // 下载
-    downloadBlob(blob, `${filename}.csv`);
-  } catch (error) {
-    console.error('CSV export error:', error);
-    throw new Error('导出CSV失败');
-  }
+export interface StaticProxyExportData {
+  credentials?: string; // IP:Port:Account:Password (from backend virtual field)
+  ip?: string;
+  port?: number;
+  username?: string;
+  password?: string;
+  countryName?: string;
+  cityName?: string;
+  ipType?: string;
+  channelName?: string;
+  expireTimeUtc?: string | Date;
+  releaseTimeUtc?: string | Date;
+  nodeId?: string;
+  remark?: string;
 }
 
 /**
- * 导出为TXT格式（IP:Port:Username:Password格式）
- * @param data 数据数组
- * @param filename 文件名（不含扩展名）
+ * Format proxy data as TXT (one credential per line)
+ * Format: IP:Port:Account:Password
  */
-export function exportToTXT(data: any[], filename: string) {
-  try {
-    // 构建TXT内容（每行一个IP）
-    const txtRows: string[] = [];
-    
-    data.forEach((item) => {
-      const line = `${item.ipAddress}:${item.port}:${item.username}:${item.password}`;
-      txtRows.push(line);
-    });
-    
-    // 创建Blob
-    const txtContent = txtRows.join('\n');
-    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
-    
-    // 下载
-    downloadBlob(blob, `${filename}.txt`);
-  } catch (error) {
-    console.error('TXT export error:', error);
-    throw new Error('导出TXT失败');
-  }
+function formatAsTXT(data: StaticProxyExportData[]): string {
+  return data
+    .map((proxy) => {
+      // Use credentials field if available (from backend), otherwise construct it
+      if (proxy.credentials) {
+        return proxy.credentials;
+      }
+      return `${proxy.ip}:${proxy.port}:${proxy.username}:${proxy.password}`;
+    })
+    .join('\n');
 }
 
 /**
- * 导出为JSON格式
- * @param data 数据数组
- * @param filename 文件名（不含扩展名）
+ * Format proxy data as CSV with headers
+ * Format: IP地址:端口:账号:密码,国家/城市,IP类型,所属通道,到期时间,释放时间,节点ID,备注
  */
-export function exportToJSON(data: any[], filename: string) {
-  try {
-    const jsonContent = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
-    downloadBlob(blob, `${filename}.json`);
-  } catch (error) {
-    console.error('JSON export error:', error);
-    throw new Error('导出JSON失败');
-  }
+function formatAsCSV(data: StaticProxyExportData[]): string {
+  // CSV headers
+  const headers = [
+    'IP地址:端口:账号:密码',
+    '国家/城市',
+    'IP类型',
+    '所属通道',
+    '到期时间',
+    '释放时间',
+    '节点ID',
+    '备注',
+  ];
+
+  // Create CSV rows
+  const rows = data.map((proxy) => {
+    // Get credentials string
+    const credentials = proxy.credentials || `${proxy.ip}:${proxy.port}:${proxy.username}:${proxy.password}`;
+    
+    // Format location
+    const location = proxy.cityName ? `${proxy.countryName}/${proxy.cityName}` : proxy.countryName || '';
+    
+    // Format IP type
+    const ipType = proxy.ipType === 'premium' ? '原生' : '普通';
+    
+    // Format dates
+    const expireTime = proxy.expireTimeUtc ? formatDateTime(proxy.expireTimeUtc) : '';
+    const releaseTime = proxy.releaseTimeUtc ? formatDateTime(proxy.releaseTimeUtc) : '';
+    
+    // Create row array
+    return [
+      credentials,
+      location,
+      ipType,
+      proxy.channelName || '',
+      expireTime,
+      releaseTime,
+      proxy.nodeId || '',
+      proxy.remark || '',
+    ];
+  });
+
+  // Combine headers and rows into CSV string
+  const csvContent = [
+    headers.join(','),
+    ...rows.map((row) => row.map((cell) => escapeCsvCell(cell)).join(',')),
+  ].join('\n');
+
+  return csvContent;
 }
 
 /**
- * 下载Blob对象
- * @param blob Blob对象
- * @param filename 文件名
+ * Escape CSV cell content (handle commas, quotes, newlines)
  */
-function downloadBlob(blob: Blob, filename: string) {
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
-}
-
-/**
- * 格式化日期为字符串（用于文件名）
- * @param date 日期对象
- * @returns 格式化后的字符串（YYYYMMDD_HHMMSS）
- */
-export function formatDateForFilename(date: Date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
+function escapeCsvCell(cell: string): string {
+  if (!cell) return '';
   
-  return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+  // If cell contains comma, quote, or newline, wrap in quotes and escape quotes
+  if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
+    return `"${cell.replace(/"/g, '""')}"`;
+  }
+  
+  return cell;
+}
+
+/**
+ * Format date/time to local string
+ */
+function formatDateTime(date: string | Date): string {
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return '';
+  }
+}
+
+/**
+ * Generate filename with timestamp
+ */
+function generateFilename(format: 'csv' | 'txt'): string {
+  const now = new Date();
+  const timestamp = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+  const time = now.toTimeString().slice(0, 8).replace(/:/g, ''); // HHMMSS
+  return `static-proxies-${timestamp}-${time}.${format}`;
+}
+
+/**
+ * Trigger browser download for a file
+ */
+function downloadFile(content: string, filename: string, mimeType: string): void {
+  try {
+    // Create blob
+    const blob = new Blob([content], { type: mimeType });
+    
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    throw new Error('文件下载失败');
+  }
+}
+
+/**
+ * Main export function - exports static proxy data in specified format
+ * @param format - Export format ('csv' or 'txt')
+ * @param data - Array of static proxy data
+ * @throws Error if data is empty or export fails
+ */
+export async function exportStaticProxies(
+  format: 'csv' | 'txt',
+  data: StaticProxyExportData[],
+): Promise<void> {
+  // Validate data
+  if (!data || data.length === 0) {
+    throw new Error('没有可导出的IP数据');
+  }
+
+  try {
+    // Format content based on export type
+    let content: string;
+    let mimeType: string;
+
+    if (format === 'txt') {
+      content = formatAsTXT(data);
+      mimeType = 'text/plain;charset=utf-8';
+    } else if (format === 'csv') {
+      content = formatAsCSV(data);
+      mimeType = 'text/csv;charset=utf-8';
+    } else {
+      throw new Error('不支持的导出格式');
+    }
+
+    // Generate filename
+    const filename = generateFilename(format);
+
+    // Download file
+    downloadFile(content, filename, mimeType);
+  } catch (error: any) {
+    console.error('Export failed:', error);
+    
+    // If download failed, try to copy to clipboard as fallback
+    if (error.message !== '没有可导出的IP数据' && error.message !== '不支持的导出格式') {
+      try {
+        const content = format === 'txt' ? formatAsTXT(data) : formatAsCSV(data);
+        await navigator.clipboard.writeText(content);
+        throw new Error('导出失败，数据已复制到剪贴板');
+      } catch (clipboardError) {
+        throw new Error('导出失败，请重试');
+      }
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Export only credentials (IP:Port:Account:Password) as TXT
+ * Simpler version for quick credential export
+ */
+export async function exportCredentials(
+  data: StaticProxyExportData[],
+): Promise<void> {
+  return exportStaticProxies('txt', data);
 }
 

@@ -22,7 +22,7 @@
 
 ## Phase 2: Frontend Core Utilities
 
-- [ ] 3. Create Export Utility
+- [x] 3. Create Export Utility
   - Files:
     - `frontend/src/utils/export.ts` (NEW)
   - Purpose: Provide reusable export functionality for CSV and TXT formats
@@ -32,7 +32,7 @@
 
 ## Phase 3: Dynamic Proxy Management UI
 
-- [ ] 4. Refactor DynamicManage.vue to 985Proxy Design
+- [x] 4. Refactor DynamicManage.vue to 985Proxy Design
   - Files:
     - `frontend/src/views/proxy/DynamicManage.vue`
   - Purpose: Completely redesign dynamic proxy management page to match 985Proxy layout while keeping ProxyHub colors
@@ -42,7 +42,7 @@
 
 ## Phase 4: Static Proxy UI Enhancements
 
-- [ ] 5. Add Country Flags to Static Proxy Buy Payment Panel
+- [x] 5. Add Country Flags to Static Proxy Buy Payment Panel
   - Files:
     - `frontend/src/views/proxy/StaticBuy.vue`
   - Purpose: Display country flags in payment panel using flag-icons library
@@ -50,7 +50,7 @@
   - _Requirements: Requirement 2 - Static Proxy Selection Payment Panel with Country Flags_
   - _Prompt: Role: Frontend UI Developer | Task: Implement the task for spec ui-refinement-phase2, first run spec-workflow-guide to get the workflow guide then implement the task: Update payment panel in StaticBuy.vue to display country flags. Replace emoji flags with <span :class="`fi fi-${item.code.toLowerCase()}`" class="flag-icon"></span>. Ensure flags display properly in "支付详情" section with format "[Flag] 国家 - 城市" (e.g., 🇺🇸 美国 - Chicago). Match 图六 (985Proxy payment panel). First edit tasks.md to mark this task as [-] in-progress, implement the flags, then mark as [x] complete. | Restrictions: Must use flag-icons library (not images or emojis), ensure flags scale properly with text, add fallback for missing flags, maintain existing payment panel functionality | Success: Country flags display correctly in payment panel, flags match countries accurately, payment panel matches 985Proxy design, fallback works for countries without flags_
 
-- [ ] 6. Update Static Proxy Management IP Display Format
+- [-] 6. Update Static Proxy Management IP Display Format
   - Files:
     - `frontend/src/views/proxy/StaticManage.vue`
   - Purpose: Display IP credentials in "IP:Port:Account:Password" format with one-click copy

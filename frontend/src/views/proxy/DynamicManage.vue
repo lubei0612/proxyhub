@@ -2,59 +2,59 @@
   <div class="dynamic-manage-container">
     <h1>动态住宅IP管理</h1>
 
-    <!-- 套餐概览 -->
+    <!-- 套餐概览 - 4个统计卡片 -->
     <el-row :gutter="20" class="package-overview">
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card card-blue">
           <div class="stat-content">
-            <div class="stat-icon" style="background-color: #409eff">
-              <el-icon :size="30"><Connection /></el-icon>
+            <div class="stat-icon">
+              <el-icon :size="32"><Box /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ packageInfo.name || '未订阅' }}</div>
-              <div class="stat-label">当前套餐</div>
+              <div class="stat-label">套餐类型</div>
+              <div class="stat-value">{{ packageInfo.name || '个人套餐' }}</div>
             </div>
           </div>
         </el-card>
       </el-col>
 
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card card-green">
           <div class="stat-content">
-            <div class="stat-icon" style="background-color: #67c23a">
-              <el-icon :size="30"><DataLine /></el-icon>
+            <div class="stat-icon">
+              <el-icon :size="32"><DataLine /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ packageInfo.remaining || 0 }} GB</div>
               <div class="stat-label">剩余流量</div>
+              <div class="stat-value">{{ packageInfo.remaining || 0 }} GB</div>
             </div>
           </div>
         </el-card>
       </el-col>
 
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card card-orange">
           <div class="stat-content">
-            <div class="stat-icon" style="background-color: #e6a23c">
-              <el-icon :size="30"><Timer /></el-icon>
+            <div class="stat-icon">
+              <el-icon :size="32"><CircleCheck /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">{{ packageInfo.status || '运行中' }}</div>
               <div class="stat-label">状态</div>
+              <div class="stat-value">{{ packageInfo.status || '运行中' }}</div>
             </div>
           </div>
         </el-card>
       </el-col>
 
       <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
+        <el-card shadow="hover" class="stat-card card-red">
           <div class="stat-content">
-            <div class="stat-icon" style="background-color: #f56c6c">
-              <el-icon :size="30"><Money /></el-icon>
+            <div class="stat-icon">
+              <el-icon :size="32"><PriceTag /></el-icon>
             </div>
             <div class="stat-info">
-              <div class="stat-value">${{ packageInfo.pricePerGb || 0 }}/GB</div>
               <div class="stat-label">流量单价</div>
+              <div class="stat-value">${{ packageInfo.pricePerGb || 4.5 }}/GB</div>
             </div>
           </div>
         </el-card>
@@ -63,24 +63,52 @@
 
     <!-- 操作按钮 -->
     <el-card shadow="hover" class="action-card">
-      <div class="action-buttons">
-        <el-button type="primary" size="large" @click="handleContactService">
-          <el-icon><ChatDotRound /></el-icon>
-          联系客服购买套餐
-        </el-button>
-        <el-button type="success" size="large" @click="handleContactService">
-          <el-icon><Plus /></el-icon>
-          升级套餐
-        </el-button>
-        <el-button type="warning" size="large" @click="handleToggleStatus">
-          <el-icon><Switch /></el-icon>
-          {{ packageInfo.status === '运行中' ? '暂停使用' : '恢复使用' }}
-        </el-button>
-        <el-button type="info" size="large" @click="handleContactService">
-          <el-icon><Setting /></el-icon>
-          套餐设置
-        </el-button>
-      </div>
+      <el-row :gutter="15" justify="center">
+        <el-col :span="6">
+          <el-button
+            type="primary"
+            size="large"
+            class="action-btn"
+            @click="handleContactService"
+          >
+            <el-icon><ChatDotRound /></el-icon>
+            联系客服购买套餐
+          </el-button>
+        </el-col>
+        <el-col :span="6">
+          <el-button
+            type="success"
+            size="large"
+            class="action-btn"
+            @click="handleContactService"
+          >
+            <el-icon><Top /></el-icon>
+            升级套餐
+          </el-button>
+        </el-col>
+        <el-col :span="6">
+          <el-button
+            type="warning"
+            size="large"
+            class="action-btn"
+            @click="handleToggleStatus"
+          >
+            <el-icon><VideoPause /></el-icon>
+            {{ packageInfo.status === '运行中' ? '暂停使用' : '恢复使用' }}
+          </el-button>
+        </el-col>
+        <el-col :span="6">
+          <el-button
+            type="info"
+            size="large"
+            class="action-btn"
+            @click="handleContactService"
+          >
+            <el-icon><Setting /></el-icon>
+            套餐设置
+          </el-button>
+        </el-col>
+      </el-row>
     </el-card>
 
     <!-- 使用说明 -->
@@ -91,18 +119,14 @@
         </div>
       </template>
 
-      <el-row :gutter="20">
-        <el-col :span="24">
-          <div class="usage-info">
-            <p>• 动态住宅代理按流量计费，流量用完后需要联系客服续费</p>
-            <p>• 支持HTTP/HTTPS/SOCKS5协议</p>
-            <p>• 联系客服: <el-link type="primary" href="https://t.me/lubei12" target="_blank">@lubei12</el-link></p>
-          </div>
-        </el-col>
-      </el-row>
+      <div class="usage-info">
+        <p>• 动态住宅代理按流量计费，流量用完后需要联系客服续费</p>
+        <p>• 支持HTTP/HTTPS/SOCKS5协议</p>
+        <p>• 联系客服: <el-link type="primary" href="https://t.me/lubei12" target="_blank">@lubei12</el-link></p>
+      </div>
     </el-card>
 
-    <!-- 使用统计 -->
+    <!-- 本月使用统计 -->
     <el-card shadow="hover" class="usage-card">
       <template #header>
         <div class="card-header">
@@ -114,31 +138,36 @@
         </div>
       </template>
 
-      <el-table :data="usageData" v-loading="loading" style="width: 100%">
-        <el-table-column label="日期" prop="date" width="150" />
-        <el-table-column label="请求数" prop="requests" width="120">
+      <el-table :data="usageData" v-loading="loading" style="width: 100%" stripe>
+        <el-table-column label="日期" prop="date" width="150" align="center" />
+        <el-table-column label="请求数" prop="requests" width="120" align="center">
           <template #default="{ row }">
-            <el-text type="primary">{{ row.requests.toLocaleString() }}</el-text>
+            <el-text type="primary" style="font-weight: 600;">{{ row.requests.toLocaleString() }}</el-text>
           </template>
         </el-table-column>
-        <el-table-column label="成功率" prop="successRate" width="100">
+        <el-table-column label="成功率" prop="successRate" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.successRate >= 95 ? 'success' : 'warning'">
+            <el-tag :type="row.successRate >= 95 ? 'success' : 'warning'" size="large">
               {{ row.successRate }}%
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="流量使用" prop="traffic" width="120">
+        <el-table-column label="流量使用" prop="traffic" width="120" align="center">
           <template #default="{ row }">
-            {{ row.traffic }} GB
+            <span style="font-weight: 500;">{{ row.traffic }} GB</span>
           </template>
         </el-table-column>
-        <el-table-column label="费用" prop="cost" width="100">
+        <el-table-column label="费用" prop="cost" width="100" align="center">
           <template #default="{ row }">
-            ${{ row.cost.toFixed(2) }}
+            <el-text type="warning" style="font-weight: 600;">${{ row.cost.toFixed(2) }}</el-text>
           </template>
         </el-table-column>
-        <el-table-column label="备注" prop="note" />
+        <el-table-column label="备注" prop="note" align="center">
+          <template #default="{ row }">
+            <el-tag v-if="row.note" type="info" size="small">{{ row.note }}</el-tag>
+            <span v-else style="color: #909399;">-</span>
+          </template>
+        </el-table-column>
       </el-table>
 
       <div class="pagination-container">
@@ -160,20 +189,15 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import {
-  Connection,
+  Box,
   DataLine,
-  Timer,
-  Money,
+  CircleCheck,
+  PriceTag,
   ChatDotRound,
-  Plus,
-  Switch,
+  Top,
+  VideoPause,
   Setting,
-  Star,
-  Trophy,
   Refresh,
-  ShoppingBag,
-  Monitor,
-  Histogram,
 } from '@element-plus/icons-vue';
 
 // 套餐信息
@@ -183,46 +207,6 @@ const packageInfo = ref({
   status: '运行中',
   pricePerGb: 4.5,
 });
-
-// 热门业务场景
-const scenarios = ref([
-  {
-    icon: ShoppingBag,
-    title: '电商采集',
-    description: '商品价格监控、库存追踪、竞品分析',
-    color: '#409eff',
-  },
-  {
-    icon: Monitor,
-    title: '社交媒体',
-    description: '账号管理、内容发布、数据统计',
-    color: '#67c23a',
-  },
-  {
-    icon: Histogram,
-    title: 'SEO优化',
-    description: '搜索排名监控、关键词分析、竞争对手追踪',
-    color: '#e6a23c',
-  },
-  {
-    icon: DataLine,
-    title: '市场调研',
-    description: '用户行为分析、市场趋势监测、数据采集',
-    color: '#f56c6c',
-  },
-  {
-    icon: Star,
-    title: '广告验证',
-    description: '广告展示验证、点击率监控、作弊检测',
-    color: '#9b59b6',
-  },
-  {
-    icon: Connection,
-    title: '品牌保护',
-    description: '假冒商品监测、侵权内容识别、品牌声誉管理',
-    color: '#1abc9c',
-  },
-]);
 
 // 使用统计
 const usageData = ref<any[]>([]);
@@ -242,8 +226,9 @@ const handleContactService = () => {
 // 切换状态
 const handleToggleStatus = async () => {
   try {
-    packageInfo.value.status = packageInfo.value.status === '运行中' ? '已暂停' : '运行中';
-    ElMessage.success(`已${packageInfo.value.status === '运行中' ? '恢复' : '暂停'}使用`);
+    const newStatus = packageInfo.value.status === '运行中' ? '已暂停' : '运行中';
+    packageInfo.value.status = newStatus;
+    ElMessage.success(`已${newStatus === '运行中' ? '恢复' : '暂停'}使用`);
   } catch (error: any) {
     ElMessage.error('操作失败：' + error.message);
   }
@@ -255,13 +240,13 @@ const loadUsageData = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Mock数据
+    // Mock数据 - 模拟985Proxy的数据格式
     const mockData = Array.from({ length: 10 }, (_, i) => ({
       date: `2025-11-${String(i + 1).padStart(2, '0')}`,
-      requests: Math.floor(Math.random() * 10000) + 5000,
+      requests: Math.floor(Math.random() * 6000) + 5000,
       successRate: Math.floor(Math.random() * 5) + 95,
-      traffic: parseFloat((Math.random() * 5 + 1).toFixed(2)),
-      cost: parseFloat((Math.random() * 20 + 5).toFixed(2)),
+      traffic: parseFloat((Math.random() * 4 + 1).toFixed(2)),
+      cost: parseFloat((Math.random() * 18 + 5).toFixed(2)),
       note: i % 3 === 0 ? '高峰期' : '',
     }));
 
@@ -281,10 +266,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .dynamic-manage-container {
+  padding: 20px;
+
   h1 {
-    margin: 0 0 20px 0;
+    margin: 0 0 24px 0;
     color: #303133;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 600;
   }
 
@@ -292,117 +279,140 @@ onMounted(() => {
     margin-bottom: 20px;
   }
 
+  // 统计卡片样式 - 模仿985Proxy
   .stat-card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
     .stat-content {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 16px;
+      padding: 8px 0;
 
       .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 8px;
+        width: 70px;
+        height: 70px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #fff;
+        flex-shrink: 0;
       }
 
       .stat-info {
         flex: 1;
 
-        .stat-value {
-          font-size: 24px;
-          font-weight: bold;
-          color: #303133;
-          margin-bottom: 5px;
-        }
-
         .stat-label {
           font-size: 14px;
           color: #909399;
+          margin-bottom: 8px;
+        }
+
+        .stat-value {
+          font-size: 22px;
+          font-weight: 700;
+          color: #303133;
+          line-height: 1.2;
         }
       }
     }
+
+    // 不同颜色的卡片
+    &.card-blue .stat-icon {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    &.card-green .stat-icon {
+      background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
+    }
+
+    &.card-orange .stat-icon {
+      background: linear-gradient(135deg, #f78ca0 0%, #f9748f 100%);
+    }
+
+    &.card-red .stat-icon {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
   }
 
+  // 操作按钮卡片
   .action-card {
     margin-bottom: 20px;
+    border-radius: 12px;
 
-    .action-buttons {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-      flex-wrap: wrap;
+    :deep(.el-card__body) {
+      padding: 24px;
     }
-  }
 
-  .info-card {
-    margin-bottom: 20px;
-
-    .ip-type-info {
-      h3 {
-        font-size: 16px;
-        font-weight: 600;
-        color: #303133;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-
-        li {
-          padding: 8px 0;
-          color: #606266;
-          font-size: 14px;
-        }
-      }
-    }
-  }
-
-  .scenarios-card {
-    margin-bottom: 20px;
-
-    .scenario-item {
-      text-align: center;
-      padding: 20px;
-      border: 1px solid #ebeef5;
+    .action-btn {
+      width: 100%;
+      height: 48px;
+      font-size: 15px;
+      font-weight: 500;
       border-radius: 8px;
       transition: all 0.3s;
 
       &:hover {
-        border-color: #409eff;
-        box-shadow: 0 2px 12px 0 rgba(64, 158, 255, 0.15);
         transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       }
 
-      h4 {
-        margin: 15px 0 10px;
-        font-size: 16px;
-        font-weight: 600;
-        color: #303133;
-      }
-
-      p {
-        margin: 0;
-        font-size: 13px;
-        color: #909399;
-        line-height: 1.6;
+      .el-icon {
+        margin-right: 6px;
       }
     }
   }
 
-  .usage-card {
+  // 使用说明卡片
+  .info-card {
+    margin-bottom: 20px;
+    border-radius: 12px;
+
     .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-weight: 600;
+      font-size: 16px;
+      color: #303133;
+    }
+
+    .usage-info {
+      p {
+        margin: 10px 0;
+        color: #606266;
+        font-size: 14px;
+        line-height: 1.8;
+
+        &:first-child {
+          margin-top: 0;
+        }
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+
+  // 使用统计卡片
+  .usage-card {
+    border-radius: 12px;
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 600;
+      font-size: 16px;
       color: #303133;
     }
 
@@ -414,33 +424,80 @@ onMounted(() => {
   }
 }
 
-// 浅色主题适配
+// ProxyHub 浅色主题配色
 :deep(.el-card) {
   background-color: #ffffff;
-  border: 1px solid #dcdfe6;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   &:hover {
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   }
 }
 
 :deep(.el-card__header) {
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #dcdfe6;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ebeef5;
   padding: 16px 20px;
 }
 
 :deep(.el-table) {
   color: #606266;
+  border-radius: 8px;
+  overflow: hidden;
 
   th {
     background-color: #f5f7fa;
     color: #303133;
+    font-weight: 600;
   }
 
   tr:hover > td {
     background-color: #f5f7fa;
+  }
+
+  .el-table__row--striped > td {
+    background-color: #fafafa;
+  }
+}
+
+:deep(.el-button--primary) {
+  background-color: #409eff;
+  border-color: #409eff;
+
+  &:hover {
+    background-color: #66b1ff;
+    border-color: #66b1ff;
+  }
+}
+
+:deep(.el-button--success) {
+  background-color: #67c23a;
+  border-color: #67c23a;
+
+  &:hover {
+    background-color: #85ce61;
+    border-color: #85ce61;
+  }
+}
+
+:deep(.el-button--warning) {
+  background-color: #e6a23c;
+  border-color: #e6a23c;
+
+  &:hover {
+    background-color: #ebb563;
+    border-color: #ebb563;
+  }
+}
+
+:deep(.el-button--info) {
+  background-color: #909399;
+  border-color: #909399;
+
+  &:hover {
+    background-color: #a6a9ad;
+    border-color: #a6a9ad;
   }
 }
 </style>
