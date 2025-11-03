@@ -5,7 +5,7 @@ import request from '../request';
  */
 export function getProfile() {
   return request({
-    url: '/user/profile',
+    url: '/users/profile',
     method: 'get',
   });
 }
@@ -15,7 +15,7 @@ export function getProfile() {
  */
 export function updateProfile(data: { nickname?: string; email?: string }) {
   return request({
-    url: '/user/profile',
+    url: '/users/profile',
     method: 'put',
     data,
   });
@@ -26,7 +26,7 @@ export function updateProfile(data: { nickname?: string; email?: string }) {
  */
 export function changePassword(data: { oldPassword: string; newPassword: string }) {
   return request({
-    url: '/user/change-password',
+    url: '/users/change-password',
     method: 'post',
     data,
   });
@@ -37,7 +37,7 @@ export function changePassword(data: { oldPassword: string; newPassword: string 
  */
 export function generateApiKey() {
   return request({
-    url: '/user/api-key/generate',
+    url: '/users/api-key/generate',
     method: 'post',
   });
 }
@@ -47,7 +47,7 @@ export function generateApiKey() {
  */
 export function resetApiKey() {
   return request({
-    url: '/user/api-key/reset',
+    url: '/users/api-key/reset',
     method: 'post',
   });
 }

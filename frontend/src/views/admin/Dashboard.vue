@@ -324,7 +324,7 @@ const pendingItems = ref([
     description: '有5笔充值申请待审核',
     count: 5,
     badgeType: 'warning',
-    action: '/admin/recharge-approval',
+    action: '/admin/recharges',
   },
   {
     id: 2,

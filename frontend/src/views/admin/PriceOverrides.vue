@@ -20,7 +20,7 @@
           <el-col :span="6">
             <div class="product-card">
               <div class="product-header">
-                <img src="/flags/1x1/kr.svg" class="flag-large" />
+                <img src="https://flagcdn.com/w80/kr.png" class="flag-large" />
                 <div class="product-title">
                   <h3>韩国</h3>
                   <span class="product-type">普通IP</span>
@@ -47,7 +47,7 @@
           <el-col :span="6">
             <div class="product-card">
               <div class="product-header">
-                <img src="/flags/1x1/kr.svg" class="flag-large" />
+                <img src="https://flagcdn.com/w80/kr.png" class="flag-large" />
                 <div class="product-title">
                   <h3>韩国</h3>
                   <span class="product-type native">原生IP</span>
@@ -74,7 +74,7 @@
           <el-col :span="6">
             <div class="product-card">
               <div class="product-header">
-                <img src="/flags/1x1/jp.svg" class="flag-large" />
+                <img src="https://flagcdn.com/w80/jp.png" class="flag-large" />
                 <div class="product-title">
                   <h3>日本</h3>
                   <span class="product-type">普通IP</span>
@@ -101,7 +101,7 @@
           <el-col :span="6">
             <div class="product-card">
               <div class="product-header">
-                <img src="/flags/1x1/jp.svg" class="flag-large" />
+                <img src="https://flagcdn.com/w80/jp.png" class="flag-large" />
                 <div class="product-title">
                   <h3>日本</h3>
                   <span class="product-type native">原生IP</span>
@@ -128,7 +128,7 @@
           <el-col :span="6">
             <div class="product-card">
               <div class="product-header">
-                <img src="/flags/1x1/sg.svg" class="flag-large" />
+                <img src="https://flagcdn.com/w80/sg.png" class="flag-large" />
                 <div class="product-title">
                   <h3>新加坡</h3>
                   <span class="product-type">普通IP</span>
@@ -155,7 +155,7 @@
           <el-col :span="6">
             <div class="product-card">
               <div class="product-header">
-                <img src="/flags/1x1/sg.svg" class="flag-large" />
+                <img src="https://flagcdn.com/w80/sg.png" class="flag-large" />
                 <div class="product-title">
                   <h3>新加坡</h3>
                   <span class="product-type native">原生IP</span>
