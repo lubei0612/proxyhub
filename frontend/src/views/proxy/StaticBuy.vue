@@ -173,7 +173,10 @@
               <!-- 选中的IP明细列表 -->
               <div class="selected-items-list">
                 <div v-for="item in selectedCountries" :key="`${item.name}-${item.city}`" class="selected-item">
-                  <span class="item-location">🌍 {{ item.name }} - {{ item.city }}</span>
+                  <span class="item-location">
+                    <span :class="`fi fi-${item.code.toLowerCase()}`" class="flag-icon"></span>
+                    {{ item.name }} - {{ item.city }}
+                  </span>
                   <span class="item-quantity">×{{ item.quantity }}</span>
                   <span class="item-price">${{ calculateItemPrice(item) }}</span>
                 </div>
@@ -802,7 +805,14 @@ onMounted(() => {
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            
+            .flag-icon {
+              width: 20px;
+              height: 15px;
+              border-radius: 2px;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+            }
           }
           
           .item-quantity {
