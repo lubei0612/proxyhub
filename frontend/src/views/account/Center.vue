@@ -142,7 +142,7 @@
               动态代理管理
             </el-button>
             <el-button type="info" @click="$router.push('/proxy/static/manage')" class="action-btn">
-              <el-icon><List /></el-icon>
+              <el-icon><Memo /></el-icon>
               静态IP管理
             </el-button>
             <el-button type="warning" @click="$router.push('/billing/orders')" class="action-btn">
@@ -240,7 +240,7 @@ import {
   Message,
   ShoppingCart,
   Connection,
-  List,
+  Memo,
   Document,
   ChatDotRound,
 } from '@element-plus/icons-vue';
