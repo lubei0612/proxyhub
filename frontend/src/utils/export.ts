@@ -224,3 +224,59 @@ export async function exportCredentials(
   return exportStaticProxies('txt', data);
 }
 
+/**
+ * Generic CSV export function for any data
+ * @param data - Array of objects to export
+ * @param headers - Column headers
+ * @param filename - Custom filename (optional)
+ */
+export function exportToCSV(
+  data: any[],
+  headers: string[],
+  filename?: string,
+): void {
+  if (!data || data.length === 0) {
+    throw new Error('没有可导出的数据');
+  }
+
+  try {
+    // Create CSV content
+    const csvRows = [
+      headers.join(','),
+      ...data.map((row) => {
+        return headers.map((header) => {
+          const value = row[header] ?? '';
+          return escapeCsvCell(String(value));
+        }).join(',');
+      }),
+    ];
+
+    const csvContent = csvRows.join('\n');
+    
+    // Generate filename if not provided
+    const finalFilename = filename || `export-${formatDateForFilename()}.csv`;
+    
+    // Download
+    downloadFile(csvContent, finalFilename, 'text/csv;charset=utf-8');
+  } catch (error) {
+    console.error('CSV export failed:', error);
+    throw new Error('CSV导出失败');
+  }
+}
+
+/**
+ * Format current date for filename
+ * @returns Formatted date string (YYYYMMDD-HHMMSS)
+ */
+export function formatDateForFilename(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  
+  return `${year}${month}${day}-${hours}${minutes}${seconds}`;
+}
+
