@@ -54,14 +54,14 @@
 
         <el-table-column label="用户邮箱" width="180">
           <template #default="{ row }">
-            <el-text type="primary">{{ row.userEmail }}</el-text>
+            <el-text type="primary">{{ row.user?.email || '-' }}</el-text>
           </template>
         </el-table-column>
 
         <el-table-column label="充值金额" width="120">
           <template #default="{ row }">
             <el-text type="success" style="font-size: 16px; font-weight: 600">
-              ${{ row.amount.toFixed(2) }}
+              ${{ parseFloat(row.amount).toFixed(2) }}
             </el-text>
           </template>
         </el-table-column>
@@ -150,10 +150,10 @@
           {{ currentRecharge.orderNo }}
         </el-descriptions-item>
         <el-descriptions-item label="用户邮箱">
-          {{ currentRecharge.userEmail }}
+          {{ currentRecharge.user?.email || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="充值金额">
-          ${{ currentRecharge.amount.toFixed(2) }}
+          ${{ parseFloat(currentRecharge.amount).toFixed(2) }}
         </el-descriptions-item>
         <el-descriptions-item label="支付方式">
           {{ getPaymentMethodText(currentRecharge.paymentMethod) }}
@@ -308,12 +308,11 @@ const confirmApprove = async () => {
     // 调用API批准充值
     await approveRecharge(currentRecharge.value.id.toString(), {
       approved: true,
-      remark: approveForm.value.remark || '审核通过',
+      remark: '审核通过',
     });
 
     ElMessage.success('批准成功！用户余额已更新。');
     approveDialogVisible.value = false;
-    approveForm.value.remark = '';
     loadData();
   } catch (error: any) {
     console.error('批准充值失败:', error);
@@ -362,7 +361,7 @@ const confirmReject = async () => {
 
 const viewDetail = (recharge: any) => {
   ElMessageBox.alert(
-    `订单号：${recharge.orderNo}\n用户：${recharge.userEmail}\n金额：$${recharge.amount}\n备注：${recharge.remark || '无'}`,
+    `订单号：${recharge.orderNo}\n用户：${recharge.user?.email || '-'}\n金额：$${parseFloat(recharge.amount).toFixed(2)}\n备注：${recharge.remark || '无'}`,
     '充值详情',
     { confirmButtonText: '关闭' }
   );
