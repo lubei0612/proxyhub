@@ -83,63 +83,20 @@
       </div>
     </el-card>
 
-    <!-- IP类型说明 -->
+    <!-- 使用说明 -->
     <el-card shadow="hover" class="info-card">
       <template #header>
         <div class="card-header">
-          <span>住宅IP类型说明</span>
+          <span>使用说明</span>
         </div>
       </template>
 
       <el-row :gutter="20">
-        <el-col :span="12">
-          <div class="ip-type-info">
-            <h3>
-              <el-icon color="#409eff"><Star /></el-icon>
-              普通IP（Shared）
-            </h3>
-            <ul>
-              <li>✓ 稳定可靠的住宅IP资源</li>
-              <li>✓ 适合大多数业务场景</li>
-              <li>✓ 性价比高</li>
-              <li>✓ 支持HTTP/HTTPS/SOCKS5协议</li>
-            </ul>
-          </div>
-        </el-col>
-
-        <el-col :span="12">
-          <div class="ip-type-info">
-            <h3>
-              <el-icon color="#f56c6c"><Trophy /></el-icon>
-              原生IP（Native）
-            </h3>
-            <ul>
-              <li>✓ 本地真实住宅IP</li>
-              <li>✓ 极低封禁率</li>
-              <li>✓ 适合高要求业务</li>
-              <li>✓ 支持流媒体解锁</li>
-            </ul>
-          </div>
-        </el-col>
-      </el-row>
-    </el-card>
-
-    <!-- 热门业务场景 -->
-    <el-card shadow="hover" class="scenarios-card">
-      <template #header>
-        <div class="card-header">
-          <span>热门业务场景</span>
-        </div>
-      </template>
-
-      <el-row :gutter="15">
-        <el-col :span="8" v-for="(scenario, index) in scenarios" :key="index">
-          <div class="scenario-item">
-            <el-icon :size="40" :color="scenario.color">
-              <component :is="scenario.icon" />
-            </el-icon>
-            <h4>{{ scenario.title }}</h4>
-            <p>{{ scenario.description }}</p>
+        <el-col :span="24">
+          <div class="usage-info">
+            <p>• 动态住宅代理按流量计费，流量用完后需要联系客服续费</p>
+            <p>• 支持HTTP/HTTPS/SOCKS5协议</p>
+            <p>• 联系客服: <el-link type="primary" href="https://t.me/lubei12" target="_blank">@lubei12</el-link></p>
           </div>
         </el-col>
       </el-row>
