@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { login, register, adminLogin, type LoginParams, type RegisterParams } from '@/api/modules/auth';
+import { getProfile } from '@/api/modules/user';
 
 export const useUserStore = defineStore('user', () => {
   // 状态
@@ -101,6 +102,19 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  // 获取最新用户信息（包括余额）
+  async function fetchUserInfo() {
+    try {
+      const response = await getProfile();
+      if (response.data) {
+        user.value = response.data;
+        localStorage.setItem('user', JSON.stringify(response.data));
+      }
+    } catch (error: any) {
+      console.error('获取用户信息失败:', error);
+    }
+  }
+
   return {
     token,
     user,
@@ -112,6 +126,7 @@ export const useUserStore = defineStore('user', () => {
     logout,
     updateUser,
     updateBalance,
+    fetchUserInfo,
   };
 });
 
