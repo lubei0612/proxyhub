@@ -158,23 +158,22 @@
       >
         <el-table-column type="selection" width="55" fixed />
 
-        <el-table-column label="IP地址" width="150" fixed>
-          <template #default="{ row }">
-            <el-text type="primary" copyable>{{ row.ip }}</el-text>
-          </template>
-        </el-table-column>
+        <el-table-column label="所属通道" width="120" prop="channel" />
 
-        <el-table-column label="端口" width="80" prop="port" />
-
-        <el-table-column label="账号" width="120" prop="username">
+        <el-table-column label="IP地址:端口:账号:密码" min-width="320" fixed>
           <template #default="{ row }">
-            <el-text copyable>{{ row.username }}</el-text>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="密码" width="120">
-          <template #default="{ row }">
-            <el-text copyable type="info">{{ row.password }}</el-text>
+            <div class="credentials-cell">
+              <el-text type="primary" class="credentials-text">
+                {{ getCredentials(row) }}
+              </el-text>
+              <el-button
+                size="small"
+                :icon="DocumentCopy"
+                circle
+                @click="handleCopyCredentials(row)"
+                title="复制凭证"
+              />
+            </div>
           </template>
         </el-table-column>
 
@@ -194,8 +193,6 @@
             </el-tag>
           </template>
         </el-table-column>
-
-        <el-table-column label="所属通道" width="120" prop="channel" />
 
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
@@ -315,9 +312,10 @@ import {
   Refresh,
   ArrowDown,
   Tickets,
+  DocumentCopy,
 } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
-import { exportToCSV, exportToTXT, formatDateForFilename } from '@/utils/export';
+import { exportStaticProxies } from '@/utils/export';
 
 // 筛选条件
 const filters = ref({
@@ -365,6 +363,28 @@ const renewDuration = ref(30);
 // 获取国旗URL
 const getFlagUrl = (code: string) => {
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+};
+
+// 获取凭证字符串 (IP:Port:Account:Password)
+const getCredentials = (proxy: any) => {
+  // 如果后端返回了credentials字段（虚拟字段），直接使用
+  if (proxy.credentials) {
+    return proxy.credentials;
+  }
+  // 否则前端拼接
+  return `${proxy.ip}:${proxy.port}:${proxy.username}:${proxy.password}`;
+};
+
+// 复制凭证到剪贴板
+const handleCopyCredentials = async (proxy: any) => {
+  try {
+    const credentials = getCredentials(proxy);
+    await navigator.clipboard.writeText(credentials);
+    ElMessage.success('已复制到剪贴板');
+  } catch (error: any) {
+    console.error('复制失败:', error);
+    ElMessage.error('复制失败，请手动复制');
+  }
 };
 
 // 处理国家变化
@@ -513,45 +533,35 @@ const handleSelectionChange = (selection: any[]) => {
 };
 
 // 批量导出
-const handleBatchExport = (format: 'csv' | 'txt') => {
+const handleBatchExport = async (format: 'csv' | 'txt') => {
   if (selectedProxies.value.length === 0) {
     ElMessage.warning('请先选择要导出的IP');
     return;
   }
 
   try {
-    const filename = `static-proxies_${formatDateForFilename()}`;
+    // 使用新的export工具
+    const exportData = selectedProxies.value.map((proxy) => ({
+      // 如果后端有credentials字段，直接使用；否则让export工具自动拼接
+      credentials: proxy.credentials || `${proxy.ip}:${proxy.port}:${proxy.username}:${proxy.password}`,
+      ip: proxy.ip,
+      port: proxy.port,
+      username: proxy.username,
+      password: proxy.password,
+      countryName: proxy.country,
+      cityName: proxy.city,
+      ipType: proxy.ipType, // 'shared' or 'premium'
+      channelName: proxy.channel,
+      expireTimeUtc: proxy.expireTime,
+      releaseTimeUtc: getReleaseTime(proxy.expireTime),
+      nodeId: proxy.nodeId,
+      remark: proxy.remark,
+    }));
 
-    if (format === 'csv') {
-      // CSV格式：所有字段
-      const headers = ['ip', 'port', 'username', 'password', 'country', 'city', 'ipType', 'expireTime'];
-      const data = selectedProxies.value.map((proxy) => ({
-        ip: proxy.ip,
-        port: proxy.port,
-        username: proxy.username,
-        password: proxy.password,
-        country: proxy.country,
-        city: proxy.city,
-        ipType: proxy.ipType === 'premium' ? '原生' : '普通',
-        expireTime: dayjs(proxy.expireTime).format('YYYY-MM-DD HH:mm:ss'),
-      }));
-      
-      exportToCSV(data, headers, filename);
-    } else {
-      // TXT格式：IP:Port:Username:Password
-      const data = selectedProxies.value.map((proxy) => ({
-        ipAddress: proxy.ip,
-        port: proxy.port,
-        username: proxy.username,
-        password: proxy.password,
-      }));
-      
-      exportToTXT(data, filename);
-    }
-
+    await exportStaticProxies(format, exportData);
     ElMessage.success(`已导出 ${selectedProxies.value.length} 个IP`);
   } catch (error: any) {
-    ElMessage.error('导出失败：' + error.message);
+    ElMessage.error(error.message || '导出失败');
   }
 };
 
@@ -676,6 +686,23 @@ onMounted(() => {
         height: 15px;
         margin-right: 8px;
         vertical-align: middle;
+      }
+    }
+
+    .credentials-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .credentials-text {
+        flex: 1;
+        font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+        font-size: 13px;
+        word-break: break-all;
+      }
+
+      .el-button {
+        flex-shrink: 0;
       }
     }
 

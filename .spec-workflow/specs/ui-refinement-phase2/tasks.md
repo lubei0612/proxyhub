@@ -50,7 +50,7 @@
   - _Requirements: Requirement 2 - Static Proxy Selection Payment Panel with Country Flags_
   - _Prompt: Role: Frontend UI Developer | Task: Implement the task for spec ui-refinement-phase2, first run spec-workflow-guide to get the workflow guide then implement the task: Update payment panel in StaticBuy.vue to display country flags. Replace emoji flags with <span :class="`fi fi-${item.code.toLowerCase()}`" class="flag-icon"></span>. Ensure flags display properly in "支付详情" section with format "[Flag] 国家 - 城市" (e.g., 🇺🇸 美国 - Chicago). Match 图六 (985Proxy payment panel). First edit tasks.md to mark this task as [-] in-progress, implement the flags, then mark as [x] complete. | Restrictions: Must use flag-icons library (not images or emojis), ensure flags scale properly with text, add fallback for missing flags, maintain existing payment panel functionality | Success: Country flags display correctly in payment panel, flags match countries accurately, payment panel matches 985Proxy design, fallback works for countries without flags_
 
-- [-] 6. Update Static Proxy Management IP Display Format
+- [x] 6. Update Static Proxy Management IP Display Format
   - Files:
     - `frontend/src/views/proxy/StaticManage.vue`
   - Purpose: Display IP credentials in "IP:Port:Account:Password" format with one-click copy
@@ -58,7 +58,7 @@
   - _Requirements: Requirement 3 - Static Proxy Management IP Display Format_
   - _Prompt: Role: Frontend Developer | Task: Implement the task for spec ui-refinement-phase2, first run spec-workflow-guide to get the workflow guide then implement the task: Modify StaticManage.vue table to display credentials field (from backend) in format "IP:端口:账号:密码". Add copy button/icon next to credentials field. Implement one-click copy using navigator.clipboard.writeText(). Show success message using ElMessage.success('已复制到剪贴板'). Update table columns to match 图八: 所属通道, IP地址:端口:账号:密码, 国家 (with flag), filter fields. First edit tasks.md to mark this task as [-] in-progress, implement the display and copy, then mark as [x] complete. | Restrictions: Must use new credentials field from backend, handle copy errors gracefully, maintain existing filter functionality, ensure table is horizontally scrollable for 节点ID and 备注 | Success: Credentials display in single field with correct format, copy button works and shows confirmation, table structure matches requirements, filters still work correctly_
 
-- [ ] 7. Implement Export Functionality in Static Proxy Management
+- [x] 7. Implement Export Functionality in Static Proxy Management
   - Files:
     - `frontend/src/views/proxy/StaticManage.vue`
   - Purpose: Add export buttons for CSV and TXT formats using export utility
@@ -68,7 +68,7 @@
 
 ## Phase 5: Authentication UI Enhancement
 
-- [ ] 8. Enhance Login Error Messages
+- [x] 8. Enhance Login Error Messages
   - Files:
     - `frontend/src/views/auth/Login.vue`
   - Purpose: Display specific error messages based on backend error codes

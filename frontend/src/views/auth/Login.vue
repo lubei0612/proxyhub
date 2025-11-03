@@ -57,6 +57,15 @@ const loginForm = reactive({
 
 const loading = ref(false);
 
+// 错误消息映射
+const errorMessages: Record<string, string> = {
+  AUTH_USER_NOT_FOUND: '该账号不存在，请先注册',
+  AUTH_INVALID_PASSWORD: '密码错误，请重试',
+  AUTH_INVALID_EMAIL_FORMAT: '请输入有效的邮箱地址',
+  AUTH_ACCOUNT_DISABLED: '账户已被禁用，请联系客服',
+  AUTH_ADMIN_REQUIRED: '需要管理员权限',
+};
+
 const handleLogin = async () => {
   if (!loginForm.email || !loginForm.password) {
     ElMessage.warning('请输入邮箱和密码');
@@ -75,6 +84,24 @@ const handleLogin = async () => {
       // 登录成功，跳转到仪表盘
       router.push('/dashboard');
     }
+  } catch (error: any) {
+    // 处理详细错误消息
+    let errorMsg = '登录失败，请重试';
+    
+    if (error.response?.data) {
+      const { errorCode, message } = error.response.data;
+      
+      // 优先使用映射的错误消息，如果没有映射则使用后端返回的message
+      if (errorCode && errorMessages[errorCode]) {
+        errorMsg = errorMessages[errorCode];
+      } else if (message) {
+        errorMsg = message;
+      }
+    } else if (error.message) {
+      errorMsg = error.message;
+    }
+    
+    ElMessage.error(errorMsg);
   } finally {
     loading.value = false;
   }
