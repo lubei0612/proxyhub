@@ -106,9 +106,9 @@ export const useUserStore = defineStore('user', () => {
   async function fetchUserInfo() {
     try {
       const response = await getProfile();
-      if (response.data) {
-        user.value = response.data;
-        localStorage.setItem('user', JSON.stringify(response.data));
+      if (response) {
+        user.value = response;
+        localStorage.setItem('user', JSON.stringify(response));
       }
     } catch (error: any) {
       console.error('获取用户信息失败:', error);
