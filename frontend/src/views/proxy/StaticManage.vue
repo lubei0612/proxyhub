@@ -316,6 +316,7 @@ import {
 } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { exportStaticProxies } from '@/utils/export';
+import { getStaticProxyList } from '@/api/modules/proxy';
 
 // 筛选条件
 const filters = ref({
@@ -449,64 +450,45 @@ const getReleaseTime = (expireTime: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    // Mock数据
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 构建查询参数
+    const params: any = {
+      page: pagination.value.page,
+      limit: pagination.value.pageSize,
+    };
 
-    const mockData = [
-      {
-        id: 1,
-        ip: '192.168.1.100',
-        port: 8080,
-        username: 'user_001',
-        password: 'pass_001',
-        country: '美国',
-        countryCode: 'US',
-        city: 'Los Angeles',
-        ipType: 'shared',
-        channel: '默认通道',
-        status: 'active',
-        expireTime: dayjs().add(25, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        nodeId: 'NODE_001',
-        remark: '',
-      },
-      {
-        id: 2,
-        ip: '192.168.1.101',
-        port: 8081,
-        username: 'user_002',
-        password: 'pass_002',
-        country: '英国',
-        countryCode: 'GB',
-        city: 'London',
-        ipType: 'premium',
-        channel: '电商专用',
-        status: 'expiring',
-        expireTime: dayjs().add(5, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        nodeId: 'NODE_002',
-        remark: '重要客户',
-      },
-      {
-        id: 3,
-        ip: '192.168.1.102',
-        port: 8082,
-        username: 'user_003',
-        password: 'pass_003',
-        country: '日本',
-        countryCode: 'JP',
-        city: 'Tokyo',
-        ipType: 'shared',
-        channel: '社交媒体',
-        status: 'active',
-        expireTime: dayjs().add(60, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        nodeId: 'NODE_003',
-        remark: '',
-      },
-    ];
+    // 添加筛选参数（只添加有值的）
+    if (filters.value.ip && filters.value.ip.trim()) {
+      params.ip = filters.value.ip.trim();
+    }
+    if (filters.value.channel) {
+      params.channel = filters.value.channel;
+    }
+    if (filters.value.country) {
+      params.country = filters.value.country;
+    }
+    if (filters.value.city) {
+      params.city = filters.value.city;
+    }
+    if (filters.value.nodeId && filters.value.nodeId.trim()) {
+      params.nodeId = filters.value.nodeId.trim();
+    }
+    if (filters.value.ipType) {
+      params.ipType = filters.value.ipType;
+    }
+    if (filters.value.status) {
+      params.status = filters.value.status;
+    }
 
-    proxyList.value = mockData;
-    pagination.value.total = mockData.length;
+    // 调用真实API
+    const response = await getStaticProxyList(params);
+    proxyList.value = response.list || [];
+    pagination.value.total = response.total || 0;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + error.message);
+    console.error('加载静态代理列表失败:', error);
+    ElMessage.error('加载失败：' + (error.message || '请稍后重试'));
+    // 失败时显示空列表
+    proxyList.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }

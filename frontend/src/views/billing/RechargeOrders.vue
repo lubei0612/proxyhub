@@ -253,6 +253,7 @@ import { ElMessage } from 'element-plus';
 import { Search, Refresh, Download, Document, ArrowDown } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { exportToCSV, formatDateForFilename } from '@/utils/export';
+import { getUserRecharges } from '@/api/modules/billing';
 
 // 筛选条件
 const filters = ref({
@@ -283,47 +284,42 @@ const currentOrder = ref<any>(null);
 const loadData = async () => {
   loading.value = true;
   try {
-    // TODO: 调用后端API
-    // const response = await getRechargeOrders({...});
-    
-    // 模拟数据
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    orderList.value = [
-      {
-        id: 1,
-        orderNo: 'RO202511021430001',
-        amount: 100.00,
-        paymentMethod: 'wechat',
-        status: 'approved',
-        remark: '微信支付',
-        createdAt: '2025-11-02 14:30:15',
-        updatedAt: '2025-11-02 14:35:20',
-      },
-      {
-        id: 2,
-        orderNo: 'RO202511021425002',
-        amount: 500.00,
-        paymentMethod: 'usdt',
-        status: 'pending',
-        remark: 'USDT地址：TXyzAbC123...',
-        createdAt: '2025-11-02 14:25:30',
-        updatedAt: null,
-      },
-      {
-        id: 3,
-        orderNo: 'RO202511021420003',
-        amount: 50.00,
-        paymentMethod: 'alipay',
-        status: 'rejected',
-        remark: '支付宝转账',
-        rejectReason: '转账凭证不清晰',
-        createdAt: '2025-11-02 14:20:10',
-        updatedAt: '2025-11-02 14:22:40',
-      },
-    ];
-    pagination.value.total = orderList.value.length;
+    // 构建查询参数
+    const params: any = {
+      page: pagination.value.page,
+      limit: pagination.value.pageSize,
+    };
+
+    // 添加筛选参数
+    if (filters.value.orderNo && filters.value.orderNo.trim()) {
+      params.orderNo = filters.value.orderNo.trim();
+    }
+    if (filters.value.status) {
+      params.status = filters.value.status;
+    }
+    if (filters.value.paymentMethod) {
+      params.method = filters.value.paymentMethod; // 后端使用method字段
+    }
+    if (filters.value.minAmount !== null) {
+      params.minAmount = filters.value.minAmount;
+    }
+    if (filters.value.maxAmount !== null) {
+      params.maxAmount = filters.value.maxAmount;
+    }
+    if (filters.value.dateRange && filters.value.dateRange.length === 2) {
+      params.startDate = filters.value.dateRange[0];
+      params.endDate = filters.value.dateRange[1];
+    }
+
+    // 调用真实API
+    const response = await getUserRecharges(params);
+    orderList.value = response.list || [];
+    pagination.value.total = response.total || 0;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + error.message);
+    console.error('加载充值订单失败:', error);
+    ElMessage.error('加载失败：' + (error.message || '请稍后重试'));
+    orderList.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }
