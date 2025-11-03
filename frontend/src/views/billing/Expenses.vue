@@ -1,35 +1,39 @@
 <template>
   <div class="expenses-container">
-    <h1>费用明细</h1>
+    <h1>消费记录</h1>
 
     <el-card shadow="hover" class="expenses-card">
       <template #header>
         <div class="card-header">
-          <span>消费记录</span>
-          <el-tag type="danger">总支出：${{ totalExpenses.toFixed(2) }}</el-tag>
+          <span>我的消费明细</span>
         </div>
       </template>
 
-      <!-- 筛选 -->
+      <!-- 筛选条件 -->
       <div class="filter-section">
         <el-row :gutter="15">
           <el-col :span="6">
-            <el-select v-model="filters.category" placeholder="消费类型" clearable>
+            <el-select
+              v-model="filters.type"
+              placeholder="消费类型"
+              clearable
+              @change="loadData"
+            >
               <el-option label="全部" value="" />
-              <el-option label="静态IP购买" value="static_proxy" />
-              <el-option label="动态代理购买" value="dynamic_proxy" />
+              <el-option label="购买代理IP" value="purchase" />
               <el-option label="续费" value="renewal" />
+              <el-option label="流量消费" value="traffic" />
             </el-select>
           </el-col>
 
           <el-col :span="8">
             <el-date-picker
               v-model="filters.dateRange"
-              type="datetimerange"
+              type="daterange"
               range-separator="至"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
-              style="width: 100%"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              @change="loadData"
             />
           </el-col>
 
@@ -38,104 +42,87 @@
               <el-icon><Search /></el-icon>
               搜索
             </el-button>
+          </el-col>
+
+          <el-col :span="4">
             <el-button @click="resetFilters">
               <el-icon><Refresh /></el-icon>
               重置
             </el-button>
           </el-col>
+
+          <el-col :span="2">
+            <el-button type="success" @click="exportData">
+              <el-icon><Download /></el-icon>
+              导出
+            </el-button>
+          </el-col>
         </el-row>
       </div>
 
-      <!-- 费用统计卡片 -->
-      <el-row :gutter="20" class="stats-row">
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon" style="background-color: #409eff">
-              <el-icon :size="30"><ShoppingCart /></el-icon>
+      <!-- 统计信息 -->
+      <div class="stats-section">
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <div class="stat-card">
+              <div class="stat-label">本月消费</div>
+              <div class="stat-value">${{ monthlyExpense.toFixed(2) }}</div>
             </div>
-            <div class="stat-info">
-              <div class="stat-label">本月支出</div>
-              <div class="stat-value">${{ monthlyExpenses.toFixed(2) }}</div>
+          </el-col>
+          <el-col :span="6">
+            <div class="stat-card">
+              <div class="stat-label">今日消费</div>
+              <div class="stat-value">${{ todayExpense.toFixed(2) }}</div>
             </div>
-          </div>
-        </el-col>
+          </el-col>
+          <el-col :span="6">
+            <div class="stat-card">
+              <div class="stat-label">总消费</div>
+              <div class="stat-value">${{ totalExpense.toFixed(2) }}</div>
+            </div>
+          </el-col>
+          <el-col :span="6">
+            <div class="stat-card">
+              <div class="stat-label">消费记录数</div>
+              <div class="stat-value">{{ pagination.total }}</div>
+            </div>
+          </el-col>
+        </el-row>
+      </div>
 
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon" style="background-color: #67c23a">
-              <el-icon :size="30"><Box /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">静态IP购买</div>
-              <div class="stat-value">${{ staticProxyExpenses.toFixed(2) }}</div>
-            </div>
-          </div>
-        </el-col>
+      <!-- 消费记录列表 -->
+      <el-table :data="expenseList" v-loading="loading" stripe style="width: 100%">
+        <el-table-column type="index" label="#" width="60" />
 
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon" style="background-color: #e6a23c">
-              <el-icon :size="30"><Connection /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">动态代理购买</div>
-              <div class="stat-value">${{ dynamicProxyExpenses.toFixed(2) }}</div>
-            </div>
-          </div>
-        </el-col>
-
-        <el-col :span="6">
-          <div class="stat-card">
-            <div class="stat-icon" style="background-color: #f56c6c">
-              <el-icon :size="30"><RefreshRight /></el-icon>
-            </div>
-            <div class="stat-info">
-              <div class="stat-label">续费支出</div>
-              <div class="stat-value">${{ renewalExpenses.toFixed(2) }}</div>
-            </div>
-          </div>
-        </el-col>
-      </el-row>
-
-      <!-- 费用列表 -->
-      <el-table :data="expenseList" v-loading="loading" style="width: 100%">
-        <el-table-column label="消费ID" width="150">
+        <el-table-column label="交易时间" width="180">
           <template #default="{ row }">
-            <el-text copyable>{{ row.expenseId }}</el-text>
+            {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="消费类型" width="130">
+        <el-table-column label="消费类型" width="150">
           <template #default="{ row }">
-            <el-tag :type="getCategoryColor(row.category)">
-              {{ getCategoryText(row.category) }}
+            <el-tag :type="getTypeTagType(row.type)">
+              {{ getTypeName(row.type) }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column label="金额" width="120">
+        <el-table-column label="描述" min-width="300">
           <template #default="{ row }">
-            <span class="amount">-${{ row.amount.toFixed(2) }}</span>
+            {{ row.description || row.remark }}
           </template>
         </el-table-column>
 
-        <el-table-column label="消费描述" min-width="300">
+        <el-table-column label="消费金额" width="150" align="right">
           <template #default="{ row }">
-            {{ row.description }}
+            <span class="expense-amount">-${{ row.amount.toFixed(2) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="关联订单" width="150">
+        <el-table-column label="余额" width="150" align="right">
           <template #default="{ row }">
-            <el-link type="primary" @click="viewOrder(row.orderId)">
-              {{ row.orderId }}
-            </el-link>
-          </template>
-        </el-table-column>
-
-        <el-table-column label="消费时间" width="180">
-          <template #default="{ row }">
-            {{ formatDate(row.createdAt) }}
+            ${{ (row.balanceAfter || 0).toFixed(2) }}
           </template>
         </el-table-column>
       </el-table>
@@ -158,137 +145,132 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import {
-  Search,
-  Refresh,
-  ShoppingCart,
-  Box,
-  Connection,
-  RefreshRight,
-} from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
+import { Search, Refresh, Download } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
+import { getUserTransactions } from '@/api/modules/billing';
+import { exportToCSV, formatDateForFilename } from '@/utils/export';
 
 const filters = ref({
-  category: '',
+  type: '',
   dateRange: null as any,
 });
 
 const expenseList = ref<any[]>([]);
 const loading = ref(false);
+
 const pagination = ref({
   page: 1,
   pageSize: 20,
   total: 0,
 });
 
-const totalExpenses = computed(() => {
-  return expenseList.value.reduce((sum, item) => sum + item.amount, 0);
-});
-
-const monthlyExpenses = computed(() => {
-  const now = dayjs();
+// 统计数据
+const monthlyExpense = computed(() => {
+  const startOfMonth = dayjs().startOf('month');
   return expenseList.value
-    .filter((item) => dayjs(item.createdAt).isSame(now, 'month'))
-    .reduce((sum, item) => sum + item.amount, 0);
+    .filter((item) => dayjs(item.createdAt).isAfter(startOfMonth))
+    .reduce((sum, item) => sum + (item.type === 'expense' ? item.amount : 0), 0);
 });
 
-const staticProxyExpenses = computed(() => {
+const todayExpense = computed(() => {
+  const startOfDay = dayjs().startOf('day');
   return expenseList.value
-    .filter((item) => item.category === 'static_proxy')
-    .reduce((sum, item) => sum + item.amount, 0);
+    .filter((item) => dayjs(item.createdAt).isAfter(startOfDay))
+    .reduce((sum, item) => sum + (item.type === 'expense' ? item.amount : 0), 0);
 });
 
-const dynamicProxyExpenses = computed(() => {
-  return expenseList.value
-    .filter((item) => item.category === 'dynamic_proxy')
-    .reduce((sum, item) => sum + item.amount, 0);
+const totalExpense = computed(() => {
+  return expenseList.value.reduce((sum, item) => sum + (item.type === 'expense' ? item.amount : 0), 0);
 });
 
-const renewalExpenses = computed(() => {
-  return expenseList.value
-    .filter((item) => item.category === 'renewal')
-    .reduce((sum, item) => sum + item.amount, 0);
-});
-
-const getCategoryText = (category: string) => {
-  const map: Record<string, string> = {
-    static_proxy: '静态IP购买',
-    dynamic_proxy: '动态代理购买',
-    renewal: '续费',
-  };
-  return map[category] || category;
-};
-
-const getCategoryColor = (category: string) => {
-  const map: Record<string, any> = {
-    static_proxy: 'success',
-    dynamic_proxy: 'warning',
-    renewal: 'info',
-  };
-  return map[category] || 'info';
-};
-
-const formatDate = (date: string) => {
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
-};
-
+// 加载数据
 const loadData = async () => {
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 构建查询参数
+    const params: any = {
+      page: pagination.value.page,
+      limit: pagination.value.pageSize,
+      type: 'expense', // 只查询支出类型
+    };
 
-    const mockData = [
-      {
-        id: 1,
-        expenseId: 'EXP20251102001',
-        category: 'static_proxy',
-        amount: 25,
-        description: '购买静态IP - 美国洛杉矶 × 5个 × 30天',
-        orderId: 'ORD20251102001',
-        createdAt: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 2,
-        expenseId: 'EXP20251101001',
-        category: 'renewal',
-        amount: 15,
-        description: '续费静态IP - 日本东京 × 3个 × 30天',
-        orderId: 'ORD20251101001',
-        createdAt: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 3,
-        expenseId: 'EXP20251031001',
-        category: 'dynamic_proxy',
-        amount: 50,
-        description: '购买动态代理流量包 - 10GB',
-        orderId: 'ORD20251031001',
-        createdAt: dayjs().subtract(2, 'day').format('YYYY-MM-DD HH:mm:ss'),
-      },
-    ];
+    if (filters.value.type) {
+      params.category = filters.value.type;
+    }
+    if (filters.value.dateRange && filters.value.dateRange.length === 2) {
+      params.startDate = filters.value.dateRange[0];
+      params.endDate = filters.value.dateRange[1];
+    }
 
-    expenseList.value = mockData;
-    pagination.value.total = mockData.length;
+    // 调用真实API
+    const response = await getUserTransactions(params);
+    expenseList.value = response.list || [];
+    pagination.value.total = response.total || 0;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + error.message);
+    console.error('加载消费记录失败:', error);
+    ElMessage.error('加载失败：' + (error.message || '请稍后重试'));
+    expenseList.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }
 };
 
+// 重置筛选
 const resetFilters = () => {
   filters.value = {
-    category: '',
+    type: '',
     dateRange: null,
   };
+  pagination.value.page = 1;
   loadData();
 };
 
-const viewOrder = (orderId: string) => {
-  ElMessageBox.alert(`订单详情：${orderId}`, '订单信息', {
-    confirmButtonText: '关闭',
-  });
+// 导出数据
+const exportData = () => {
+  if (expenseList.value.length === 0) {
+    ElMessage.warning('暂无数据可导出');
+    return;
+  }
+
+  const csvData = expenseList.value.map((item) => ({
+    '交易时间': formatDate(item.createdAt),
+    '消费类型': getTypeName(item.type),
+    '描述': item.description || item.remark,
+    '消费金额': `-$${item.amount.toFixed(2)}`,
+    '余额': `$${(item.balanceAfter || 0).toFixed(2)}`,
+  }));
+
+  exportToCSV(csvData, `消费记录_${formatDateForFilename()}.csv`);
+  ElMessage.success('导出成功！');
+};
+
+// 格式化日期
+const formatDate = (date: string) => {
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+};
+
+// 获取类型名称
+const getTypeName = (type: string) => {
+  const typeMap: Record<string, string> = {
+    purchase: '购买代理IP',
+    renewal: '续费',
+    traffic: '流量消费',
+    expense: '其他支出',
+  };
+  return typeMap[type] || type;
+};
+
+// 获取类型标签颜色
+const getTypeTagType = (type: string) => {
+  const typeTagMap: Record<string, any> = {
+    purchase: 'primary',
+    renewal: 'success',
+    traffic: 'warning',
+    expense: 'info',
+  };
+  return typeTagMap[type] || 'info';
 };
 
 onMounted(() => {
@@ -307,60 +289,56 @@ onMounted(() => {
 
   .expenses-card {
     .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       font-weight: 600;
       color: #303133;
     }
 
     .filter-section {
       margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #ebeef5;
     }
 
-    .stats-row {
-      margin-bottom: 30px;
+    .stats-section {
+      margin-bottom: 20px;
+      padding: 20px 0;
+      border-bottom: 1px solid #ebeef5;
 
       .stat-card {
-        display: flex;
-        align-items: center;
-        gap: 15px;
         padding: 20px;
-        background-color: #f5f7fa;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 8px;
+        text-align: center;
+        color: #fff;
 
-        .stat-icon {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #fff;
+        &:nth-child(2n) {
+          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
-        .stat-info {
-          flex: 1;
+        &:nth-child(3n) {
+          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
 
-          .stat-label {
-            font-size: 14px;
-            color: #909399;
-            margin-bottom: 8px;
-          }
+        &:nth-child(4n) {
+          background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
 
-          .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #303133;
-          }
+        .stat-label {
+          font-size: 14px;
+          margin-bottom: 10px;
+          opacity: 0.9;
+        }
+
+        .stat-value {
+          font-size: 28px;
+          font-weight: 600;
         }
       }
     }
 
-    .amount {
-      font-size: 16px;
-      font-weight: 600;
+    .expense-amount {
       color: #f56c6c;
+      font-weight: 600;
     }
 
     .pagination-container {
@@ -368,31 +346,6 @@ onMounted(() => {
       display: flex;
       justify-content: flex-end;
     }
-  }
-}
-
-:deep(.el-card) {
-  background-color: #ffffff;
-  border: 1px solid #dcdfe6;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-:deep(.el-card__header) {
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #dcdfe6;
-  padding: 16px 20px;
-}
-
-:deep(.el-table) {
-  color: #606266;
-
-  th {
-    background-color: #f5f7fa;
-    color: #303133;
-  }
-
-  tr:hover > td {
-    background-color: #f5f7fa;
   }
 }
 </style>

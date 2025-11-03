@@ -148,6 +148,14 @@ const routes: RouteRecordRaw[] = [
             },
           },
           {
+            path: 'expenses',
+            name: 'Expenses',
+            component: () => import('@/views/billing/Expenses.vue'),
+            meta: {
+              title: '消费记录',
+            },
+          },
+          {
             path: 'settlement',
             name: 'Settlement',
             component: () => import('@/views/billing/Settlement.vue'),
