@@ -5,7 +5,7 @@ import 'element-plus/dist/index.css';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import App from './App.vue';
 import router from './router';
-import i18n from './i18n';
+import i18n from './locales';
 
 // 导入浅色主题样式
 import './styles/variables.scss';

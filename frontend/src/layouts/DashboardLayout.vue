@@ -90,6 +90,7 @@
         </div>
         <div class="header-right">
           <span class="balance">余额: ${{ Number(userBalance).toFixed(2) }}</span>
+          <LanguageSwitcher />
           <el-dropdown @command="handleCommand">
             <span class="user-dropdown">
               {{ userEmail }}
@@ -120,6 +121,7 @@
 import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import { 
   DataAnalysis, 
   Connection, 

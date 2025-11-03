@@ -59,6 +59,7 @@
         </el-icon>
         <div class="admin-title">管理后台</div>
         <div class="admin-user">
+          <LanguageSwitcher />
           <el-avatar :size="32" />
           <span>{{ userStore.user?.email }}</span>
         </div>
@@ -75,6 +76,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import {
   DataLine,
   UserFilled,
