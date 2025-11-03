@@ -81,8 +81,11 @@ const handleLogin = async () => {
     });
     
     if (success) {
-      // 登录成功，跳转到仪表盘
-      router.push('/dashboard');
+      // 确保localStorage写入完成后再跳转
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // 使用replace而不是push，避免返回到login页
+      router.replace('/dashboard');
     }
   } catch (error: any) {
     // 处理详细错误消息

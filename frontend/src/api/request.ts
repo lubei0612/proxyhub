@@ -47,12 +47,16 @@ request.interceptors.response.use(
       
       switch (status) {
         case 401:
-          ElMessage.error('未授权，请重新登录');
-          // 清除token
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          // 跳转到登录页
-          window.location.href = '/login';
+          // 只在非登录页面时清除token并跳转
+          if (window.location.pathname !== '/login') {
+            ElMessage.error('未授权，请重新登录');
+            // 清除token
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('refresh_token');
+            // 跳转到登录页
+            window.location.href = '/login';
+          }
           break;
         case 403:
           ElMessage.error('没有权限访问');
