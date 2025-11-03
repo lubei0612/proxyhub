@@ -198,6 +198,7 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search, Check, Close } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
+import { approveRecharge, getAllRecharges } from '@/api/modules/billing';
 
 const filters = ref({
   status: 'pending',
@@ -261,45 +262,31 @@ const formatDate = (date: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 构建查询参数
+    const params: any = {
+      page: pagination.value.page,
+      limit: pagination.value.pageSize,
+    };
 
-    const mockData = [
-      {
-        id: 1,
-        orderNo: 'RCH20251102001',
-        userEmail: 'user@example.com',
-        amount: 500,
-        paymentMethod: 'usdt',
-        status: 'pending',
-        remark: 'USDT地址: TXxxxxxxxxx, 交易哈希: 0xabc123...',
-        createdAt: dayjs().subtract(10, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 2,
-        orderNo: 'RCH20251102002',
-        userEmail: 'test@example.com',
-        amount: 200,
-        paymentMethod: 'wechat',
-        status: 'pending',
-        remark: '',
-        createdAt: dayjs().subtract(30, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 3,
-        orderNo: 'RCH20251101001',
-        userEmail: 'user@example.com',
-        amount: 100,
-        paymentMethod: 'alipay',
-        status: 'approved',
-        remark: '',
-        createdAt: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-      },
-    ];
+    if (filters.value.status) {
+      params.status = filters.value.status;
+    }
+    if (filters.value.paymentMethod) {
+      params.method = filters.value.paymentMethod;
+    }
+    if (filters.value.email && filters.value.email.trim()) {
+      params.email = filters.value.email.trim();
+    }
 
-    rechargeList.value = mockData.filter((item) => item.status === filters.value.status);
-    pagination.value.total = rechargeList.value.length;
+    // 调用真实API
+    const response = await getAllRecharges(params);
+    rechargeList.value = response.data || response.list || [];
+    pagination.value.total = response.total || 0;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + error.message);
+    console.error('加载充值记录失败:', error);
+    ElMessage.error('加载失败：' + (error.message || '请稍后重试'));
+    rechargeList.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }
@@ -311,17 +298,26 @@ const handleApprove = (recharge: any) => {
 };
 
 const confirmApprove = async () => {
+  if (!currentRecharge.value) {
+    return;
+  }
+
   try {
     approving.value = true;
     
-    // TODO: 调用API批准充值
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 调用API批准充值
+    await approveRecharge(currentRecharge.value.id.toString(), {
+      approved: true,
+      remark: approveForm.value.remark || '审核通过',
+    });
 
     ElMessage.success('批准成功！用户余额已更新。');
     approveDialogVisible.value = false;
+    approveForm.value.remark = '';
     loadData();
   } catch (error: any) {
-    ElMessage.error('批准失败：' + error.message);
+    console.error('批准充值失败:', error);
+    ElMessage.error('批准失败：' + (error.message || '请稍后重试'));
   } finally {
     approving.value = false;
   }
@@ -339,17 +335,26 @@ const confirmReject = async () => {
     return;
   }
 
+  if (!currentRecharge.value) {
+    return;
+  }
+
   try {
     rejecting.value = true;
     
-    // TODO: 调用API拒绝充值
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 调用API拒绝充值
+    await approveRecharge(currentRecharge.value.id.toString(), {
+      approved: false,
+      remark: rejectForm.value.reason,
+    });
 
     ElMessage.success('已拒绝该充值申请');
     rejectDialogVisible.value = false;
+    rejectForm.value.reason = '';
     loadData();
   } catch (error: any) {
-    ElMessage.error('操作失败：' + error.message);
+    console.error('拒绝充值失败:', error);
+    ElMessage.error('操作失败：' + (error.message || '请稍后重试'));
   } finally {
     rejecting.value = false;
   }
