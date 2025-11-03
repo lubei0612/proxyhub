@@ -157,7 +157,7 @@ export class StaticProxyService {
           });
 
           const savedIP = await queryRunner.manager.save(StaticProxy, mockIP);
-          allocatedIPs.push(...(Array.isArray(savedIP) ? savedIP : [savedIP]));
+          allocatedIPs.push(savedIP);
         }
 
         purchaseDetails.push({
