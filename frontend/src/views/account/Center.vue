@@ -63,7 +63,7 @@
                 </div>
                 <div class="balance-info">
                   <div class="balance-label">账户余额</div>
-                  <div class="balance-value">${{ userInfo.balance?.toFixed(2) || '0.00' }}</div>
+                  <div class="balance-value">${{ Number(userInfo.balance || 0).toFixed(2) }}</div>
                   <div class="balance-note">可用于购买代理IP</div>
                 </div>
               </div>
@@ -72,11 +72,11 @@
             <el-col :span="12">
               <div class="balance-item">
                 <div class="balance-icon" style="background-color: #67c23a">
-                  <el-icon :size="40"><Gift /></el-icon>
+                  <el-icon :size="40"><Present /></el-icon>
                 </div>
                 <div class="balance-info">
                   <div class="balance-label">赠送余额</div>
-                  <div class="balance-value">${{ userInfo.giftBalance?.toFixed(2) || '0.00' }}</div>
+                  <div class="balance-value">${{ Number(userInfo.giftBalance || 0).toFixed(2) }}</div>
                   <div class="balance-note">活动赠送，不可提现</div>
                 </div>
               </div>
@@ -235,7 +235,7 @@ import {
   Edit,
   Wallet,
   Money,
-  Gift,
+  Present,
   Lock,
   Message,
   ShoppingCart,
