@@ -418,7 +418,7 @@ const handleSubmit = async () => {
 
     // 购买成功
     ElMessage.success({
-      message: `🎉 购买成功！已分配 ${response.data.order.totalQuantity} 个IP，订单号：${response.data.order.orderNo}`,
+      message: `🎉 购买成功！已分配 ${response.order.totalQuantity} 个IP，订单号：${response.order.orderNo}`,
       duration: 5000,
       showClose: true,
     });
