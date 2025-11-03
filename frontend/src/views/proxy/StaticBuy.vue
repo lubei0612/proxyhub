@@ -230,7 +230,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
   Connection,
@@ -244,8 +244,8 @@ import {
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
 
-// 国家数据（按大洲分类）
-const countryData = {
+// 国家数据（按大洲分类）- 使用 reactive 使其响应式
+const countryData = reactive({
   'north-america': [
     { code: 'US', name: '美国', city: 'Los Angeles', available: 150, quantity: 0 },
     { code: 'US', name: '美国', city: 'New York', available: 200, quantity: 0 },
@@ -280,7 +280,7 @@ const countryData = {
     { code: 'TH', name: '泰国', city: 'Bangkok', available: 65, quantity: 0 },
     { code: 'VN', name: '越南', city: 'Ho Chi Minh', available: 55, quantity: 0 },
   ],
-};
+});
 
 const userStore = useUserStore();
 
@@ -353,9 +353,16 @@ const getFlagUrl = (code: string) => {
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 };
 
-// 更新选择
-const updateSelection = () => {
-  // 触发响应式更新
+// 更新选择（quantity变化时触发）
+const updateSelection = (value: number, oldValue: number) => {
+  // 由于使用了 reactive，Vue 会自动追踪变化
+  // 这里可以添加额外的逻辑，如日志记录
+  console.log('数量变化:', {
+    新值: value,
+    旧值: oldValue,
+    已选IP总数: totalSelectedCount.value,
+    总价: totalPrice.value.toFixed(2)
+  });
 };
 
 // 提交订单
