@@ -54,11 +54,11 @@
           <div class="section">
             <h3>IP购买时长</h3>
             <el-radio-group v-model="duration" class="duration-group">
-              <el-radio-button :label="30">30天 - ${{ getBasePrice() }}/个</el-radio-button>
-              <el-radio-button :label="60">60天 - ${{ (getBasePrice() * 2).toFixed(2) }}/个</el-radio-button>
-              <el-radio-button :label="90">90天 - ${{ (getBasePrice() * 3).toFixed(2) }}/个</el-radio-button>
-              <el-radio-button :label="180">180天 - ${{ (getBasePrice() * 6).toFixed(2) }}/个</el-radio-button>
-              <el-radio-button :label="360">360天 - ${{ (getBasePrice() * 12).toFixed(2) }}/个</el-radio-button>
+              <el-radio-button :label="30">30天</el-radio-button>
+              <el-radio-button :label="60">60天</el-radio-button>
+              <el-radio-button :label="90">90天</el-radio-button>
+              <el-radio-button :label="180">180天</el-radio-button>
+              <el-radio-button :label="360">360天</el-radio-button>
             </el-radio-group>
           </div>
 
@@ -164,113 +164,64 @@
             <p class="empty-hint">在左侧选择国家和城市，设置购买数量</p>
           </div>
 
-          <!-- 已选择IP时 -->
-          <div v-else class="payment-details">
-            <!-- 订单明细 -->
-            <div class="order-details">
-              <h4>订单明细</h4>
-              <div class="order-items">
-                <div v-for="(item, index) in selectedCountries" :key="index" class="order-item">
-                  <div class="item-header">
-                    <div class="item-location">
-                      <img :src="getFlagUrl(item.code)" :alt="item.name" class="flag-sm" />
-                      <span class="location-name">{{ item.name }} - {{ item.city }}</span>
-                    </div>
-                    <div class="item-count">{{ item.quantity }} 个</div>
-                  </div>
-                  <div class="item-footer">
-                    <span class="item-price-label">${{ getUnitPrice(item) }}/月 × {{ item.quantity }}个 × {{ duration / 30 }}月</span>
-                    <span class="item-price-value">${{ calculateItemPrice(item) }}</span>
-                  </div>
-                </div>
+          <!-- 已选择IP时 - 985proxy风格 -->
+          <div v-else class="payment-details-985">
+            <!-- 支付详情 -->
+            <div class="payment-info-section">
+              <h4>支付详情</h4>
+              
+              <div class="info-row">
+                <span class="info-label">总IP数</span>
+                <span class="info-value">{{ totalSelectedCount }} IPs</span>
+              </div>
+              
+              <div class="info-row">
+                <span class="info-label">有效时间</span>
+                <span class="info-value">{{ duration }}天</span>
+              </div>
+              
+              <div class="info-row">
+                <span class="info-label">总计费用</span>
+                <span class="info-value">${{ totalPrice.toFixed(2) }}</span>
+              </div>
+              
+              <div class="info-row promo">
+                <span class="info-label">总计优惠</span>
+                <el-link type="primary" :underline="false">使用优惠码</el-link>
+                <span class="info-value">$ 0.00</span>
               </div>
             </div>
 
             <el-divider />
 
-            <!-- 价格汇总 -->
-            <div class="price-summary">
-              <div class="summary-row">
-                <span class="label">IP类型：</span>
-                <span class="value">{{ ipType === 'shared' ? '普通IP' : '原生IP' }}</span>
-              </div>
-              <div class="summary-row">
-                <span class="label">时长：</span>
-                <span class="value">{{ duration }}天</span>
-              </div>
-              <div class="summary-row">
-                <span class="label">总数量：</span>
-                <span class="value">{{ totalSelectedCount }} 个</span>
-              </div>
-              <div class="summary-row highlight">
-                <span class="label">小计（USD）：</span>
-                <span class="value total">${{ totalPrice.toFixed(2) }}</span>
-              </div>
-              <div class="summary-row">
-                <span class="label">折合（CNY）：</span>
-                <span class="value">¥{{ (totalPrice * exchangeRate).toFixed(2) }}</span>
-              </div>
+            <!-- 支付费用 -->
+            <div class="payment-total">
+              <div class="total-label">支付费用</div>
+              <div class="total-amount">${{ totalPrice.toFixed(2) }}</div>
             </div>
 
             <el-divider />
 
             <!-- 支付方式 -->
-            <div class="payment-method">
-              <h4>支付方式</h4>
-              <el-radio-group v-model="paymentMethod" class="payment-options">
-                <el-radio label="balance">
-                  <div class="payment-option-content">
-                    <el-icon><Wallet /></el-icon>
-                    <div>
-                      <div>账户余额</div>
-                      <div class="balance-amount">${{ userBalance.toFixed(2) }}</div>
-                    </div>
-                  </div>
-                </el-radio>
-                <el-radio label="wechat">
-                  <div class="payment-option-content">
-                    <el-icon color="#07c160"><ChatDotRound /></el-icon>
-                    <span>微信支付</span>
-                  </div>
-                </el-radio>
-                <el-radio label="alipay">
-                  <div class="payment-option-content">
-                    <el-icon color="#1677ff"><Money /></el-icon>
-                    <span>支付宝</span>
-                  </div>
-                </el-radio>
-                <el-radio label="usdt">
-                  <div class="payment-option-content">
-                    <el-icon color="#26a17b"><CreditCard /></el-icon>
-                    <span>USDT</span>
-                  </div>
-                </el-radio>
-              </el-radio-group>
+            <div class="payment-method-section">
+              <div class="method-label">支付方式</div>
+              <el-button
+                type="primary"
+                size="large"
+                class="wallet-pay-button"
+                :loading="submitting"
+                :disabled="!canSubmit"
+                @click="handleSubmit"
+              >
+                <el-icon><Wallet /></el-icon>
+                <span>钱包余额支付</span>
+              </el-button>
+              
+              <div class="wallet-balance">
+                <span>钱包余额</span>
+                <span class="balance-value">${{ userBalance.toFixed(2) }}</span>
+              </div>
             </div>
-
-            <!-- 余额不足提示 -->
-            <el-alert
-              v-if="paymentMethod === 'balance' && totalPrice > userBalance"
-              type="warning"
-              :closable="false"
-              show-icon
-              class="balance-warning"
-            >
-              余额不足，请先充值
-            </el-alert>
-
-            <!-- 提交按钮 -->
-            <el-button
-              type="primary"
-              size="large"
-              :loading="submitting"
-              :disabled="!canSubmit"
-              @click="handleSubmit"
-              class="submit-btn"
-            >
-              <el-icon><Check /></el-icon>
-              立即购买
-            </el-button>
           </div>
         </el-card>
       </el-col>
@@ -729,7 +680,96 @@ onMounted(() => {
       }
     }
 
-    // 支付详情
+    // 支付详情 - 985proxy风格
+    .payment-details-985 {
+      padding: 10px 0;
+
+      h4 {
+        margin: 0 0 20px 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: #303133;
+      }
+
+      .payment-info-section {
+        .info-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 16px;
+
+          .info-label {
+            font-size: 14px;
+            color: #606266;
+          }
+
+          .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #303133;
+          }
+
+          &.promo {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
+            align-items: center;
+          }
+        }
+      }
+
+      .payment-total {
+        text-align: center;
+        padding: 20px 0;
+
+        .total-label {
+          font-size: 14px;
+          color: #909399;
+          margin-bottom: 10px;
+        }
+
+        .total-amount {
+          font-size: 36px;
+          font-weight: bold;
+          color: #409eff;
+        }
+      }
+
+      .payment-method-section {
+        .method-label {
+          font-size: 14px;
+          color: #606266;
+          margin-bottom: 15px;
+        }
+
+        .wallet-pay-button {
+          width: 100%;
+          height: 50px;
+          font-size: 16px;
+          margin-bottom: 15px;
+
+          .el-icon {
+            margin-right: 8px;
+          }
+        }
+
+        .wallet-balance {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 0;
+          font-size: 14px;
+          color: #606266;
+
+          .balance-value {
+            font-weight: 600;
+            color: #303133;
+          }
+        }
+      }
+    }
+
+    // 旧版支付详情（保留作为备份）
     .payment-details {
       .order-details {
         h4 {
