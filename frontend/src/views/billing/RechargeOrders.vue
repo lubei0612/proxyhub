@@ -313,7 +313,12 @@ const loadData = async () => {
 
     // 调用真实API
     const response = await getUserRecharges(params);
-    orderList.value = response.list || [];
+    // 映射后端字段名：method -> paymentMethod，data -> list
+    const list = response.data || response.list || [];
+    orderList.value = list.map((item: any) => ({
+      ...item,
+      paymentMethod: item.method || item.paymentMethod, // 支持两种字段名
+    }));
     pagination.value.total = response.total || 0;
   } catch (error: any) {
     console.error('加载充值订单失败:', error);
