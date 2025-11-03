@@ -1,7 +1,7 @@
 <template>
   <el-dropdown @command="handleCommand" trigger="click">
     <span class="language-switcher">
-      <el-icon><Globe /></el-icon>
+      <el-icon><Switch /></el-icon>
       <span class="language-text">{{ currentLanguageName }}</span>
       <el-icon class="el-icon--right"><ArrowDown /></el-icon>
     </span>
@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Globe, ArrowDown, Check } from '@element-plus/icons-vue';
+import { Switch, ArrowDown, Check } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
 const { locale } = useI18n();
