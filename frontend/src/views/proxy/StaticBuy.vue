@@ -18,33 +18,41 @@
           <!-- IP类型选择 -->
           <div class="section">
             <h3>住宅IP类型</h3>
-            <el-radio-group v-model="ipType" size="large" class="ip-type-group">
-              <el-radio-button label="shared">
-                <div class="radio-content">
-                  <el-icon><Connection /></el-icon>
-                  <div>
-                    <div class="radio-title">普通</div>
-                    <div class="radio-desc">稳定可靠，性价比高</div>
-                  </div>
+            <div class="ip-type-cards">
+              <div 
+                class="ip-type-card"
+                :class="{ 'selected': ipType === 'shared' }"
+                @click="ipType = 'shared'"
+              >
+                <div class="card-icon normal">
+                  <el-icon :size="28"><Connection /></el-icon>
                 </div>
-              </el-radio-button>
-              <el-radio-button label="premium">
-                <div class="radio-content">
-                  <el-icon><Star /></el-icon>
-                  <div>
-                    <div class="radio-title">原生</div>
-                    <div class="radio-desc">电子商务，流媒体优选</div>
-                  </div>
+                <div class="card-content">
+                  <div class="card-title">普通</div>
+                  <div class="card-desc">经过我们严格的高质量筛选程序，适合入门级广泛的商务场景。</div>
                 </div>
-              </el-radio-button>
-            </el-radio-group>
+              </div>
+              <div 
+                class="ip-type-card"
+                :class="{ 'selected': ipType === 'premium' }"
+                @click="ipType = 'premium'"
+              >
+                <div class="card-icon native">
+                  <el-icon :size="28"><Star /></el-icon>
+                </div>
+                <div class="card-content">
+                  <div class="card-title">原生</div>
+                  <div class="card-desc">电子商务，旅游和社交媒体，领域最稳/需求最旺盛的IP。</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <el-divider />
 
           <!-- 时长选择 -->
           <div class="section">
-            <h3>选择时长</h3>
+            <h3>IP购买时长</h3>
             <el-radio-group v-model="duration" class="duration-group">
               <el-radio-button :label="30">30天 - ${{ getBasePrice() }}/个</el-radio-button>
               <el-radio-button :label="60">60天 - ${{ (getBasePrice() * 2).toFixed(2) }}/个</el-radio-button>
@@ -469,22 +477,92 @@ onMounted(() => {
         color: #303133;
       }
 
-      // IP类型选择
-      .ip-type-group {
-        display: flex;
+      // IP类型选择 - 大卡片样式
+      .ip-type-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 15px;
-        width: 100%;
+
+        .ip-type-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 15px;
+          padding: 20px;
+          border: 2px solid #dcdfe6;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s;
+          background: #ffffff;
+
+          &:hover {
+            border-color: #409eff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+          }
+
+          &.selected {
+            border-color: #409eff;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f4ff 100%);
+            box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+          }
+
+          .card-icon {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            &.normal {
+              background: linear-gradient(135deg, #e1f3d8 0%, #d4f0c4 100%);
+              color: #67c23a;
+            }
+
+            &.native {
+              background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%);
+              color: #409eff;
+            }
+          }
+
+          .card-content {
+            flex: 1;
+
+            .card-title {
+              font-size: 16px;
+              font-weight: 600;
+              color: #303133;
+              margin-bottom: 8px;
+            }
+
+            .card-desc {
+              font-size: 13px;
+              color: #606266;
+              line-height: 1.6;
+            }
+          }
+        }
+      }
+
+      // 时长选择 - 水平按钮组
+      .duration-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
 
         :deep(.el-radio-button) {
+          margin-right: 0;
           flex: 1;
-          border-radius: 8px;
-          overflow: hidden;
+          min-width: 140px;
 
           .el-radio-button__inner {
             width: 100%;
-            padding: 20px;
-            border: 2px solid #dcdfe6;
-            border-radius: 8px;
+            border-radius: 6px;
+            text-align: center;
+            padding: 12px 16px;
+            font-size: 14px;
+            border: 1px solid #dcdfe6;
             transition: all 0.3s;
 
             &:hover {
@@ -495,47 +573,9 @@ onMounted(() => {
 
           &.is-active .el-radio-button__inner {
             border-color: #409eff;
-            background-color: #e6f4ff;
-            color: #409eff;
-          }
-        }
-
-        .radio-content {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-
-          .el-icon {
-            font-size: 28px;
-          }
-
-          .radio-title {
-            font-size: 16px;
+            background-color: #409eff;
+            color: #ffffff;
             font-weight: 600;
-            margin-bottom: 4px;
-          }
-
-          .radio-desc {
-            font-size: 12px;
-            color: #909399;
-            line-height: 1.4;
-          }
-        }
-      }
-
-      // 时长选择
-      .duration-group {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-
-        :deep(.el-radio-button) {
-          margin-right: 0;
-
-          .el-radio-button__inner {
-            width: 100%;
-            border-radius: 6px;
-            text-align: left;
           }
         }
       }
@@ -545,6 +585,27 @@ onMounted(() => {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+
+        :deep(.el-radio-button) {
+          .el-radio-button__inner {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid #dcdfe6;
+            transition: all 0.3s;
+
+            &:hover {
+              border-color: #409eff;
+              background-color: #f0f7ff;
+            }
+          }
+
+          &.is-active .el-radio-button__inner {
+            border-color: #409eff;
+            background-color: #409eff;
+            color: #ffffff;
+            font-weight: 600;
+          }
+        }
       }
 
       // 国家卡片网格（4列）
