@@ -27,7 +27,7 @@ export class BillingController {
     @CurrentUser() user: any,
     @Body() data: { amount: number; method: string },
   ) {
-    return this.billingService.createRecharge(user.userId, data.amount, data.method);
+    return this.billingService.createRecharge(user.id, data.amount, data.method);
   }
 
   /**
@@ -39,7 +39,7 @@ export class BillingController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
   ) {
-    return this.billingService.getUserRecharges(user.userId, page, limit);
+    return this.billingService.getUserRecharges(user.id, page, limit);
   }
 
   /**
@@ -54,7 +54,7 @@ export class BillingController {
     @Query('category') category?: string,
   ) {
     const filters = { type, category };
-    return this.billingService.getUserTransactions(user.userId, page, limit, filters);
+    return this.billingService.getUserTransactions(user.id, page, limit, filters);
   }
 
   /**

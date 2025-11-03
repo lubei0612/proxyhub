@@ -28,7 +28,7 @@ export class OrderController {
     @Query('type') type?: string,
   ) {
     const filters = { status, type };
-    return this.orderService.getUserOrders(user.userId, page, limit, filters);
+    return this.orderService.getUserOrders(user.id, page, limit, filters);
   }
 
   /**
@@ -39,7 +39,7 @@ export class OrderController {
     @CurrentUser() user: any,
     @Param('id') orderId: string,
   ) {
-    return this.orderService.getOrderDetail(orderId, user.userId);
+    return this.orderService.getOrderDetail(orderId, user.id);
   }
 
   /**

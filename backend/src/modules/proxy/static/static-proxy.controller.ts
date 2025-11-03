@@ -29,7 +29,7 @@ export class StaticProxyController {
     @Query('status') status?: string,
   ) {
     const filters = status ? { status } : undefined;
-    return this.staticProxyService.getUserProxies(user.userId, page, limit, filters);
+    return this.staticProxyService.getUserProxies(user.id, page, limit, filters);
   }
 
   /**
@@ -40,7 +40,7 @@ export class StaticProxyController {
     @CurrentUser() user: any,
     @Body() dto: PurchaseStaticProxyDto,
   ) {
-    return this.staticProxyService.purchaseStaticProxy(user.userId, dto);
+    return this.staticProxyService.purchaseStaticProxy(user.id, dto);
   }
 
   /**
@@ -51,7 +51,7 @@ export class StaticProxyController {
     @CurrentUser() user: any,
     @Param('id') proxyId: string,
   ) {
-    return this.staticProxyService.toggleAutoRenew(proxyId, user.userId);
+    return this.staticProxyService.toggleAutoRenew(proxyId, user.id);
   }
 
   /**
@@ -63,7 +63,7 @@ export class StaticProxyController {
     @Param('id') proxyId: string,
     @Body() data: { remark: string },
   ) {
-    return this.staticProxyService.updateRemark(proxyId, user.userId, data.remark);
+    return this.staticProxyService.updateRemark(proxyId, user.id, data.remark);
   }
 
   /**

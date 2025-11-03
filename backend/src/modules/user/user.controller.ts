@@ -41,7 +41,7 @@ export class UserController {
     @CurrentUser() user: any,
     @Body() data: { nickname?: string; email?: string },
   ) {
-    return this.userService.updateProfile(user.userId, data);
+    return this.userService.updateProfile(user.id, data);
   }
 
   /**
@@ -54,7 +54,7 @@ export class UserController {
     @Body() data: { oldPassword: string; newPassword: string },
   ) {
     return this.userService.changePassword(
-      user.userId,
+      user.id,
       data.oldPassword,
       data.newPassword,
     );
@@ -66,7 +66,7 @@ export class UserController {
   @Post('api-key/generate')
   @HttpCode(HttpStatus.OK)
   async generateApiKey(@CurrentUser() user: any) {
-    return this.userService.generateApiKey(user.userId);
+    return this.userService.generateApiKey(user.id);
   }
 
   /**
@@ -75,7 +75,7 @@ export class UserController {
   @Post('api-key/reset')
   @HttpCode(HttpStatus.OK)
   async resetApiKey(@CurrentUser() user: any) {
-    return this.userService.resetApiKey(user.userId);
+    return this.userService.resetApiKey(user.id);
   }
 }
 
