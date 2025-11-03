@@ -89,7 +89,7 @@
           <span class="welcome">欢迎回来，{{ userName }}！</span>
         </div>
         <div class="header-right">
-          <span class="balance">余额: ${{ userBalance.toFixed(2) }}</span>
+          <span class="balance">余额: ${{ Number(userBalance).toFixed(2) }}</span>
           <el-dropdown @command="handleCommand">
             <span class="user-dropdown">
               {{ userEmail }}

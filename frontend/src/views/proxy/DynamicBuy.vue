@@ -23,11 +23,15 @@
           <el-tag v-if="pkg.isHot" class="hot-tag" type="danger" effect="dark">热门</el-tag>
           
           <div class="package-name">{{ pkg.name }}</div>
-          <div class="package-price">
+          <div class="package-price" v-if="!pkg.isEnterprise">
             <span class="amount">${{ pkg.price }}</span>
             <span class="period">/ {{ pkg.period }}</span>
           </div>
-          <div class="package-unit-price">${{ pkg.unitPrice }}/GB</div>
+          <div class="package-price enterprise" v-else>
+            <span class="amount">{{ pkg.price }}</span>
+          </div>
+          <div class="package-unit-price" v-if="!pkg.isEnterprise">${{ pkg.unitPrice }}/GB</div>
+          <div class="package-unit-price enterprise" v-else>{{ pkg.unitPrice }}</div>
           
           <el-divider />
           
@@ -55,57 +59,10 @@
             class="buy-button"
             @click="contactService"
           >
-            立即购买
+            联系客服
           </el-button>
         </el-card>
       </div>
-
-      <!-- 住宅IP类型说明 -->
-      <el-card class="ip-type-info" shadow="never">
-        <h4>住宅IP类型说明</h4>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <div class="info-block">
-              <div class="info-icon normal">
-                <el-icon><Location /></el-icon>
-              </div>
-              <div class="info-content">
-                <h5>普通 (Shared)</h5>
-                <p>经过我们严格的高质量筛选程序，适合入门级广泛的商务场景。</p>
-              </div>
-            </div>
-          </el-col>
-          <el-col :span="12">
-            <div class="info-block">
-              <div class="info-icon native">
-                <el-icon><Star /></el-icon>
-              </div>
-              <div class="info-content">
-                <h5>原生 (Native)</h5>
-                <p>本地真实住宅IP，旅游和社交媒体，领域最稳/需求最旺盛的IP。</p>
-              </div>
-            </div>
-          </el-col>
-        </el-row>
-      </el-card>
-
-      <!-- 热门业务场景 -->
-      <el-card class="business-scenarios" shadow="never">
-        <h4>热门业务场景</h4>
-        <el-row :gutter="20">
-          <el-col :span="8" v-for="scenario in scenarios" :key="scenario.name">
-            <div class="scenario-card">
-              <div class="scenario-icon">
-                <el-icon>
-                  <component :is="scenario.icon" />
-                </el-icon>
-              </div>
-              <div class="scenario-name">{{ scenario.name }}</div>
-              <div class="scenario-desc">{{ scenario.desc }}</div>
-            </div>
-          </el-col>
-        </el-row>
-      </el-card>
     </el-card>
   </div>
 </template>
@@ -115,12 +72,7 @@ import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { 
   ChatDotRound, 
-  Check, 
-  Location, 
-  Star,
-  ShoppingCart,
-  Monitor,
-  TrendCharts
+  Check
 } from '@element-plus/icons-vue';
 
 // 套餐数据
@@ -161,24 +113,15 @@ const packages = ref([
     sessions: '无限制',
     isHot: false,
   },
-]);
-
-// 业务场景
-const scenarios = ref([
   {
-    name: '电商采集',
-    desc: '商品价格监控、库存跟踪、竞品分析',
-    icon: 'ShoppingCart',
-  },
-  {
-    name: '社交媒体',
-    desc: '账号管理、内容发布、数据统计',
-    icon: 'Monitor',
-  },
-  {
-    name: 'SEO优化',
-    desc: '搜索排名监控、关键词分析、竞争对手追踪',
-    icon: 'TrendCharts',
+    id: 5,
+    name: '企业定制',
+    price: '大客户',
+    period: '',
+    unitPrice: '联系客服',
+    sessions: '无限制',
+    isHot: false,
+    isEnterprise: true,
   },
 ]);
 
@@ -247,12 +190,24 @@ const contactService = () => {
           font-size: 14px;
           color: #909399;
         }
+
+        &.enterprise {
+          .amount {
+            font-size: 24px;
+            color: #606266;
+          }
+        }
       }
 
       .package-unit-price {
         font-size: 14px;
         color: #67c23a;
         margin-bottom: 20px;
+
+        &.enterprise {
+          color: #409eff;
+          font-weight: 600;
+        }
       }
 
       .package-features {
@@ -274,99 +229,6 @@ const contactService = () => {
 
       .buy-button {
         width: 100%;
-      }
-    }
-  }
-
-  // IP类型说明
-  .ip-type-info {
-    margin-bottom: 30px;
-
-    h4 {
-      margin: 0 0 20px 0;
-      font-size: 16px;
-    }
-
-    .info-block {
-      display: flex;
-      gap: 15px;
-      align-items: flex-start;
-
-      .info-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-
-        &.normal {
-          background-color: #e1f3d8;
-          color: #67c23a;
-        }
-
-        &.native {
-          background-color: #f0f9ff;
-          color: #409eff;
-        }
-      }
-
-      .info-content {
-        flex: 1;
-
-        h5 {
-          margin: 0 0 8px 0;
-          font-size: 15px;
-          color: #303133;
-        }
-
-        p {
-          margin: 0;
-          font-size: 13px;
-          color: #909399;
-          line-height: 1.5;
-        }
-      }
-    }
-  }
-
-  // 业务场景
-  .business-scenarios {
-    h4 {
-      margin: 0 0 20px 0;
-      font-size: 16px;
-    }
-
-    .scenario-card {
-      text-align: center;
-      padding: 20px;
-      border: 1px solid #ebeef5;
-      border-radius: 8px;
-      transition: all 0.3s;
-
-      &:hover {
-        border-color: #409eff;
-        box-shadow: 0 2px 12px rgba(64, 158, 255, 0.2);
-      }
-
-      .scenario-icon {
-        font-size: 40px;
-        color: #409eff;
-        margin-bottom: 15px;
-      }
-
-      .scenario-name {
-        font-size: 16px;
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: #303133;
-      }
-
-      .scenario-desc {
-        font-size: 13px;
-        color: #909399;
-        line-height: 1.5;
       }
     }
   }
