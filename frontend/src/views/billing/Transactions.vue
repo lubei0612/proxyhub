@@ -109,6 +109,7 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search, Refresh } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
+import { getUserTransactions } from '@/api/modules/billing';
 
 const filters = ref({
   type: '',
@@ -160,35 +161,30 @@ const formatDate = (date: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 构建查询参数
+    const params: any = {
+      page: pagination.value.page,
+      limit: pagination.value.pageSize,
+    };
 
-    const mockData = [
-      {
-        id: 1,
-        transactionNo: 'TXN20251102001',
-        type: 'recharge',
-        amount: 100,
-        balanceBefore: 50,
-        balanceAfter: 150,
-        description: '充值到账',
-        createdAt: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 2,
-        transactionNo: 'TXN20251102002',
-        type: 'purchase',
-        amount: 25,
-        balanceBefore: 150,
-        balanceAfter: 125,
-        description: '购买静态IP - 美国洛杉矶 × 5',
-        createdAt: dayjs().subtract(2, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-      },
-    ];
+    // 添加筛选参数
+    if (filters.value.type) {
+      params.type = filters.value.type;
+    }
+    if (filters.value.dateRange && filters.value.dateRange.length === 2) {
+      params.startDate = filters.value.dateRange[0];
+      params.endDate = filters.value.dateRange[1];
+    }
 
-    transactionList.value = mockData;
-    pagination.value.total = mockData.length;
+    // 调用真实API
+    const response = await getUserTransactions(params);
+    transactionList.value = response.list || [];
+    pagination.value.total = response.total || 0;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + error.message);
+    console.error('加载交易明细失败:', error);
+    ElMessage.error('加载失败：' + (error.message || '请稍后重试'));
+    transactionList.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }
