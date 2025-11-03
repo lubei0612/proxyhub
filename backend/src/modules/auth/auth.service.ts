@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../user/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { AuthException, AuthErrorCode } from '../../common/exceptions/auth-exceptions';
 
 @Injectable()
 export class AuthService {
@@ -62,21 +63,39 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
+    // 验证邮箱格式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new AuthException(
+        AuthErrorCode.INVALID_EMAIL_FORMAT,
+        '请输入有效的邮箱地址',
+      );
+    }
+
     // 查找用户
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      throw new UnauthorizedException('邮箱或密码错误');
+      throw new AuthException(
+        AuthErrorCode.USER_NOT_FOUND,
+        '该账号不存在，请先注册',
+      );
     }
 
     // 验证密码
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('邮箱或密码错误');
+      throw new AuthException(
+        AuthErrorCode.INVALID_PASSWORD,
+        '密码错误，请重试',
+      );
     }
 
     // 检查用户状态
     if (user.status !== 'active') {
-      throw new UnauthorizedException('账户已被禁用');
+      throw new AuthException(
+        AuthErrorCode.ACCOUNT_DISABLED,
+        '账户已被禁用，请联系客服',
+      );
     }
 
     // 生成Token
@@ -100,7 +119,10 @@ export class AuthService {
     });
 
     if (user.role !== 'admin') {
-      throw new UnauthorizedException('需要管理员权限');
+      throw new AuthException(
+        AuthErrorCode.ADMIN_REQUIRED,
+        '需要管理员权限',
+      );
     }
 
     return result;

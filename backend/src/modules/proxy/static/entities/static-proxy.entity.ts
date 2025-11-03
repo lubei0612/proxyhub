@@ -79,6 +79,14 @@ export class StaticProxy {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  /**
+   * Virtual field: IP:Port:Account:Password format
+   * This field is computed and not stored in the database
+   */
+  get credentials(): string {
+    return `${this.ip}:${this.port}:${this.username}:${this.password}`;
+  }
 }
 
 // Export enum types

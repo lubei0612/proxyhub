@@ -2,7 +2,7 @@
 
 ## Phase 1: Backend Enhancements
 
-- [ ] 1. Enhance Auth Service Error Handling
+- [x] 1. Enhance Auth Service Error Handling
   - Files: 
     - `backend/src/modules/auth/auth.service.ts`
     - `backend/src/modules/auth/auth.controller.ts`
@@ -11,7 +11,7 @@
   - _Requirements: Requirement 5 - Enhanced Authentication Error Messages_
   - _Prompt: Role: Backend Security Developer | Task: Implement the task for spec ui-refinement-phase2, first run spec-workflow-guide to get the workflow guide then implement the task: Enhance authentication service to return specific error codes (AUTH_USER_NOT_FOUND, AUTH_INVALID_PASSWORD, AUTH_INVALID_EMAIL_FORMAT) in auth.service.ts. Update auth.controller.ts to catch these errors and return standardized responses. First edit tasks.md to mark this task as [-] in-progress, implement the changes, then mark as [x] complete. | Restrictions: Do not expose sensitive information in error messages, maintain existing JWT token generation logic, follow NestJS exception handling patterns | Success: Login endpoint returns specific error codes, frontend can distinguish between user not found and wrong password, no security information leakage_
 
-- [ ] 2. Add Static Proxy Credentials Virtual Field
+- [x] 2. Add Static Proxy Credentials Virtual Field
   - Files:
     - `backend/src/modules/proxy/entities/static-proxy.entity.ts`
     - `backend/src/modules/proxy/proxy.service.ts`
