@@ -316,10 +316,15 @@ router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - ProxyHub` : 'ProxyHub';
 
+  // 直接从localStorage检查登录状态，避免computed属性延迟
+  const token = localStorage.getItem('token');
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
   // 公开路由直接通过
   if (to.meta.public) {
     // 如果已登录访问登录页，跳转到首页
-    if (userStore.isLoggedIn && (to.name === 'Login' || to.name === 'Register')) {
+    if (token && (to.name === 'Login' || to.name === 'Register')) {
       next({ name: 'Dashboard' });
       return;
     }
@@ -328,7 +333,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 检查是否登录
-  if (!userStore.isLoggedIn) {
+  if (!token) {
     next({ 
       name: 'Login', 
       query: { redirect: to.fullPath } 
@@ -337,7 +342,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 检查管理员权限
-  if (to.meta.requiresAdmin && !userStore.isAdmin) {
+  if (to.meta.requiresAdmin && user?.role !== 'admin') {
     next({ name: 'Dashboard' });
     return;
   }

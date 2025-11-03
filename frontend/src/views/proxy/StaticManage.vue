@@ -316,7 +316,6 @@ import {
 } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { exportStaticProxies } from '@/utils/export';
-import { getStaticProxyList } from '@/api/modules/proxy';
 
 // 筛选条件
 const filters = ref({
@@ -450,38 +449,64 @@ const getReleaseTime = (expireTime: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    // 调用后端API获取用户的静态代理列表
-    const response = await getStaticProxyList({
-      page: pagination.value.page,
-      limit: pagination.value.pageSize,
-      ...filters.value,
-    });
+    // Mock数据
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // 处理后端返回的数据
-    proxyList.value = (response.data || []).map((proxy: any) => ({
-      id: proxy.id,
-      ip: proxy.ip,
-      port: proxy.port,
-      username: proxy.username,
-      password: proxy.password,
-      country: proxy.country,
-      countryCode: proxy.countryCode,
-      city: proxy.city || proxy.cityName,
-      ipType: proxy.ipType,
-      channel: proxy.channelName,
-      status: proxy.status,
-      expireTime: proxy.expireTimeUtc ? dayjs(proxy.expireTimeUtc).format('YYYY-MM-DD HH:mm:ss') : '',
-      releaseTime: proxy.releaseTimeUtc ? dayjs(proxy.releaseTimeUtc).format('YYYY-MM-DD HH:mm:ss') : '',
-      nodeId: proxy.nodeId || '',
-      remark: proxy.remark || '',
-    }));
+    const mockData = [
+      {
+        id: 1,
+        ip: '192.168.1.100',
+        port: 8080,
+        username: 'user_001',
+        password: 'pass_001',
+        country: '美国',
+        countryCode: 'US',
+        city: 'Los Angeles',
+        ipType: 'shared',
+        channel: '默认通道',
+        status: 'active',
+        expireTime: dayjs().add(25, 'day').format('YYYY-MM-DD HH:mm:ss'),
+        nodeId: 'NODE_001',
+        remark: '',
+      },
+      {
+        id: 2,
+        ip: '192.168.1.101',
+        port: 8081,
+        username: 'user_002',
+        password: 'pass_002',
+        country: '英国',
+        countryCode: 'GB',
+        city: 'London',
+        ipType: 'premium',
+        channel: '电商专用',
+        status: 'expiring',
+        expireTime: dayjs().add(5, 'day').format('YYYY-MM-DD HH:mm:ss'),
+        nodeId: 'NODE_002',
+        remark: '重要客户',
+      },
+      {
+        id: 3,
+        ip: '192.168.1.102',
+        port: 8082,
+        username: 'user_003',
+        password: 'pass_003',
+        country: '日本',
+        countryCode: 'JP',
+        city: 'Tokyo',
+        ipType: 'shared',
+        channel: '社交媒体',
+        status: 'active',
+        expireTime: dayjs().add(60, 'day').format('YYYY-MM-DD HH:mm:ss'),
+        nodeId: 'NODE_003',
+        remark: '',
+      },
+    ];
 
-    pagination.value.total = response.total || proxyList.value.length;
+    proxyList.value = mockData;
+    pagination.value.total = mockData.length;
   } catch (error: any) {
-    console.error('Load proxy list failed:', error);
-    ElMessage.error('加载失败：' + (error.message || '请求超时，请重试'));
-    proxyList.value = [];
-    pagination.value.total = 0;
+    ElMessage.error('加载失败：' + error.message);
   } finally {
     loading.value = false;
   }
