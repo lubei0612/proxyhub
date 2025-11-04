@@ -377,13 +377,15 @@ const loadAllPrices = async () => {
     });
     
     // 更新价格缓存
-    if (response.items && response.items.length > 0) {
-      response.items.forEach((item: any) => {
-        // 使用country_code和city_name（后端返回的字段名）
-        const key = getPriceCacheKey(item.country_code, item.city_name, ipType.value);
+    // 后端返回的字段是breakdown而不是items，格式为 {location: "JP/Tokyo", unitPrice: 10}
+    if (response.breakdown && response.breakdown.length > 0) {
+      response.breakdown.forEach((item: any) => {
+        // location格式: "JP/Tokyo"
+        const [countryCode, cityName] = item.location.split('/');
+        const key = getPriceCacheKey(countryCode, cityName, ipType.value);
         priceCache.value.set(key, item.unitPrice);
       });
-      console.log('[Price] Successfully loaded', response.items.length, 'prices');
+      console.log('[Price] Successfully loaded', response.breakdown.length, 'prices');
     } else {
       console.warn('[Price] No price data returned from API');
     }
