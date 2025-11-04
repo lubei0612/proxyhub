@@ -125,3 +125,23 @@ export const deletePriceOverride = (id: number) => {
   });
 };
 
+/**
+ * 计算价格（批量）
+ * 用于用户端获取实际价格（包含价格覆盖）
+ */
+export const calculatePrice = (data: {
+  items: Array<{
+    country: string;
+    city: string;
+    ipType: string;
+    quantity: number;
+    duration: number;
+  }>;
+}) => {
+  return request({
+    url: '/price/calculate',
+    method: 'POST',
+    data,
+  });
+};
+
