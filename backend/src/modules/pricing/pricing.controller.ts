@@ -72,6 +72,16 @@ export class PricingController {
   }
 
   /**
+   * 获取IP池列表（管理员 - 用于价格覆盖管理）
+   */
+  @Get('ip-pool')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async getIpPool() {
+    return this.pricingService.getIpPool();
+  }
+
+  /**
    * 获取所有价格覆盖（管理员）
    */
   @Get('overrides')
@@ -79,6 +89,18 @@ export class PricingController {
   @Roles('admin')
   async getAllPriceOverrides(@Query('productType') productType?: string) {
     return this.pricingService.getAllPriceOverrides(productType);
+  }
+
+  /**
+   * 批量更新价格覆盖（管理员 - 用于价格覆盖管理）
+   */
+  @Post('overrides/batch')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async batchUpdatePriceOverrides(
+    @Body() body: { updates: Array<{ country: string; city: string; ipType: string; overridePrice: number | null }> }
+  ) {
+    return this.pricingService.batchUpdatePriceOverrides(body.updates);
   }
 
   /**
