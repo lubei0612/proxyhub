@@ -357,24 +357,30 @@ const loadAllPrices = async () => {
     // 获取所有国家列表
     const allCountries = Object.values(countryData).flat();
     
-    // 构造价格计算请求
-    const items = allCountries.map(country => ({
-      country: country.code,
-      city: country.city,
-      ipType: ipType.value,
-      quantity: 1,
-      duration: duration.value
+    // 确定产品类型
+    const productType = ipType.value === 'premium' ? 'static-residential-native' : 'static-residential';
+    
+    // 构造价格计算请求（使用后端期望的格式）
+    const buyData = allCountries.map(country => ({
+      country_code: country.code,
+      city_name: country.city,
+      count: 1
     }));
     
-    console.log('[Price] Loading prices for', items.length, 'regions with ipType:', ipType.value, 'duration:', duration.value);
+    console.log('[Price] Loading prices for', buyData.length, 'regions with productType:', productType, 'timePeriod:', duration.value);
     
     // 调用后端API
-    const response = await calculatePrice({ items });
+    const response = await calculatePrice({
+      productType,
+      buyData,
+      timePeriod: duration.value
+    });
     
     // 更新价格缓存
     if (response.items && response.items.length > 0) {
       response.items.forEach((item: any) => {
-        const key = getPriceCacheKey(item.country, item.city, item.ipType);
+        // 使用country_code和city_name（后端返回的字段名）
+        const key = getPriceCacheKey(item.country_code, item.city_name, ipType.value);
         priceCache.value.set(key, item.unitPrice);
       });
       console.log('[Price] Successfully loaded', response.items.length, 'prices');
