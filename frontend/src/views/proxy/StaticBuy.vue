@@ -244,7 +244,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
@@ -256,9 +256,11 @@ import {
   Money,
   CreditCard,
   Check,
+  Loading,
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
 import { purchaseStaticProxy } from '@/api/modules/proxy';
+import { calculatePrice } from '@/api/modules/pricing';
 
 const router = useRouter();
 
@@ -312,9 +314,19 @@ const submitting = ref(false);
 const exchangeRate = ref(7.25);
 const userBalance = ref(1000); // TODO: 从store获取
 
-// 获取基础价格
+// 价格缓存相关
+const priceCache = ref<Map<string, number>>(new Map());
+const priceLoading = ref(false);
+const priceError = ref<string | null>(null);
+
+// 获取基础价格（Fallback）
 const getBasePrice = () => {
   return ipType.value === 'shared' ? 5 : 8;
+};
+
+// 生成价格缓存key
+const getPriceCacheKey = (country: string, city: string, ipType: string): string => {
+  return `${country}-${city}-${ipType}`;
 };
 
 // 计算属性：筛选后的国家列表
@@ -336,10 +348,62 @@ const totalSelectedCount = computed(() => {
   return selectedCountries.value.reduce((sum, item) => sum + item.quantity, 0);
 });
 
-// 获取单价（考虑覆盖价格）
+// 批量加载所有地区的价格
+const loadAllPrices = async () => {
+  priceLoading.value = true;
+  priceError.value = null;
+  
+  try {
+    // 获取所有国家列表
+    const allCountries = Object.values(countryData).flat();
+    
+    // 构造价格计算请求
+    const items = allCountries.map(country => ({
+      country: country.code,
+      city: country.city,
+      ipType: ipType.value,
+      quantity: 1,
+      duration: duration.value
+    }));
+    
+    console.log('[Price] Loading prices for', items.length, 'regions with ipType:', ipType.value, 'duration:', duration.value);
+    
+    // 调用后端API
+    const response = await calculatePrice({ items });
+    
+    // 更新价格缓存
+    if (response.items && response.items.length > 0) {
+      response.items.forEach((item: any) => {
+        const key = getPriceCacheKey(item.country, item.city, item.ipType);
+        priceCache.value.set(key, item.unitPrice);
+      });
+      console.log('[Price] Successfully loaded', response.items.length, 'prices');
+    } else {
+      console.warn('[Price] No price data returned from API');
+    }
+    
+  } catch (error: any) {
+    console.error('[Price] Failed to load prices:', error);
+    priceError.value = '价格加载失败，显示默认价格';
+    ElMessage.warning({
+      message: '价格加载失败，显示默认价格',
+      duration: 3000
+    });
+  } finally {
+    priceLoading.value = false;
+  }
+};
+
+// 获取单价（从缓存或使用基础价格）
 const getUnitPrice = (item: any) => {
-  // TODO: 调用后端API获取覆盖价格
-  // 这里先使用基础价格
+  const key = getPriceCacheKey(item.code, item.city, ipType.value);
+  const cachedPrice = priceCache.value.get(key);
+  
+  if (cachedPrice !== undefined) {
+    return cachedPrice;
+  }
+  
+  // 缓存未命中，返回基础价格
   return getBasePrice();
 };
 
@@ -475,6 +539,15 @@ const handleSubmit = async () => {
     submitting.value = false;
   }
 };
+
+// 监听IP类型和时长变化，重新加载价格
+watch(
+  [ipType, duration],
+  () => {
+    loadAllPrices();
+  },
+  { immediate: true } // 首次加载时也触发
+);
 
 onMounted(() => {
   // 初始化：从userStore获取用户余额
