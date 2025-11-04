@@ -395,8 +395,8 @@ export class PricingService {
 
     // 为每个IP池项目匹配默认价格和覆盖价格
     const ipPoolWithPrices = ipPool.map((item) => {
-      // 根据IP类型找到对应的价格配置
-      const productType = item.ipType === 'premium' ? 'static-residential-native' : 'static-residential';
+      // Mock环境下所有IP类型使用同一个价格配置
+      const productType = 'static-residential';
       const priceConfig = priceConfigs.find(c => c.productType === productType);
       const defaultPrice = priceConfig ? parseFloat(priceConfig.basePrice as any) : 5;
 
@@ -444,8 +444,8 @@ export class PricingService {
 
     for (const update of updates) {
       try {
-        // 根据IP类型确定产品类型
-        const productType = update.ipType === 'premium' ? 'static-residential-native' : 'static-residential';
+        // Mock环境下所有IP类型使用同一个价格配置
+        const productType = 'static-residential';
         
         // 查找价格配置
         const config = await this.priceConfigRepo.findOne({

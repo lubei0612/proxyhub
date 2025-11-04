@@ -142,7 +142,8 @@
             <div class="price-row override-row">
               <span class="price-label">覆盖价格：</span>
               <el-input-number
-                v-model="getOverridePrice(item)"
+                :model-value="getOverridePrice(item)"
+                @update:model-value="handlePriceChange(item, $event)"
                 :min="0"
                 :max="999"
                 :step="0.5"
@@ -150,7 +151,6 @@
                 size="small"
                 style="width: 120px"
                 placeholder="留空"
-                @change="handlePriceChange(item, $event)"
               />
             </div>
           </div>
