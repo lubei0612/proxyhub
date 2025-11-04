@@ -129,12 +129,12 @@ export class BillingService {
         // 创建交易记录
         const transaction = queryRunner.manager.create(Transaction, {
           userId: recharge.userId,
-          type: TransactionType.INCOME,
-          category: 'recharge',
+          transactionNo: `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+          type: TransactionType.RECHARGE,
           amount: rechargeAmount,
-          relatedId: recharge.id,
-          relatedType: 'recharge',
-          description: `充值 - ${recharge.paymentMethod || recharge.method}`,
+          balanceBefore: currentBalance,
+          balanceAfter: newBalance,
+          remark: `充值 - ${recharge.paymentMethod || recharge.method} - 订单号: ${recharge.orderNo}`,
         });
         await queryRunner.manager.save(Transaction, transaction);
       } else {

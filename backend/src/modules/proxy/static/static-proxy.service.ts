@@ -61,7 +61,7 @@ export class StaticProxyService {
     });
 
     return {
-      list: proxies,
+      data: proxies,
       total,
       page,
       limit,

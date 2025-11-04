@@ -68,14 +68,14 @@
         <el-table-column label="金额" width="150">
           <template #default="{ row }">
             <span :class="['amount', row.type === 'recharge' ? 'income' : 'expense']">
-              {{ row.type === 'recharge' ? '+' : '-' }}${{ row.amount.toFixed(2) }}
+              {{ row.type === 'recharge' ? '+' : '-' }}${{ parseFloat(row.amount || 0).toFixed(2) }}
             </span>
           </template>
         </el-table-column>
 
         <el-table-column label="余额变动" width="150">
           <template #default="{ row }">
-            <el-text type="info">${{ row.balanceBefore.toFixed(2) }} → ${{ row.balanceAfter.toFixed(2) }}</el-text>
+            <el-text type="info">${{ parseFloat(row.balanceBefore || 0).toFixed(2) }} → ${{ parseFloat(row.balanceAfter || 0).toFixed(2) }}</el-text>
           </template>
         </el-table-column>
 
@@ -127,13 +127,13 @@ const pagination = ref({
 const totalIncome = computed(() => {
   return transactionList.value
     .filter((t) => t.type === 'recharge')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 });
 
 const totalExpense = computed(() => {
   return transactionList.value
     .filter((t) => t.type === 'purchase')
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 });
 
 const getTypeText = (type: string) => {
@@ -178,7 +178,7 @@ const loadData = async () => {
 
     // 调用真实API
     const response = await getUserTransactions(params);
-    transactionList.value = response.list || [];
+    transactionList.value = response.data || [];
     pagination.value.total = response.total || 0;
   } catch (error: any) {
     console.error('加载交易明细失败:', error);

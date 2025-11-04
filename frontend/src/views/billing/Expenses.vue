@@ -205,7 +205,7 @@ const loadData = async () => {
 
     // 调用真实API
     const response = await getUserTransactions(params);
-    expenseList.value = response.list || [];
+    expenseList.value = response.data || [];
     pagination.value.total = response.total || 0;
   } catch (error: any) {
     console.error('加载消费记录失败:', error);

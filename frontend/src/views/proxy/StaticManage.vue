@@ -481,7 +481,7 @@ const loadData = async () => {
 
     // 调用真实API
     const response = await getStaticProxyList(params);
-    proxyList.value = response.list || [];
+    proxyList.value = response.data || [];
     pagination.value.total = response.total || 0;
   } catch (error: any) {
     console.error('加载静态代理列表失败:', error);
