@@ -324,20 +324,20 @@ onMounted(() => {
 
           .payment-text {
             display: flex;
-            flex-direction: column;
-            gap: 2px;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
             flex: 1;
             min-width: 0;
             overflow: hidden;
 
             .payment-name {
-              font-size: 15px;
+              font-size: 14px;
               font-weight: 600;
               color: #303133;
               line-height: 1.4;
               white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
+              flex-shrink: 0;
             }
 
             .payment-desc {
@@ -347,6 +347,11 @@ onMounted(() => {
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
+              
+              &::before {
+                content: '- ';
+                margin-right: 4px;
+              }
             }
           }
         }
