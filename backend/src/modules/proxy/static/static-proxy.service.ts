@@ -178,25 +178,41 @@ export class StaticProxyService {
         count: item.quantity,
       }));
 
-      this.logger.log(`[Purchase] Calling 985Proxy API to buy ${totalQuantity} IPs`);
-      
-      // 调用985Proxy API购买
+      // 检查测试模式
+      const isTestMode = process.env.PROXY_985_TEST_MODE === 'true';
       const zone = process.env.PROXY_985_ZONE || 'your_zone_id_here';
       const proxyType = dto.ipType === 'native' ? 'premium' : 'shared';
       
+      if (isTestMode) {
+        this.logger.warn(`⚠️ [Purchase] 测试模式开启 - 不调用985Proxy API，使用mock数据`);
+      } else {
+        this.logger.log(`💰 [Purchase] 生产模式 - 调用真实985Proxy API购买 ${totalQuantity} 个IP（会扣费）`);
+        this.logger.log(`[Purchase] Zone: ${zone}, Type: ${proxyType}, Amount: $${totalPrice}`);
+      }
+      
       let proxy985Response;
-      try {
-        proxy985Response = await this.proxy985Service.buyStaticProxy({
-          zone,
-          amount: totalPrice,
-          static_proxy_type: proxyType,
-          duration: dto.duration,
-          buy_data: buyData,
-        });
-        this.logger.log(`[Purchase] 985Proxy API response: ${JSON.stringify(proxy985Response)}`);
-      } catch (error) {
-        this.logger.error(`[Purchase] 985Proxy API failed: ${error.message}`);
-        throw new BadRequestException(`购买失败: ${error.message}`);
+      
+      if (isTestMode) {
+        // 测试模式：跳过API调用
+        this.logger.log('[Purchase] 跳过985Proxy API调用，将使用fallback mock数据');
+        proxy985Response = null;
+      } else {
+        // 生产模式：调用真实API
+        try {
+          proxy985Response = await this.proxy985Service.buyStaticProxy({
+            zone,
+            time_period: dto.duration,
+            static_proxy_type: proxyType,
+            buy_data: buyData,
+            pay_type: 'balance', // 使用钱包余额支付
+            purpose_web: dto.scenario || undefined, // 业务场景（可选）
+          });
+          this.logger.log(`✅ [Purchase] 985Proxy API 购买成功！`);
+          this.logger.log(`[Purchase] 985Proxy API response: ${JSON.stringify(proxy985Response)}`);
+        } catch (error) {
+          this.logger.error(`❌ [Purchase] 985Proxy API 调用失败: ${error.message}`);
+          throw new BadRequestException(`985Proxy API购买失败: ${error.message}`);
+        }
       }
 
       // 解析985Proxy返回的IP数据并保存到数据库

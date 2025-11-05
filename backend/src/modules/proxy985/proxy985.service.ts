@@ -179,29 +179,33 @@ export class Proxy985Service {
 
   /**
    * 购买静态代理IP
-   * POST /res_static/buy_ip
+   * POST /res_static/buy
    * @param data 购买数据
    * @param data.zone 通道标识
-   * @param data.amount 购买金额（美元）
+   * @param data.time_period 购买时长（天，必须是30的倍数）
    * @param data.static_proxy_type 代理类型（shared/premium）
-   * @param data.duration 时长（天）
    * @param data.buy_data 购买明细数组
+   * @param data.pay_type 支付方式（balance/gift，默认balance）
+   * @param data.promo_code 优惠码（可选）
+   * @param data.purpose_web 业务场景（可选）
    */
   async buyStaticProxy(data: {
     zone: string;
-    amount: number;
+    time_period: number;
     static_proxy_type: 'shared' | 'premium';
-    duration: number;
     buy_data: Array<{
       country_code: string;
       city_name?: string;
       count: number;
     }>;
+    pay_type?: string;
+    promo_code?: string;
+    purpose_web?: string;
   }) {
     this.logger.log(`[985Proxy] Buying static proxies: ${JSON.stringify(data)}`);
 
     try {
-      const response = await this.client.post('/res_static/buy_ip', data);
+      const response = await this.client.post('/res_static/buy', data);
       return response.data;
     } catch (error) {
       this.logger.error(`[985Proxy] Failed to buy static proxies: ${error.message}`);
