@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import Redis from 'ioredis';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { StaticProxyModule } from './modules/proxy/static/static-proxy.module';
@@ -13,6 +14,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PricingModule } from './modules/pricing/pricing.module';
 import { Proxy985Module } from './modules/proxy985/proxy985.module';
 import { EventLogModule } from './modules/event-log/event-log.module';
+import { DynamicProxyModule } from './modules/proxy/dynamic/dynamic-proxy.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -57,11 +60,26 @@ import { EventLogModule } from './modules/event-log/event-log.module';
     PricingModule,
     Proxy985Module,
     EventLogModule,
-    // TODO: 其他模块将在后续添加
-    // DynamicProxyModule,
+    DynamicProxyModule,
+    NotificationModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    // Redis客户端（全局可用）
+    {
+      provide: 'REDIS_CLIENT',
+      useFactory: (configService: ConfigService) => {
+        return new Redis({
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+          password: configService.get<string>('REDIS_PASSWORD'),
+          db: configService.get<number>('REDIS_DB', 0),
+        });
+      },
+      inject: [ConfigService],
+    },
+  ],
+  exports: ['REDIS_CLIENT'], // 导出以便其他模块使用
 })
 export class AppModule {}
 

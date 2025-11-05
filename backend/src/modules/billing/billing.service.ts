@@ -4,6 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Recharge, RechargeStatus } from './entities/recharge.entity';
 import { Transaction, TransactionType } from './entities/transaction.entity';
 import { User } from '../user/entities/user.entity';
+import { EventLogService } from '../event-log/event-log.service';
 
 @Injectable()
 export class BillingService {
@@ -15,6 +16,7 @@ export class BillingService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     private readonly dataSource: DataSource,
+    private readonly eventLogService: EventLogService,
   ) {}
 
   /**
@@ -30,7 +32,16 @@ export class BillingService {
       orderNo: `RCH-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
     });
 
-    return this.rechargeRepo.save(recharge);
+    const savedRecharge = await this.rechargeRepo.save(recharge);
+
+    // 记录事件日志
+    await this.eventLogService.createLog(
+      parseInt(userId),
+      '充值申请',
+      `提交充值申请：金额 $${amount.toFixed(2)}，支付方式：${method}，订单号：${savedRecharge.orderNo}`
+    );
+
+    return savedRecharge;
   }
 
   /**
@@ -57,21 +68,30 @@ export class BillingService {
    * 获取用户交易记录
    */
   async getUserTransactions(userId: string, page = 1, limit = 20, filters?: any) {
-    const where: any = { userId };
+    const queryBuilder = this.transactionRepo
+      .createQueryBuilder('transaction')
+      .where('transaction.userId = :userId', { userId });
     
+    // 应用筛选条件
     if (filters?.type) {
-      where.type = filters.type;
+      queryBuilder.andWhere('transaction.type = :type', { type: filters.type });
     }
     if (filters?.category) {
-      where.category = filters.category;
+      queryBuilder.andWhere('transaction.category = :category', { category: filters.category });
+    }
+    if (filters?.startDate) {
+      queryBuilder.andWhere('transaction.createdAt >= :startDate', { startDate: new Date(filters.startDate) });
+    }
+    if (filters?.endDate) {
+      queryBuilder.andWhere('transaction.createdAt <= :endDate', { endDate: new Date(filters.endDate) });
     }
 
-    const [transactions, total] = await this.transactionRepo.findAndCount({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' },
-    });
+    // 分页和排序
+    const [transactions, total] = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('transaction.createdAt', 'DESC')
+      .getManyAndCount();
 
     return {
       data: transactions,
@@ -146,6 +166,21 @@ export class BillingService {
       await queryRunner.manager.save(Recharge, recharge);
       await queryRunner.commitTransaction();
 
+      // 记录事件日志
+      if (approved) {
+        await this.eventLogService.createLog(
+          recharge.userId,
+          '充值审核通过',
+          `充值审核通过：金额 $${parseFloat(recharge.amount as any).toFixed(2)} 已到账，订单号：${recharge.orderNo}`
+        );
+      } else {
+        await this.eventLogService.createLog(
+          recharge.userId,
+          '充值审核拒绝',
+          `充值审核拒绝：金额 $${parseFloat(recharge.amount as any).toFixed(2)}，原因：${remark || '未通过审核'}，订单号：${recharge.orderNo}`
+        );
+      }
+
       return { message: approved ? '充值已批准' : '充值已拒绝', recharge };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -159,19 +194,27 @@ export class BillingService {
    * 获取所有充值记录（管理员）
    */
   async getAllRecharges(page = 1, limit = 20, filters?: any) {
-    const where: any = {};
+    const queryBuilder = this.rechargeRepo
+      .createQueryBuilder('recharge')
+      .leftJoinAndSelect('recharge.user', 'user');
     
+    // 应用筛选条件
     if (filters?.status) {
-      where.status = filters.status;
+      queryBuilder.andWhere('recharge.status = :status', { status: filters.status });
+    }
+    if (filters?.method) {
+      queryBuilder.andWhere('recharge.method = :method', { method: filters.method });
+    }
+    if (filters?.email) {
+      queryBuilder.andWhere('user.email LIKE :email', { email: `%${filters.email}%` });
     }
 
-    const [recharges, total] = await this.rechargeRepo.findAndCount({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' },
-      relations: ['user'],
-    });
+    // 分页和排序
+    const [recharges, total] = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('recharge.createdAt', 'DESC')
+      .getManyAndCount();
 
     return {
       data: recharges,

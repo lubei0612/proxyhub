@@ -13,7 +13,7 @@
         background-color="#1f2937"
         text-color="#9ca3af"
         active-text-color="#00d9a3"
-        router
+        @select="handleMenuSelect"
       >
         <el-menu-item index="/admin/dashboard">
           <el-icon><DataLine /></el-icon>
@@ -91,6 +91,11 @@ import {
 const router = useRouter();
 const userStore = useUserStore();
 const isCollapsed = ref(false);
+
+// 处理菜单选择
+const handleMenuSelect = (index: string) => {
+  router.push(index);
+};
 </script>
 
 <style scoped lang="scss">

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Put,
+  Post,
   Body,
   Param,
   Query,
@@ -79,6 +80,33 @@ export class AdminController {
     @Body() data: { value: string },
   ) {
     return this.adminService.updateSystemSettings(key, data.value);
+  }
+
+  /**
+   * 获取待处理事项
+   */
+  @Get('pending-items')
+  async getPendingItems() {
+    return this.adminService.getPendingItems();
+  }
+
+  /**
+   * 获取最近订单
+   */
+  @Get('recent-orders')
+  async getRecentOrders(@Query('limit') limit: number = 5) {
+    return this.adminService.getRecentOrders(limit);
+  }
+
+  /**
+   * 赠送余额给用户
+   */
+  @Post('users/:id/gift-balance')
+  async giftBalance(
+    @Param('id') userId: string,
+    @Body() data: { amount: number; remark?: string },
+  ) {
+    return this.adminService.giftBalance(userId, data.amount, data.remark);
   }
 }
 

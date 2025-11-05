@@ -12,6 +12,8 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { SendCodeDto } from './dto/send-code.dto';
+import { LoginWithCodeDto } from './dto/login-with-code.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @ApiTags('认证')
@@ -62,6 +64,24 @@ export class AuthController {
   @ApiResponse({ status: 401, description: '未授权' })
   async getProfile(@Request() req) {
     return req.user;
+  }
+
+  @Post('send-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '发送验证码' })
+  @ApiResponse({ status: 200, description: '验证码发送成功' })
+  @ApiResponse({ status: 400, description: '邮箱格式错误或发送频繁' })
+  async sendCode(@Body() sendCodeDto: SendCodeDto) {
+    return await this.authService.sendVerificationCode(sendCodeDto);
+  }
+
+  @Post('login-with-code')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '验证码登录' })
+  @ApiResponse({ status: 200, description: '登录成功' })
+  @ApiResponse({ status: 400, description: '验证码错误或已过期' })
+  async loginWithCode(@Body() loginWithCodeDto: LoginWithCodeDto) {
+    return await this.authService.loginWithCode(loginWithCodeDto);
   }
 }
 

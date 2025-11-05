@@ -34,14 +34,29 @@ export class EventLogService {
   /**
    * 获取用户事件日志
    */
-  async getUserLogs(userId: number, page = 1, limit = 20) {
-    const [logs, total] = await this.eventLogRepo.findAndCount({
-      where: { userId },
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' },
-      relations: ['user'],
-    });
+  async getUserLogs(userId: number, page = 1, limit = 20, filters?: any) {
+    const queryBuilder = this.eventLogRepo
+      .createQueryBuilder('log')
+      .leftJoinAndSelect('log.user', 'user')
+      .where('log.userId = :userId', { userId });
+
+    // 应用筛选条件
+    if (filters?.eventType) {
+      queryBuilder.andWhere('log.eventType = :eventType', { eventType: filters.eventType });
+    }
+    if (filters?.startTime) {
+      queryBuilder.andWhere('log.createdAt >= :startTime', { startTime: new Date(filters.startTime) });
+    }
+    if (filters?.endTime) {
+      queryBuilder.andWhere('log.createdAt <= :endTime', { endTime: new Date(filters.endTime) });
+    }
+
+    // 分页和排序
+    const [logs, total] = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('log.createdAt', 'DESC')
+      .getManyAndCount();
 
     return {
       data: logs.map((log) => ({

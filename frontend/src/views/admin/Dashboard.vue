@@ -192,6 +192,8 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import VChart from 'vue-echarts';
+import { getAdminStatistics, getPendingItems, getRecentOrders } from '@/api/modules/admin';
+import { formatRelativeTime } from '@/utils/datetime';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { LineChart, BarChart } from 'echarts/charts';
@@ -227,14 +229,14 @@ const router = useRouter();
 
 // 统计数据
 const stats = ref({
-  totalUsers: 850,
-  newUsersToday: 12,
-  totalRevenue: 125680,
-  todayRevenue: 2580,
-  totalOrders: 1250,
-  todayOrders: 28,
-  totalProxies: 5680,
-  todayProxies: 125,
+  totalUsers: 0,
+  newUsersToday: 0,
+  totalRevenue: 0,
+  todayRevenue: 0,
+  totalOrders: 0,
+  todayOrders: 0,
+  totalProxies: 0,
+  todayProxies: 0,
 });
 
 // 图表周期
@@ -315,73 +317,57 @@ const userChartOption = ref({
 });
 
 // 待处理事项
-const pendingItems = ref([
-  {
-    id: 1,
-    icon: DocumentChecked,
-    color: '#e6a23c',
-    title: '充值审核',
-    description: '有5笔充值申请待审核',
-    count: 5,
-    badgeType: 'warning',
-    action: '/admin/recharges',
-  },
-  {
-    id: 2,
-    icon: Warning,
-    color: '#f56c6c',
-    title: '异常订单',
-    description: '有2个订单状态异常',
-    count: 2,
-    badgeType: 'danger',
-    action: '/admin/orders',
-  },
-  {
-    id: 3,
-    icon: Bell,
-    color: '#409eff',
-    title: '系统通知',
-    description: '有3条系统消息待处理',
-    count: 3,
-    badgeType: 'primary',
-    action: '/admin/settings',
-  },
-]);
+const pendingItems = ref([]);
 
 // 最近订单
-const recentOrders = ref([
-  {
-    orderNo: 'ORD001',
-    userEmail: 'user1@example.com',
-    amount: 125.5,
-    createdAt: dayjs().subtract(5, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-  },
-  {
-    orderNo: 'ORD002',
-    userEmail: 'user2@example.com',
-    amount: 85.0,
-    createdAt: dayjs().subtract(15, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-  },
-  {
-    orderNo: 'ORD003',
-    userEmail: 'user3@example.com',
-    amount: 200.0,
-    createdAt: dayjs().subtract(30, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-  },
-]);
+const recentOrders = ref([]);
 
 const formatTime = (time: string) => {
-  const diff = dayjs().diff(dayjs(time), 'minute');
-  if (diff < 60) return `${diff}分钟前`;
-  return dayjs(time).format('HH:mm');
+  return formatRelativeTime(time);
 };
 
 const handlePendingItem = (item: any) => {
   router.push(item.action);
 };
 
-onMounted(() => {
-  // 加载数据
+onMounted(async () => {
+  // 加载统计数据
+  try {
+    const data = await getAdminStatistics();
+    
+    // 更新统计数据
+    stats.value.totalUsers = data.users?.total || 0;
+    stats.value.newUsersToday = 0; // 暂无今日新增用户API，需要后端添加
+    stats.value.totalRevenue = parseFloat(data.revenue?.total || '0');
+    stats.value.todayRevenue = parseFloat(data.revenue?.today || '0');
+    stats.value.totalOrders = data.orders?.total || 0;
+    stats.value.todayOrders = data.orders?.today || 0;
+    stats.value.totalProxies = data.proxies?.total || 0;
+    stats.value.todayProxies = 0; // 暂无今日新增代理API，需要后端添加
+  } catch (error: any) {
+    console.error('[AdminDashboard] 加载统计数据失败:', error);
+  }
+
+  // 加载待处理事项
+  try {
+    const response = await getPendingItems();
+    // 需要将icon字符串转换为组件
+    pendingItems.value = response.data.map((item: any) => ({
+      ...item,
+      icon: item.icon === 'DocumentChecked' ? DocumentChecked : 
+            item.icon === 'Warning' ? Warning : Bell,
+    }));
+  } catch (error: any) {
+    console.error('[AdminDashboard] 加载待处理事项失败:', error);
+  }
+
+  // 加载最近订单
+  try {
+    const response = await getRecentOrders(5);
+    recentOrders.value = response.data;
+  } catch (error: any) {
+    console.error('[AdminDashboard] 加载最近订单失败:', error);
+  }
 });
 </script>
 

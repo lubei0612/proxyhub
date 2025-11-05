@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
 import { Order } from '../order/entities/order.entity';
@@ -8,6 +8,7 @@ import { StaticProxy } from '../proxy/static/entities/static-proxy.entity';
 import { SystemSettings } from './entities/system-settings.entity';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
+import { EventLogModule } from '../event-log/event-log.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AdminController } from './admin.controller';
       StaticProxy,
       SystemSettings,
     ]),
+    forwardRef(() => EventLogModule),
   ],
   providers: [AdminService],
   controllers: [AdminController],

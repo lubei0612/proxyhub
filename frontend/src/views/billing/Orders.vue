@@ -228,6 +228,7 @@ import { ElMessage } from 'element-plus';
 import { Search, Refresh, Download, Document, ArrowDown } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { exportToCSV, formatDateForFilename } from '@/utils/export';
+import { getUserOrders } from '@/api/modules/order';
 
 // 筛选条件
 const filters = ref({
@@ -291,40 +292,21 @@ const formatDate = (date: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const params = {
+      page: pagination.value.page,
+      limit: pagination.value.pageSize,
+      ...filters.value,
+    };
 
-    // Mock数据
-    const mockData = [
-      {
-        id: 1,
-        orderNo: 'RCH20251102001',
-        tradeNo: 'TR20251102001',
-        amount: 100,
-        paymentMethod: 'wechat',
-        status: 'approved',
-        refunded: false,
-        remark: '',
-        createdAt: dayjs().subtract(2, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        approvedAt: dayjs().subtract(2, 'day').add(10, 'minute').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 2,
-        orderNo: 'RCH20251101001',
-        tradeNo: '',
-        amount: 500,
-        paymentMethod: 'usdt',
-        status: 'pending',
-        refunded: false,
-        remark: 'USDT地址: TXxxxxxxxxx',
-        createdAt: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        approvedAt: null,
-      },
-    ];
-
-    orderList.value = mockData;
-    pagination.value.total = mockData.length;
+    // 调用实际API
+    const response = await getUserOrders(params);
+    orderList.value = response.data || response.list || [];
+    pagination.value.total = response.total || orderList.value.length;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + error.message);
+    console.error('[Orders] 加载失败:', error);
+    ElMessage.error('加载失败：' + (error.message || '未知错误'));
+    orderList.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }

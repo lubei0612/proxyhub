@@ -22,47 +22,62 @@ async function initPriceConfig() {
     // 1. 检查是否已存在配置
     console.log('🔍 检查现有价格配置...');
     const checkResult = await client.query(
-      `SELECT * FROM price_configs WHERE product_type = 'static-residential'`
+      `SELECT * FROM price_configs WHERE product_type IN ('static-residential', 'static-residential-native')`
     );
     
-    if (checkResult.rows.length > 0) {
+    if (checkResult.rows.length >= 2) {
       console.log('ℹ️  价格配置已存在:');
       console.table(checkResult.rows);
       console.log('\n✅ 无需初始化');
       return;
     }
 
-    console.log('⚠️  未找到价格配置，开始初始化...\n');
+    console.log('⚠️  部分或全部价格配置缺失，开始初始化...\n');
 
-    // 2. 插入默认配置
+    // 2. 插入缺失的配置
     console.log('📝 插入默认价格配置...');
-    const insertResult = await client.query(`
-      INSERT INTO price_configs 
-        (product_type, base_price, is_active, created_at, updated_at)
-      VALUES 
-        ('static-residential', 5.00, true, NOW(), NOW())
-      RETURNING *
-    `);
+    const insertedRows = [];
+    
+    // 检查并插入 static-residential
+    const existingShared = checkResult.rows.find(r => r.product_type === 'static-residential');
+    if (!existingShared) {
+      const result = await client.query(`
+        INSERT INTO price_configs 
+          (product_type, base_price, is_active, created_at, updated_at)
+        VALUES 
+          ('static-residential', 5.00, true, NOW(), NOW())
+        RETURNING *
+      `);
+      insertedRows.push(...result.rows);
+    }
+    
+    // 检查并插入 static-residential-native
+    const existingNative = checkResult.rows.find(r => r.product_type === 'static-residential-native');
+    if (!existingNative) {
+      const result = await client.query(`
+        INSERT INTO price_configs 
+          (product_type, base_price, is_active, created_at, updated_at)
+        VALUES 
+          ('static-residential-native', 10.00, true, NOW(), NOW())
+        RETURNING *
+      `);
+      insertedRows.push(...result.rows);
+    }
 
     console.log('✅ 价格配置初始化成功:');
-    console.table(insertResult.rows);
+    console.table(insertedRows);
 
     // 3. 验证结果
     console.log('\n🔍 验证插入结果...');
     const verifyResult = await client.query(
-      `SELECT * FROM price_configs WHERE product_type = 'static-residential'`
+      `SELECT * FROM price_configs WHERE product_type IN ('static-residential', 'static-residential-native') ORDER BY product_type`
     );
 
-    if (verifyResult.rows.length > 0) {
-      console.log('✅ 验证成功！配置已生效:');
-      console.log({
-        id: verifyResult.rows[0].id,
-        product_type: verifyResult.rows[0].product_type,
-        base_price: verifyResult.rows[0].base_price,
-        is_active: verifyResult.rows[0].is_active,
-      });
+    if (verifyResult.rows.length === 2) {
+      console.log('✅ 验证成功！所有配置已生效:');
+      console.table(verifyResult.rows);
     } else {
-      console.error('❌ 验证失败！配置未找到');
+      console.error('❌ 验证失败！配置数量不正确:', verifyResult.rows.length);
     }
 
   } catch (error) {

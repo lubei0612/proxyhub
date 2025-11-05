@@ -64,3 +64,24 @@ export function updateSystemSetting(key: string, value: string) {
   });
 }
 
+/**
+ * 获取待处理事项（管理员）
+ */
+export function getPendingItems() {
+  return request({
+    url: '/admin/pending-items',
+    method: 'get',
+  });
+}
+
+/**
+ * 获取最近订单（管理员）
+ */
+export function getRecentOrders(limit = 5) {
+  return request({
+    url: '/admin/recent-orders',
+    method: 'get',
+    params: { limit },
+  });
+}
+

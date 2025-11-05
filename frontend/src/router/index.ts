@@ -8,7 +8,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/auth/Login.vue'),
+    component: () => import('@/views/auth/Auth.vue'),
     meta: { 
       title: '登录',
       public: true 
@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/auth/Register.vue'),
+    component: () => import('@/views/auth/Auth.vue'),
     meta: { 
       title: '注册',
       public: true 
@@ -62,7 +62,15 @@ const routes: RouteRecordRaw[] = [
             name: 'DynamicProxyManage',
             component: () => import('@/views/proxy/DynamicManage.vue'),
             meta: {
-              title: '动态住宅管理',
+              title: '动态住宅概览',
+            },
+          },
+          {
+            path: 'channels',
+            name: 'DynamicChannels',
+            component: () => import('@/views/proxy/DynamicChannels.vue'),
+            meta: {
+              title: '动态通道管理',
             },
           },
         ],
@@ -103,13 +111,13 @@ const routes: RouteRecordRaw[] = [
           icon: 'Cellphone',
         },
       },
-      // 订单管理
+      // IP购买订单
       {
         path: 'orders',
         name: 'Orders',
         component: () => import('@/views/order/Index.vue'),
         meta: {
-          title: '订单列表',
+          title: 'IP购买订单',
           icon: 'Document',
         },
       },
@@ -136,7 +144,7 @@ const routes: RouteRecordRaw[] = [
             name: 'BillingOrders',
             component: () => import('@/views/billing/Orders.vue'),
             meta: {
-              title: '订单管理',
+              title: '充值订单',
             },
           },
           {
@@ -326,14 +334,31 @@ router.beforeEach(async (to, from, next) => {
 
   // 直接从localStorage检查登录状态，避免computed属性延迟
   const token = localStorage.getItem('token');
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  // 兼容两个不同的key：userInfo和user
+  const userInfoStr = localStorage.getItem('userInfo') || localStorage.getItem('user');
+  let user = null;
+  
+  try {
+    user = userInfoStr ? JSON.parse(userInfoStr) : null;
+  } catch (e) {
+    console.error('Failed to parse user info:', e);
+  }
+
+  console.log('[Router Guard] Navigating to:', to.path);
+  console.log('[Router Guard] User:', user);
+  console.log('[Router Guard] User Role:', user?.role);
+  console.log('[Router Guard] Requires Admin:', to.meta.requiresAdmin);
 
   // 公开路由直接通过
   if (to.meta.public) {
     // 如果已登录访问登录页，跳转到首页
     if (token && (to.name === 'Login' || to.name === 'Register')) {
-      next({ name: 'Dashboard' });
+      // 根据用户角色跳转
+      if (user?.role === 'admin') {
+        next({ name: 'AdminDashboard' });
+      } else {
+        next({ name: 'Dashboard' });
+      }
       return;
     }
     next();
@@ -350,9 +375,13 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 检查管理员权限
-  if (to.meta.requiresAdmin && user?.role !== 'admin') {
-    next({ name: 'Dashboard' });
-    return;
+  if (to.meta.requiresAdmin) {
+    if (!user || user.role !== 'admin') {
+      console.warn('[Router Guard] Access denied: User is not admin');
+      next({ name: 'Dashboard' });
+      return;
+    }
+    console.log('[Router Guard] Admin access granted');
   }
 
   next();

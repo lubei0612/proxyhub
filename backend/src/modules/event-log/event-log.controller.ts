@@ -18,11 +18,20 @@ export class EventLogController {
     @CurrentUser() user: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('eventType') eventType?: string,
+    @Query('startTime') startTime?: string,
+    @Query('endTime') endTime?: string,
   ) {
+    const filters: any = {};
+    if (eventType) filters.eventType = eventType;
+    if (startTime) filters.startTime = startTime;
+    if (endTime) filters.endTime = endTime;
+
     return this.eventLogService.getUserLogs(
       user.id,
       parseInt(page) || 1,
       parseInt(limit) || 20,
+      filters,
     );
   }
 

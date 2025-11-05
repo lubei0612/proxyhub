@@ -53,3 +53,24 @@ export function getInventory() {
   });
 }
 
+/**
+ * 续费静态代理
+ */
+export function renewStaticProxy(id: number, duration: number) {
+  return request({
+    url: `/proxy/static/${id}/renew`,
+    method: 'post',
+    data: { duration },
+  });
+}
+
+/**
+ * 释放静态代理
+ */
+export function releaseStaticProxy(id: number) {
+  return request({
+    url: `/proxy/static/${id}`,
+    method: 'delete',
+  });
+}
+

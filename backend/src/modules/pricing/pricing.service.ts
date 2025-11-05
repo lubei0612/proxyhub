@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PriceConfig } from './entities/price-config.entity';
@@ -10,7 +10,7 @@ import { UpdatePriceConfigDto } from './dto/update-price-config.dto';
 import { UpdateExchangeRateDto } from './dto/update-exchange-rate.dto';
 
 @Injectable()
-export class PricingService {
+export class PricingService implements OnModuleInit {
   private readonly logger = new Logger(PricingService.name);
   
   // 价格缓存（内存缓存）
@@ -25,6 +25,43 @@ export class PricingService {
     @InjectRepository(ExchangeRate)
     private readonly exchangeRateRepo: Repository<ExchangeRate>,
   ) {}
+
+  /**
+   * 模块初始化时执行 - 确保默认价格配置存在
+   */
+  async onModuleInit() {
+    await this.ensureDefaultPriceConfigs();
+  }
+
+  /**
+   * 确保默认价格配置存在（自动初始化）
+   */
+  private async ensureDefaultPriceConfigs() {
+    try {
+      const defaultConfigs = [
+        { productType: 'static-residential', basePrice: 5.00 },
+        { productType: 'static-residential-native', basePrice: 10.00 },
+      ];
+
+      for (const config of defaultConfigs) {
+        const existing = await this.priceConfigRepo.findOne({
+          where: { productType: config.productType },
+        });
+
+        if (!existing) {
+          const newConfig = this.priceConfigRepo.create({
+            productType: config.productType,
+            basePrice: config.basePrice as any,
+            isActive: true,
+          });
+          await this.priceConfigRepo.save(newConfig);
+          this.logger.log(`[Init] Created default price config: ${config.productType} = $${config.basePrice}`);
+        }
+      }
+    } catch (error) {
+      this.logger.error('[Init] Failed to ensure default price configs:', error.message);
+    }
+  }
 
   /**
    * 计算价格（应用基础价格 + 覆盖价格）- 优化版本（带缓存）
@@ -444,8 +481,12 @@ export class PricingService {
 
     for (const update of updates) {
       try {
-        // Mock环境下所有IP类型使用同一个价格配置
-        const productType = 'static-residential';
+        // 根据IP类型确定产品类型
+        const productType = (update.ipType === 'premium' || update.ipType === 'native')
+          ? 'static-residential-native'
+          : 'static-residential';
+        
+        this.logger.log(`[Batch Update] ${update.country}/${update.city} (${update.ipType}) -> ${productType}`);
         
         // 查找价格配置
         const config = await this.priceConfigRepo.findOne({

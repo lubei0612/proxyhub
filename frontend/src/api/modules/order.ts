@@ -32,3 +32,24 @@ export function getAllOrders(params?: any) {
   });
 }
 
+/**
+ * 取消订单（管理员）
+ */
+export function cancelOrder(id: number) {
+  return request({
+    url: `/orders/${id}/cancel`,
+    method: 'patch',
+  });
+}
+
+/**
+ * 获取用户事件日志
+ */
+export function getEventLogs(params?: any) {
+  return request({
+    url: '/event-logs/my',
+    method: 'get',
+    params,
+  });
+}
+

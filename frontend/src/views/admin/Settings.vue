@@ -243,6 +243,7 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Check, DocumentChecked, User, Document } from '@element-plus/icons-vue';
+import { getSystemSettings, updateSystemSetting, getAdminStatistics } from '@/api/modules/admin';
 
 // 价格配置
 const priceSettings = ref({
@@ -267,11 +268,11 @@ const serviceSettings = ref({
 
 // 系统统计
 const systemStats = ref({
-  totalUsers: 150,
-  activeUsers: 120,
-  totalProxies: 850,
-  todayOrders: 25,
-  todayIncome: 1250.50,
+  totalUsers: 0,
+  activeUsers: 0,
+  totalProxies: 0,
+  todayOrders: 0,
+  todayIncome: 0,
 });
 
 const saving = ref(false);
@@ -281,12 +282,16 @@ const savePriceSettings = async () => {
   try {
     saving.value = true;
     
-    // TODO: 调用API保存
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 调用API保存每个配置项
+    await Promise.all([
+      updateSystemSetting('sharedPrice', priceSettings.value.sharedPrice.toString()),
+      updateSystemSetting('premiumPrice', priceSettings.value.premiumPrice.toString()),
+      updateSystemSetting('exchangeRate', priceSettings.value.exchangeRate.toString()),
+    ]);
 
     ElMessage.success('价格配置保存成功');
   } catch (error: any) {
-    ElMessage.error('保存失败：' + error.message);
+    ElMessage.error('保存失败：' + (error.message || '未知错误'));
   } finally {
     saving.value = false;
   }
@@ -297,12 +302,15 @@ const saveRechargeSettings = async () => {
   try {
     saving.value = true;
     
-    // TODO: 调用API保存
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 调用API保存每个配置项
+    await Promise.all([
+      updateSystemSetting('minRechargeAmount', rechargeSettings.value.minAmount.toString()),
+      updateSystemSetting('maxRechargeAmount', rechargeSettings.value.maxAmount.toString()),
+    ]);
 
     ElMessage.success('充值设置保存成功');
   } catch (error: any) {
-    ElMessage.error('保存失败：' + error.message);
+    ElMessage.error('保存失败：' + (error.message || '未知错误'));
   } finally {
     saving.value = false;
   }
@@ -313,19 +321,67 @@ const saveServiceSettings = async () => {
   try {
     saving.value = true;
     
-    // TODO: 调用API保存
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 调用API保存每个配置项
+    await Promise.all([
+      updateSystemSetting('telegram1', serviceSettings.value.telegram1),
+      updateSystemSetting('telegram1Link', serviceSettings.value.telegram1Link),
+      updateSystemSetting('telegram2', serviceSettings.value.telegram2),
+      updateSystemSetting('telegram2Link', serviceSettings.value.telegram2Link),
+    ]);
 
     ElMessage.success('客服设置保存成功');
   } catch (error: any) {
-    ElMessage.error('保存失败：' + error.message);
+    ElMessage.error('保存失败：' + (error.message || '未知错误'));
   } finally {
     saving.value = false;
   }
 };
 
+// 加载系统设置
+const loadSettings = async () => {
+  try {
+    const settings = await getSystemSettings();
+    
+    // 加载价格配置
+    if (settings.sharedPrice) priceSettings.value.sharedPrice = parseFloat(settings.sharedPrice);
+    if (settings.premiumPrice) priceSettings.value.premiumPrice = parseFloat(settings.premiumPrice);
+    if (settings.exchangeRate) priceSettings.value.exchangeRate = parseFloat(settings.exchangeRate);
+    
+    // 加载充值配置
+    if (settings.minRechargeAmount) rechargeSettings.value.minAmount = parseInt(settings.minRechargeAmount);
+    if (settings.maxRechargeAmount) rechargeSettings.value.maxAmount = parseInt(settings.maxRechargeAmount);
+    
+    // 加载客服配置
+    if (settings.telegram1) serviceSettings.value.telegram1 = settings.telegram1;
+    if (settings.telegram1Link) serviceSettings.value.telegram1Link = settings.telegram1Link;
+    if (settings.telegram2) serviceSettings.value.telegram2 = settings.telegram2;
+    if (settings.telegram2Link) serviceSettings.value.telegram2Link = settings.telegram2Link;
+  } catch (error: any) {
+    console.error('[Settings] 加载失败:', error);
+    ElMessage.warning('加载系统设置失败，使用默认值');
+  }
+};
+
+// 加载统计数据
+const loadStatistics = async () => {
+  try {
+    const stats = await getAdminStatistics();
+    
+    // 更新统计数据
+    systemStats.value.totalUsers = stats.users?.total || 0;
+    systemStats.value.activeUsers = stats.users?.active || 0;
+    systemStats.value.totalProxies = stats.proxies?.total || 0;
+    systemStats.value.todayOrders = stats.orders?.today || 0;
+    systemStats.value.todayIncome = parseFloat(stats.revenue?.today || '0');
+  } catch (error: any) {
+    console.error('[Settings] 加载统计数据失败:', error);
+    // 不显示错误消息，使用默认值0
+  }
+};
+
 onMounted(() => {
-  // 加载配置
+  loadSettings();
+  loadStatistics();
 });
 </script>
 

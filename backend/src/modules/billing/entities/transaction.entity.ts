@@ -46,6 +46,7 @@ export class Transaction {
 export enum TransactionType {
   RECHARGE = 'recharge',
   PURCHASE = 'purchase',
+  RENEWAL = 'renewal',
   REFUND = 'refund',
   COMMISSION = 'commission',
   EXPENSE = 'expense',

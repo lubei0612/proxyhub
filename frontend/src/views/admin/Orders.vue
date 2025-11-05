@@ -62,7 +62,8 @@
       </div>
 
       <!-- 订单列表 -->
-      <el-table :data="orderList" v-loading="loading" style="width: 100%">
+      <el-table :data="orderList" v-loading="loading" style="width: 100%" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" />
         <el-table-column label="订单号" width="150">
           <template #default="{ row }">
             <el-text copyable>{{ row.orderNo }}</el-text>
@@ -214,6 +215,7 @@ import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search, Refresh, Download, View } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
+import * as orderApi from '@/api/modules/order';
 
 const filters = ref({
   orderNo: '',
@@ -223,6 +225,7 @@ const filters = ref({
 });
 
 const orderList = ref<any[]>([]);
+const selectedOrders = ref<any[]>([]);
 const loading = ref(false);
 const pagination = ref({
   page: 1,
@@ -278,56 +281,27 @@ const formatDate = (date: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const params = {
+      page: pagination.value.page,
+      limit: pagination.value.pageSize,
+      ...filters.value,
+    };
 
-    const mockData = [
-      {
-        id: 1,
-        orderNo: 'ORD20251102001',
-        userEmail: 'user@example.com',
-        type: 'static_proxy',
-        amount: 25,
-        status: 'completed',
-        description: '购买静态IP - 美国洛杉矶 × 5个 × 30天',
-        createdAt: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-        updatedAt: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-        items: [
-          { name: '静态IP - 美国洛杉矶', quantity: 5, unitPrice: 5 },
-        ],
-      },
-      {
-        id: 2,
-        orderNo: 'ORD20251101001',
-        userEmail: 'test@example.com',
-        type: 'renewal',
-        amount: 15,
-        status: 'completed',
-        description: '续费静态IP - 日本东京 × 3个 × 30天',
-        createdAt: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        updatedAt: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        items: [
-          { name: '静态IP - 日本东京', quantity: 3, unitPrice: 5 },
-        ],
-      },
-      {
-        id: 3,
-        orderNo: 'ORD20251031001',
-        userEmail: 'user2@example.com',
-        type: 'dynamic_proxy',
-        amount: 50,
-        status: 'pending',
-        description: '购买动态代理流量包 - 10GB',
-        createdAt: dayjs().subtract(2, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        updatedAt: dayjs().subtract(2, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        items: [
-          { name: '动态代理流量包', quantity: 10, unitPrice: 5 },
-        ],
-      },
-    ];
-
-    orderList.value = mockData;
-    pagination.value.total = mockData.length;
+    const response = await orderApi.getAllOrders(params);
+    
+    // 处理订单数据
+    orderList.value = (response.data || []).map((order: any) => ({
+      ...order,
+      userEmail: order.user?.email || order.userEmail || 'N/A',
+      amount: parseFloat(order.amount || 0),
+      description: order.remark || order.description || '-',
+    }));
+    
+    pagination.value.total = response.total || 0;
+    
+    console.log('[AdminOrders] 加载订单成功:', orderList.value);
   } catch (error: any) {
+    console.error('[AdminOrders] 加载失败:', error);
     ElMessage.error('加载失败：' + error.message);
   } finally {
     loading.value = false;
@@ -361,8 +335,8 @@ const cancelOrder = async (order: any) => {
       }
     );
 
-    // TODO: 调用API取消订单
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 调用API取消订单
+    await orderApi.cancelOrder(order.id);
 
     ElMessage.success('订单已取消');
     loadData();
@@ -373,9 +347,48 @@ const cancelOrder = async (order: any) => {
   }
 };
 
+const handleSelectionChange = (selection: any[]) => {
+  selectedOrders.value = selection;
+  console.log('[Orders] 选中订单:', selectedOrders.value.length);
+};
+
 const exportOrders = () => {
-  ElMessage.success('正在导出订单数据...');
-  // TODO: 实现导出功能
+  if (selectedOrders.value.length === 0) {
+    ElMessage.warning('请先选择要导出的订单');
+    return;
+  }
+
+  try {
+    // 准备导出数据
+    const exportData = selectedOrders.value.map((order) => ({
+      订单号: order.orderNo,
+      用户邮箱: order.userEmail,
+      订单类型: getTypeText(order.type),
+      金额: `$${order.amount.toFixed(2)}`,
+      状态: getStatusText(order.status),
+      订单详情: order.description,
+      创建时间: dayjs(order.createdAt).format('YYYY-MM-DD HH:mm:ss'),
+    }));
+
+    // 转换为CSV格式
+    const headers = Object.keys(exportData[0]);
+    const csvContent = [
+      headers.join(','),
+      ...exportData.map((row) => headers.map((header) => `"${row[header]}"`).join(',')),
+    ].join('\n');
+
+    // 创建下载链接
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `订单导出_${dayjs().format('YYYYMMDD_HHmmss')}.csv`;
+    link.click();
+
+    ElMessage.success(`成功导出 ${selectedOrders.value.length} 条订单`);
+  } catch (error: any) {
+    console.error('[Orders] 导出失败:', error);
+    ElMessage.error('导出失败：' + error.message);
+  }
 };
 
 onMounted(() => {

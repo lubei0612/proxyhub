@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -86,6 +87,29 @@ export class StaticProxyController {
   @Get('inventory')
   async getInventory() {
     return this.staticProxyService.getInventory();
+  }
+
+  /**
+   * 续费静态代理
+   */
+  @Post(':id/renew')
+  async renewProxy(
+    @CurrentUser() user: any,
+    @Param('id') proxyId: string,
+    @Body() data: { duration: number },
+  ) {
+    return this.staticProxyService.renewProxy(user.id, proxyId, data.duration);
+  }
+
+  /**
+   * 释放静态代理
+   */
+  @Delete(':id')
+  async releaseProxy(
+    @CurrentUser() user: any,
+    @Param('id') proxyId: string,
+  ) {
+    return this.staticProxyService.releaseProxy(user.id, proxyId);
   }
 }
 

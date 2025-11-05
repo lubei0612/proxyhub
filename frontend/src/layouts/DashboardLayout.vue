@@ -6,7 +6,7 @@
       </div>
       <el-menu
         :default-active="activeMenu"
-        router
+        @select="handleMenuSelect"
         class="sidebar-menu"
         background-color="#304156"
         text-color="#bfcbd9"
@@ -57,7 +57,7 @@
             <el-icon><List /></el-icon>
             <span>账单明细</span>
           </template>
-          <el-menu-item index="/billing/orders">订单管理</el-menu-item>
+          <el-menu-item index="/orders">订单管理</el-menu-item>
           <el-menu-item index="/billing/transactions">交易明细</el-menu-item>
           <el-menu-item index="/billing/settlement">结算记录</el-menu-item>
           <el-menu-item index="/billing/recharge-orders">充值订单</el-menu-item>
@@ -154,6 +154,11 @@ const handleCommand = async (command: string) => {
   } else if (command === 'admin') {
     router.push('/admin/dashboard');
   }
+};
+
+// 处理菜单选择
+const handleMenuSelect = (index: string) => {
+  router.push(index);
 };
 </script>
 

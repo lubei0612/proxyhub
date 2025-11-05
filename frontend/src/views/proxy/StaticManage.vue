@@ -207,15 +207,15 @@
 
         <el-table-column label="到期时间" width="180">
           <template #default="{ row }">
-            <span :class="{ 'expiring': isExpiringSoon(row.expireTime) }">
-              {{ formatDate(row.expireTime) }}
+            <span :class="{ 'expiring': isExpiringSoon(row.expireTimeUtc) }">
+              {{ formatDate(row.expireTimeUtc) }}
             </span>
           </template>
         </el-table-column>
 
         <el-table-column label="释放时间" width="180">
           <template #default="{ row }">
-            <span class="muted-text">{{ getReleaseTime(row.expireTime) }}</span>
+            <span class="muted-text">{{ getReleaseTime(row.expireTimeUtc) }}</span>
           </template>
         </el-table-column>
 
@@ -238,7 +238,7 @@
               type="primary"
               size="small"
               @click="handleRenew(row)"
-              :disabled="row.status === 'active' && !isExpiringSoon(row.expireTime)"
+              :disabled="row.status === 'active' && !isExpiringSoon(row.expireTimeUtc)"
             >
               续费
             </el-button>
@@ -289,7 +289,7 @@
         </el-form-item>
 
         <el-form-item label="续费金额">
-          <span class="renew-price">${{ calculateRenewPrice().toFixed(2) }}</span>
+          <span class="renew-price">${{ renewPrice.toFixed(2) }}</span>
         </el-form-item>
       </el-form>
 
@@ -302,7 +302,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
   Download,
@@ -316,7 +316,12 @@ import {
 } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { exportStaticProxies } from '@/utils/export';
-import { getStaticProxyList } from '@/api/modules/proxy';
+import { getStaticProxyList, renewStaticProxy, releaseStaticProxy } from '@/api/modules/proxy';
+import { useUserStore } from '@/stores/user';
+import { calculatePrice } from '@/api/modules/pricing';
+
+// 用户状态
+const userStore = useUserStore();
 
 // 筛选条件
 const filters = ref({
@@ -360,6 +365,7 @@ const pagination = ref({
 const renewDialogVisible = ref(false);
 const renewingProxies = ref<any[]>([]);
 const renewDuration = ref(30);
+const renewPrice = ref(0); // 准确的续费价格
 
 // 获取国旗URL
 const getFlagUrl = (code: string) => {
@@ -534,8 +540,8 @@ const handleBatchExport = async (format: 'csv' | 'txt') => {
       cityName: proxy.city,
       ipType: proxy.ipType, // 'shared' or 'premium'
       channelName: proxy.channel,
-      expireTimeUtc: proxy.expireTime,
-      releaseTimeUtc: getReleaseTime(proxy.expireTime),
+      expireTimeUtc: proxy.expireTimeUtc,
+      releaseTimeUtc: getReleaseTime(proxy.expireTimeUtc),
       nodeId: proxy.nodeId,
       remark: proxy.remark,
     }));
@@ -548,7 +554,7 @@ const handleBatchExport = async (format: 'csv' | 'txt') => {
 };
 
 // 批量续费
-const handleBatchRenew = () => {
+const handleBatchRenew = async () => {
   if (selectedProxies.value.length === 0) {
     ElMessage.warning('请先选择要续费的IP');
     return;
@@ -556,36 +562,77 @@ const handleBatchRenew = () => {
 
   renewingProxies.value = selectedProxies.value;
   renewDialogVisible.value = true;
+  // 计算准确的续费价格
+  await calculateRenewPrice();
 };
 
 // 单个续费
-const handleRenew = (proxy: any) => {
+const handleRenew = async (proxy: any) => {
   renewingProxies.value = [proxy];
   renewDialogVisible.value = true;
+  // 计算准确的续费价格
+  await calculateRenewPrice();
 };
 
 // 计算续费价格
-const calculateRenewPrice = () => {
-  let total = 0;
-  renewingProxies.value.forEach((proxy) => {
-    const unitPrice = proxy.ipType === 'premium' ? 8 : 5;
-    const months = renewDuration.value / 30;
-    total += unitPrice * months;
-  });
-  return total;
+const calculateRenewPrice = async () => {
+  if (renewingProxies.value.length === 0) {
+    renewPrice.value = 0;
+    return;
+  }
+
+  try {
+    // 为每个IP调用pricing API获取准确价格
+    let total = 0;
+    for (const proxy of renewingProxies.value) {
+      const productType = proxy.ipType === 'native' || proxy.ipType === 'premium' 
+        ? 'static-residential-native' 
+        : 'static-residential';
+      
+      const response = await calculatePrice({
+        productType,
+        buyData: [{
+          country_code: proxy.country,
+          city_name: proxy.cityName || proxy.city || '',
+          count: 1,
+        }],
+        timePeriod: renewDuration.value,
+      });
+
+      if (response.breakdown && response.breakdown.length > 0) {
+        total += response.breakdown[0].totalPrice;
+      }
+    }
+    renewPrice.value = total;
+  } catch (error: any) {
+    console.error('[StaticManage] 计算续费价格失败:', error);
+    // 降级到默认价格
+    let fallbackTotal = 0;
+    renewingProxies.value.forEach((proxy) => {
+      const unitPrice = proxy.ipType === 'native' || proxy.ipType === 'premium' ? 10 : 5;
+      const months = renewDuration.value / 30;
+      fallbackTotal += unitPrice * months;
+    });
+    renewPrice.value = fallbackTotal;
+  }
 };
 
 // 确认续费
 const confirmRenew = async () => {
   try {
-    // TODO: 调用API续费
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 调用API续费（支持批量）
+    for (const proxy of renewingProxies.value) {
+      await renewStaticProxy(proxy.id, renewDuration.value);
+    }
 
     ElMessage.success('续费成功！');
     renewDialogVisible.value = false;
-    loadData();
+    
+    // 刷新用户余额和列表
+    await userStore.fetchUserInfo();
+    await loadData();
   } catch (error: any) {
-    ElMessage.error('续费失败：' + error.message);
+    ElMessage.error('续费失败：' + (error.message || '未知错误'));
   }
 };
 
@@ -602,14 +649,16 @@ const handleRelease = async (proxy: any) => {
       }
     );
 
-    // TODO: 调用API释放
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 调用API释放
+    await releaseStaticProxy(proxy.id);
 
     ElMessage.success('释放成功！');
-    loadData();
+    
+    // 刷新列表
+    await loadData();
   } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error('释放失败：' + error.message);
+      ElMessage.error('释放失败：' + (error.message || '未知错误'));
     }
   }
 };
@@ -623,6 +672,13 @@ const handleRemarkChange = async (proxy: any) => {
     ElMessage.error('备注更新失败：' + error.message);
   }
 };
+
+// 监听续费时长变化，重新计算价格
+watch(renewDuration, () => {
+  if (renewDialogVisible.value && renewingProxies.value.length > 0) {
+    calculateRenewPrice();
+  }
+});
 
 onMounted(() => {
   loadData();

@@ -115,6 +115,7 @@ import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search, Refresh, Lock } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
+import { getEventLogs } from '@/api/modules/order';
 
 // 筛选条件
 const filters = ref({
@@ -175,58 +176,23 @@ const formatDate = (date: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const params = {
+      page: pagination.value.page,
+      limit: pagination.value.pageSize,
+      eventType: filters.value.eventType || undefined,
+      startTime: filters.value.dateRange?.[0] || undefined,
+      endTime: filters.value.dateRange?.[1] || undefined,
+    };
 
-    // Mock数据
-    const mockData = [
-      {
-        id: 1,
-        accountName: 'user@example.com',
-        eventType: 'login',
-        eventContent: '用户登录系统',
-        createdAt: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 2,
-        accountName: 'user@example.com',
-        eventType: 'purchase_static',
-        eventContent: '购买静态IP：美国-洛杉矶，数量：5个，金额：$25.00',
-        createdAt: dayjs().subtract(2, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 3,
-        accountName: 'user@example.com',
-        eventType: 'recharge',
-        eventContent: '提交充值申请：$100.00，支付方式：微信支付',
-        createdAt: dayjs().subtract(5, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 4,
-        accountName: 'user@example.com',
-        eventType: 'recharge_approved',
-        eventContent: '充值审核通过：$100.00 已到账',
-        createdAt: dayjs().subtract(4, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 5,
-        accountName: 'user@example.com',
-        eventType: 'profile_update',
-        eventContent: '更新个人资料：修改昵称为"测试用户"',
-        createdAt: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-      },
-      {
-        id: 6,
-        accountName: 'user@example.com',
-        eventType: 'password_change',
-        eventContent: '修改登录密码',
-        createdAt: dayjs().subtract(2, 'day').format('YYYY-MM-DD HH:mm:ss'),
-      },
-    ];
-
-    logList.value = mockData;
-    pagination.value.total = mockData.length;
+    // 调用实际API
+    const response = await getEventLogs(params);
+    logList.value = response.data || response.list || [];
+    pagination.value.total = response.total || logList.value.length;
   } catch (error: any) {
-    ElMessage.error('加载失败：' + error.message);
+    console.error('[EventLog] 加载失败:', error);
+    ElMessage.error('加载失败：' + (error.message || '未知错误'));
+    logList.value = [];
+    pagination.value.total = 0;
   } finally {
     loading.value = false;
   }

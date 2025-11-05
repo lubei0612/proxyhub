@@ -108,8 +108,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Search, Refresh } from '@element-plus/icons-vue';
-import dayjs from 'dayjs';
 import { getUserTransactions } from '@/api/modules/billing';
+import { formatBeijingTime } from '@/utils/datetime';
 
 const filters = ref({
   type: '',
@@ -140,6 +140,7 @@ const getTypeText = (type: string) => {
   const map: Record<string, string> = {
     recharge: '充值',
     purchase: '购买',
+    renewal: '续费',
     refund: '退款',
   };
   return map[type] || type;
@@ -155,7 +156,7 @@ const getTypeColor = (type: string) => {
 };
 
 const formatDate = (date: string) => {
-  return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
+  return formatBeijingTime(date, 'YYYY-MM-DD HH:mm:ss');
 };
 
 const loadData = async () => {

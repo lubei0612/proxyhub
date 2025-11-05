@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -56,6 +57,16 @@ export class OrderController {
   ) {
     const filters = { status, type };
     return this.orderService.getAllOrders(page, limit, filters);
+  }
+
+  /**
+   * 取消订单（管理员）
+   */
+  @Patch(':id/cancel')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async cancelOrder(@Param('id') orderId: string) {
+    return this.orderService.cancelOrder(parseInt(orderId));
   }
 }
 

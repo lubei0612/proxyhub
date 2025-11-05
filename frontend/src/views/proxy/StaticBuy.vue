@@ -312,7 +312,9 @@ const businessScenario = ref('');
 const paymentMethod = ref('balance');
 const submitting = ref(false);
 const exchangeRate = ref(7.25);
-const userBalance = ref(1000); // TODO: 从store获取
+
+// 用户余额（从userStore获取）
+const userBalance = computed(() => parseFloat(userStore.user?.balance || '0'));
 
 // 价格缓存相关
 const priceCache = ref<Map<string, number>>(new Map());
