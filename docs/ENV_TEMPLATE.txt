@@ -11,8 +11,8 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 
 JWT_SECRET=your-super-secret-jwt-key-change-in-production
-JWT_ACCESS_EXPIRY=2h
-JWT_REFRESH_EXPIRY=7d
+JWT_EXPIRES_IN=2h
+JWT_REFRESH_EXPIRES_IN=7d
 
 NODE_ENV=production
 PORT=3000

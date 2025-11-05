@@ -8,12 +8,14 @@ import { StaticProxyService } from './static-proxy.service';
 import { StaticProxyController } from './static-proxy.controller';
 import { EventLogModule } from '../../event-log/event-log.module';
 import { PricingModule } from '../../pricing/pricing.module';
+import { Proxy985Module } from '../../proxy985/proxy985.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([StaticProxy, User, Order, Transaction]),
     forwardRef(() => EventLogModule),
     forwardRef(() => PricingModule),
+    Proxy985Module, // 导入985Proxy服务
   ],
   providers: [StaticProxyService],
   controllers: [StaticProxyController],

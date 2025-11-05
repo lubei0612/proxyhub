@@ -102,6 +102,21 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  // 设置用户信息（供外部调用）
+  function setUser(newUser: any) {
+    user.value = newUser;
+    localStorage.setItem('user', JSON.stringify(newUser));
+  }
+
+  // 设置Token（供外部调用）
+  function setToken(newToken: string, newRefreshToken?: string) {
+    token.value = newToken;
+    localStorage.setItem('token', newToken);
+    if (newRefreshToken) {
+      localStorage.setItem('refresh_token', newRefreshToken);
+    }
+  }
+
   // 获取最新用户信息（包括余额）
   async function fetchUserInfo() {
     try {
@@ -124,6 +139,8 @@ export const useUserStore = defineStore('user', () => {
     adminUserLogin,
     userRegister,
     logout,
+    setUser,
+    setToken,
     updateUser,
     updateBalance,
     fetchUserInfo,

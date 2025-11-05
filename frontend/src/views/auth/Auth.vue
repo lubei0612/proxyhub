@@ -454,12 +454,8 @@ const handleCodeLogin = async () => {
       throw new Error(data.message || '登录失败');
     }
 
-    // 存储token和用户信息
-    localStorage.setItem('token', data.access_token);
-    localStorage.setItem('refresh_token', data.refresh_token);
-    localStorage.setItem('userInfo', JSON.stringify(data.user));
-    
-    // 更新用户store
+    // 存储token和用户信息（统一使用user作为key）
+    userStore.setToken(data.access_token, data.refresh_token);
     userStore.setUser(data.user);
     
     ElMessage.success('登录成功');

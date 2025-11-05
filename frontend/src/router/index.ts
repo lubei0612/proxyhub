@@ -332,16 +332,25 @@ router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   document.title = to.meta.title ? `${to.meta.title} - ProxyHub` : 'ProxyHub';
 
-  // 直接从localStorage检查登录状态，避免computed属性延迟
+  // 清理旧的userInfo key，统一使用user
+  if (localStorage.getItem('userInfo')) {
+    const oldUserInfo = localStorage.getItem('userInfo');
+    localStorage.setItem('user', oldUserInfo!);
+    localStorage.removeItem('userInfo');
+  }
+
+  // 直接从localStorage检查登录状态
   const token = localStorage.getItem('token');
-  // 兼容两个不同的key：userInfo和user
-  const userInfoStr = localStorage.getItem('userInfo') || localStorage.getItem('user');
+  const userInfoStr = localStorage.getItem('user');
   let user = null;
   
   try {
     user = userInfoStr ? JSON.parse(userInfoStr) : null;
   } catch (e) {
-    console.error('Failed to parse user info:', e);
+    console.error('[Router Guard] Failed to parse user info:', e);
+    // 清理损坏的数据
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   }
 
   console.log('[Router Guard] Navigating to:', to.path);
@@ -352,9 +361,9 @@ router.beforeEach(async (to, from, next) => {
   // 公开路由直接通过
   if (to.meta.public) {
     // 如果已登录访问登录页，跳转到首页
-    if (token && (to.name === 'Login' || to.name === 'Register')) {
+    if (token && user) {
       // 根据用户角色跳转
-      if (user?.role === 'admin') {
+      if (user.role === 'admin') {
         next({ name: 'AdminDashboard' });
       } else {
         next({ name: 'Dashboard' });
@@ -366,7 +375,8 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 检查是否登录
-  if (!token) {
+  if (!token || !user) {
+    console.warn('[Router Guard] No token or user, redirecting to login');
     next({ 
       name: 'Login', 
       query: { redirect: to.fullPath } 
@@ -376,7 +386,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 检查管理员权限
   if (to.meta.requiresAdmin) {
-    if (!user || user.role !== 'admin') {
+    if (user.role !== 'admin') {
       console.warn('[Router Guard] Access denied: User is not admin');
       next({ name: 'Dashboard' });
       return;

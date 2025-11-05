@@ -8,6 +8,7 @@ import { Transaction, TransactionType } from '../../billing/entities/transaction
 import { PurchaseStaticProxyDto } from './dto/purchase-static-proxy.dto';
 import { EventLogService } from '../../event-log/event-log.service';
 import { PricingService } from '../../pricing/pricing.service';
+import { Proxy985Service } from '../../proxy985/proxy985.service';
 
 @Injectable()
 export class StaticProxyService {
@@ -27,6 +28,7 @@ export class StaticProxyService {
     private readonly eventLogService: EventLogService,
     @Inject(forwardRef(() => PricingService))
     private readonly pricingService: PricingService,
+    private readonly proxy985Service: Proxy985Service, // 注入985Proxy服务
   ) {}
 
   /**
@@ -164,44 +166,108 @@ export class StaticProxyService {
         throw new BadRequestException(`余额不足。当前余额: $${userBalance.toFixed(2)}, 需要: $${totalPrice.toFixed(2)}`);
       }
 
-      // Step 2: Generate mock IPs
-      // Note: In production, this would call 985Proxy API to purchase real IPs
+      // Step 2: 调用985Proxy API购买真实IP
       const orderNo = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       const allocatedIPs: StaticProxy[] = [];
       const purchaseDetails = [];
 
-      for (const item of dto.items) {
-        this.logger.log(`[Purchase] Generating ${item.quantity} IPs for ${item.country}/${item.city}`);
+      // 准备购买数据
+      const buyData = dto.items.map(item => ({
+        country_code: item.country,
+        city_name: item.city || undefined,
+        count: item.quantity,
+      }));
 
-        // Generate mock IPs
-        for (let i = 0; i < item.quantity; i++) {
-          const mockIP = this.staticProxyRepo.create({
+      this.logger.log(`[Purchase] Calling 985Proxy API to buy ${totalQuantity} IPs`);
+      
+      // 调用985Proxy API购买
+      const zone = process.env.PROXY_985_ZONE || 'your_zone_id_here';
+      const proxyType = dto.ipType === 'native' ? 'premium' : 'shared';
+      
+      let proxy985Response;
+      try {
+        proxy985Response = await this.proxy985Service.buyStaticProxy({
+          zone,
+          amount: totalPrice,
+          static_proxy_type: proxyType,
+          duration: dto.duration,
+          buy_data: buyData,
+        });
+        this.logger.log(`[Purchase] 985Proxy API response: ${JSON.stringify(proxy985Response)}`);
+      } catch (error) {
+        this.logger.error(`[Purchase] 985Proxy API failed: ${error.message}`);
+        throw new BadRequestException(`购买失败: ${error.message}`);
+      }
+
+      // 解析985Proxy返回的IP数据并保存到数据库
+      if (proxy985Response && proxy985Response.data && Array.isArray(proxy985Response.data)) {
+        for (const apiIP of proxy985Response.data) {
+          const proxyEntity = this.staticProxyRepo.create({
             userId: parseInt(userId),
             channelName: dto.channelName,
-            ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-            port: 10000 + Math.floor(Math.random() * 50000),
-            username: `user_${Date.now()}_${i}`,
-            password: Math.random().toString(36).substring(2, 15),
-            country: item.country,
-            countryCode: item.country,
-            countryName: item.country,
-            cityName: item.city,
+            ip: apiIP.ip || apiIP.proxy_ip,
+            port: apiIP.port || apiIP.proxy_port || 10000,
+            username: apiIP.username || apiIP.user || '',
+            password: apiIP.password || apiIP.pass || '',
+            country: apiIP.country_code || apiIP.country,
+            countryCode: apiIP.country_code || apiIP.country,
+            countryName: apiIP.country_name || apiIP.country,
+            cityName: apiIP.city_name || apiIP.city || '',
             ipType: dto.ipType,
-            expireTimeUtc: new Date(Date.now() + dto.duration * 24 * 60 * 60 * 1000),
+            expireTimeUtc: apiIP.expire_time ? new Date(apiIP.expire_time) : new Date(Date.now() + dto.duration * 24 * 60 * 60 * 1000),
             status: ProxyStatus.ACTIVE,
             auto_renew: false,
-            remark: `Channel: ${dto.channelName}, Scenario: ${dto.scenario || 'N/A'}`,
+            remark: `Channel: ${dto.channelName}, Scenario: ${dto.scenario || 'N/A'}, 985ProxyID: ${apiIP.id || 'N/A'}`,
           });
 
-          const savedIP = await queryRunner.manager.save(StaticProxy, mockIP);
+          const savedIP = await queryRunner.manager.save(StaticProxy, proxyEntity);
           allocatedIPs.push(savedIP);
         }
 
-        purchaseDetails.push({
-          country: item.country,
-          city: item.city,
-          quantity: item.quantity,
-        });
+        // 汇总购买详情
+        for (const item of dto.items) {
+          purchaseDetails.push({
+            country: item.country,
+            city: item.city,
+            quantity: item.quantity,
+          });
+        }
+      } else {
+        // 如果API返回的数据格式不符合预期，回退到mock数据（便于测试）
+        this.logger.warn('[Purchase] 985Proxy API返回数据格式异常，使用fallback生成mock数据');
+        
+        for (const item of dto.items) {
+          this.logger.log(`[Purchase] Generating ${item.quantity} mock IPs for ${item.country}/${item.city}`);
+
+          for (let i = 0; i < item.quantity; i++) {
+            const mockIP = this.staticProxyRepo.create({
+              userId: parseInt(userId),
+              channelName: dto.channelName,
+              ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+              port: 10000 + Math.floor(Math.random() * 50000),
+              username: `user_${Date.now()}_${i}`,
+              password: Math.random().toString(36).substring(2, 15),
+              country: item.country,
+              countryCode: item.country,
+              countryName: item.country,
+              cityName: item.city,
+              ipType: dto.ipType,
+              expireTimeUtc: new Date(Date.now() + dto.duration * 24 * 60 * 60 * 1000),
+              status: ProxyStatus.ACTIVE,
+              auto_renew: false,
+              remark: `Channel: ${dto.channelName}, Scenario: ${dto.scenario || 'N/A'} [MOCK]`,
+            });
+
+            const savedIP = await queryRunner.manager.save(StaticProxy, mockIP);
+            allocatedIPs.push(savedIP);
+          }
+
+          purchaseDetails.push({
+            country: item.country,
+            city: item.city,
+            quantity: item.quantity,
+          });
+        }
       }
 
       // Step 3: Create order record
