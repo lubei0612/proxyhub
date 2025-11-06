@@ -13,7 +13,7 @@ import request from '../request';
  */
 export function getInventory(ipType: string, duration: number) {
   return request({
-    url: '/proxy985/inventory',
+    url: '/proxy/static/inventory',
     method: 'get',
     params: { ipType, duration },
   });
