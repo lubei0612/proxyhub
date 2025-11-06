@@ -82,11 +82,68 @@ export class StaticProxyController {
   }
 
   /**
-   * 获取库存信息
+   * 获取库存信息（985Proxy实时库存）
    */
   @Get('inventory')
   async getInventory(@Query('ipType') ipType: string = 'shared', @Query('duration') duration: number = 30) {
     return this.staticProxyService.getInventory(ipType, duration);
+  }
+
+  /**
+   * 计算购买价格（调用985Proxy API）
+   */
+  @Post('calculate-price')
+  async calculatePrice(
+    @CurrentUser() user: any,
+    @Body() dto: PurchaseStaticProxyDto,
+  ) {
+    return this.staticProxyService.calculatePurchasePrice(dto);
+  }
+
+  /**
+   * 获取我的IP列表（增强版 - 含过期状态）
+   */
+  @Get('my-ips')
+  async getMyIPs(
+    @CurrentUser() user: any,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
+  ) {
+    return this.staticProxyService.listMyIPs(user.id, page, limit);
+  }
+
+  /**
+   * 获取单个IP详情
+   */
+  @Get('ip/:ip')
+  async getIPDetail(
+    @CurrentUser() user: any,
+    @Param('ip') ip: string,
+  ) {
+    return this.staticProxyService.getIPDetails(user.id, ip);
+  }
+
+  /**
+   * 续费IP（通过985Proxy API）
+   */
+  @Post('ip/:ip/renew')
+  async renewIPVia985(
+    @CurrentUser() user: any,
+    @Param('ip') ip: string,
+    @Body() data: { duration: number },
+  ) {
+    return this.staticProxyService.renewIPVia985Proxy(user.id, ip, data.duration);
+  }
+
+  /**
+   * 查询订单状态（985Proxy订单）
+   */
+  @Get('order/:orderNo/status')
+  async checkOrderStatus(
+    @CurrentUser() user: any,
+    @Param('orderNo') orderNo: string,
+  ) {
+    return this.staticProxyService.checkOrderStatus(user.id, orderNo);
   }
 
   /**

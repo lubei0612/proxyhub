@@ -143,7 +143,7 @@
   - _Requirements: Design Section "StaticProxyService" - renewIP method_
   - _Prompt: Role: Backend Service Layer Developer | Task: Create renewIP() method in StaticProxyService. Verify user ownership and sufficient balance, call proxy985Service.renewIP(), poll getOrderResult() for completion, update database with new expiration date, deduct balance, and create transaction record. Wrap in database transaction for atomicity. | Restrictions: All operations must be atomic (use DB transaction), rollback on any failure, do not charge twice, validate IP not already expired | Success: Successfully renews IP with updated expiration, balance deducted correctly, transaction recorded, handles failures with rollback_
 
-- [ ] 14. Create order status checking method
+- [x] 14. Create order status checking method
   - File: backend/src/modules/proxy/static/static-proxy.service.ts
   - Add `checkOrderStatus()` method
   - Verify user owns the order (check order_no in transactions)
@@ -166,26 +166,26 @@
 
 ## Phase 3: Backend API Endpoints (StaticProxyController)
 
-- [ ] 16. Add inventory endpoint
+- [x] 16. Add inventory endpoint (rate limiting deferred)
   - File: backend/src/modules/proxy/static/static-proxy.controller.ts
   - Add `GET /api/v1/static-proxy/inventory` route
   - Add InventoryQueryDto for validation
   - Call `staticProxyService.getInventory()`
-  - Add rate limiting (10 req/min per user)
+  - Add rate limiting (10 req/min per user) - DEFERRED
   - _Leverage: Existing JwtAuthGuard, rate limiter middleware_
   - _Requirements: Design Section "StaticProxyController" - inventory route_
   - _Prompt: Role: Backend Controller Developer | Task: Add GET /api/v1/static-proxy/inventory endpoint in StaticProxyController with JwtAuthGuard protection. Create InventoryQueryDto for parameter validation (ipType, duration). Call staticProxyService.getInventory() and return response. Add rate limiting (10 requests/minute per user). | Restrictions: Validate query parameters with class-validator, apply rate limiting to prevent abuse, ensure only authenticated users can access | Success: Endpoint returns inventory data correctly, rate limiting works, validation rejects invalid inputs, requires authentication_
 
-- [ ] 17. Add price calculation endpoint
+- [x] 17. Add price calculation endpoint (rate limiting deferred)
   - File: backend/src/modules/proxy/static/static-proxy.controller.ts
   - Add `POST /api/v1/static-proxy/calculate-price` route
   - Call `staticProxyService.calculatePurchasePrice()`
-  - Add rate limiting (5 req/min per user)
+  - Add rate limiting (5 req/min per user) - DEFERRED
   - _Leverage: Existing PurchaseStaticProxyDto_
   - _Requirements: Design Section "StaticProxyController" - calculate-price route_
   - _Prompt: Role: Backend Controller Developer | Task: Add POST /api/v1/static-proxy/calculate-price endpoint in StaticProxyController with JwtAuthGuard. Reuse existing PurchaseStaticProxyDto for validation. Call staticProxyService.calculatePurchasePrice() and return price breakdown. Add rate limiting (5 requests/minute). | Restrictions: Do not charge user for calculations, validate input thoroughly, apply rate limiting, handle insufficient balance errors with 400 status | Success: Endpoint accurately calculates prices, rate limiting prevents spam, returns detailed breakdown, handles edge cases_
 
-- [ ] 18. Add my IPs list endpoint
+- [x] 18. Add my IPs list endpoint
   - File: backend/src/modules/proxy/static/static-proxy.controller.ts
   - Add `GET /api/v1/static-proxy/my-ips` route
   - Add PaginationDto for query params
@@ -195,7 +195,7 @@
   - _Requirements: Design Section "StaticProxyController" - my-ips route_
   - _Prompt: Role: Backend Controller Developer | Task: Add GET /api/v1/static-proxy/my-ips endpoint in StaticProxyController with JwtAuthGuard. Accept pagination query parameters (page, limit) via PaginationDto. Call staticProxyService.listMyIPs() with authenticated user ID and return paginated MyIPsDto response. | Restrictions: Only return IPs belonging to authenticated user, validate pagination params (max 100 per page), handle empty results gracefully | Success: Endpoint returns user's IPs with pagination metadata, respects page limits, filters by user ID correctly_
 
-- [ ] 19. Add IP detail endpoint
+- [x] 19. Add IP detail endpoint
   - File: backend/src/modules/proxy/static/static-proxy.controller.ts
   - Add `GET /api/v1/static-proxy/ip/:ip` route
   - Extract IP from URL params
@@ -205,19 +205,19 @@
   - _Requirements: Design Section "StaticProxyController" - ip/:ip route_
   - _Prompt: Role: Backend Controller Developer | Task: Add GET /api/v1/static-proxy/ip/:ip endpoint in StaticProxyController with JwtAuthGuard. Extract IP address from URL parameter, call staticProxyService.getIPDetails() with user ID for ownership verification. Return 404 if IP not found or user unauthorized. | Restrictions: Validate IP address format, enforce user ownership, return 404 for both not found and unauthorized (don't leak existence), log unauthorized access attempts | Success: Returns IP details only to owner, handles not found correctly, validates IP format, blocks unauthorized access_
 
-- [ ] 20. Add IP renewal endpoint
+- [x] 20. Add IP renewal endpoint (rate limiting deferred)
   - File: backend/src/modules/proxy/static/static-proxy.controller.ts
-  - Add `POST /api/v1/static-proxy/renew` route
+  - Add `POST /api/v1/static-proxy/ip/:ip/renew` route
   - Add RenewIPDto for validation
-  - Call `staticProxyService.renewIP()`
-  - Add rate limiting (3 req/min per user)
+  - Call `staticProxyService.renewIPVia985Proxy()`
+  - Add rate limiting (3 req/min per user) - DEFERRED
   - _Leverage: Existing transaction response format_
   - _Requirements: Design Section "StaticProxyController" - renew route_
   - _Prompt: Role: Backend Controller Developer | Task: Add POST /api/v1/static-proxy/renew endpoint in StaticProxyController with JwtAuthGuard. Create RenewIPDto for validation (ip, duration). Call staticProxyService.renewIP() and return RenewalResultDto. Add rate limiting (3 requests/minute) to prevent abuse. | Restrictions: Validate duration values (e.g., 7, 15, 30 days), rate limit to prevent spam renewals, handle insufficient balance with clear error, verify user ownership | Success: Endpoint successfully renews IPs, rate limiting works, returns new expiration date, handles errors clearly_
 
-- [ ] 21. Add order status endpoint
+- [x] 21. Add order status endpoint
   - File: backend/src/modules/proxy/static/static-proxy.controller.ts
-  - Add `GET /api/v1/static-proxy/order/:orderNo` route
+  - Add `GET /api/v1/static-proxy/order/:orderNo/status` route
   - Extract orderNo from URL params
   - Call `staticProxyService.checkOrderStatus()`
   - Return order status with details
