@@ -1,0 +1,126 @@
+version: '3.8'
+
+# ProxyHub 国内镜像加速版
+# 使用淘宝NPM镜像 + 阿里云Alpine源 + 腾讯云Docker镜像加速器
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: proxyhub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-proxyhub}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres123}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - proxyhub-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: proxyhub-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - proxyhub-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (NestJS) - 使用国内加速版Dockerfile
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.cn  # 国内加速版
+    container_name: proxyhub-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres123}
+      DATABASE_NAME: ${DATABASE_NAME:-proxyhub}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+      JWT_ACCESS_TOKEN_EXPIRATION: ${JWT_ACCESS_EXPIRY:-2h}
+      JWT_REFRESH_TOKEN_EXPIRATION: ${JWT_REFRESH_EXPIRY:-7d}
+      PORT: 3000
+      API_PREFIX: /api/v1
+      PROXY_985_API_KEY: ${PROXY_985_API_KEY}
+      PROXY_985_BASE_URL: ${PROXY_985_BASE_URL:-https://open-api.985proxy.com}
+      PROXY_985_ZONE: ${PROXY_985_ZONE}
+      # 邮件服务配置
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USER: ${MAIL_USER}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM:-ProxyHub <noreply@proxyhub.com>}
+      # Telegram Bot配置
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-ProxyHubBot}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - proxyhub-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (Vue3 + Nginx) - 使用国内加速版Dockerfile
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.cn  # 国内加速版
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000/api/v1}
+    container_name: proxyhub-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - proxyhub-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  proxyhub-network:
+    driver: bridge
+

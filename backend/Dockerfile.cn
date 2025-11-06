@@ -1,0 +1,46 @@
+# 后端生产环境 Dockerfile - 国内镜像加速版
+# 使用淘宝NPM镜像 + 阿里云Alpine镜像源
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# 使用阿里云镜像源（Alpine）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
+# 复制 package 文件
+COPY package*.json ./
+
+# 使用淘宝npm镜像（速度提升5-10倍）
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm ci --only=production && \
+    npm cache clean --force
+
+# 复制源代码
+COPY . .
+
+# 构建应用
+RUN npm run build
+
+# 生产镜像
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 使用阿里云镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk add --no-cache wget
+
+# 复制依赖和构建产物
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package*.json ./
+
+# 暴露端口
+EXPOSE 3000
+
+# 设置环境变量
+ENV NODE_ENV=production
+
+# 启动应用
+CMD ["node", "dist/main"]
+
