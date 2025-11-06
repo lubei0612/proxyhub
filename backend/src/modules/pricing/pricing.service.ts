@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PriceConfig } from './entities/price-config.entity';
@@ -8,6 +8,8 @@ import { CalculatePriceDto } from './dto/calculate-price.dto';
 import { CreatePriceOverrideDto, UpdatePriceOverrideDto } from './dto/create-price-override.dto';
 import { UpdatePriceConfigDto } from './dto/update-price-config.dto';
 import { UpdateExchangeRateDto } from './dto/update-exchange-rate.dto';
+import { GetRealtimePriceDto } from './dto/get-realtime-price.dto';
+import { Proxy985Service } from '../proxy985/proxy985.service';
 
 @Injectable()
 export class PricingService implements OnModuleInit {
@@ -24,6 +26,8 @@ export class PricingService implements OnModuleInit {
     private readonly priceOverrideRepo: Repository<PriceOverride>,
     @InjectRepository(ExchangeRate)
     private readonly exchangeRateRepo: Repository<ExchangeRate>,
+    @Inject(forwardRef(() => Proxy985Service))
+    private readonly proxy985Service: Proxy985Service,
   ) {}
 
   /**
@@ -31,6 +35,90 @@ export class PricingService implements OnModuleInit {
    */
   async onModuleInit() {
     await this.ensureDefaultPriceConfigs();
+  }
+
+  /**
+   * 获取实时价格（集成985Proxy API）
+   * P1-2: 价格显示一致性功能
+   */
+  async getRealtimePrice(dto: GetRealtimePriceDto) {
+    this.logger.log(`[Get Realtime Price] Product: ${dto.productType}, Duration: ${dto.duration} days`);
+
+    // 生成缓存键
+    const cacheKey = `realtime_${dto.productType}_${dto.duration}_${JSON.stringify(dto.locations)}`;
+    
+    // 检查缓存
+    const cached = this.priceCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      this.logger.log('[Get Realtime Price] Returning cached price');
+      return cached.data;
+    }
+
+    try {
+      // 调用985Proxy calculatePrice API
+      const zone = process.env.PROXY_985_ZONE || '';
+      const static_proxy_type = dto.productType.includes('native') ? 'premium' : 'shared';
+      
+      const buyData = dto.locations.map(loc => ({
+        country_code: loc.country,
+        city_name: loc.city || undefined,
+        count: loc.quantity,
+      }));
+
+      this.logger.log(`[Get Realtime Price] Calling 985Proxy API with: ${JSON.stringify(buyData)}`);
+
+      const response = await this.proxy985Service.calculatePrice({
+        action: 'buy',
+        zone,
+        time_period: dto.duration,
+        static_proxy_type,
+        buy_data: buyData,
+      });
+
+      if (response.code !== 0) {
+        throw new BadRequestException(`985Proxy API错误: ${response.msg}`);
+      }
+
+      const priceData = {
+        totalPrice: parseFloat(response.data.pay_price || '0'),
+        currency: 'USD',
+        duration: dto.duration,
+        locations: dto.locations.map((loc, index) => ({
+          country: loc.country,
+          city: loc.city,
+          quantity: loc.quantity,
+          unitPrice: parseFloat(response.data.pay_price || '0') / dto.locations.reduce((sum, l) => sum + l.quantity, 0),
+        })),
+        priceBreakdown: response.data.price_breakdown || [],
+        source: '985Proxy',
+        timestamp: new Date().toISOString(),
+      };
+
+      // 缓存结果
+      this.priceCache.set(cacheKey, {
+        data: priceData,
+        timestamp: Date.now(),
+      });
+
+      this.logger.log(`[Get Realtime Price] Success: $${priceData.totalPrice}`);
+      return priceData;
+
+    } catch (error) {
+      this.logger.error(`[Get Realtime Price] Failed: ${error.message}`);
+      
+      // 如果985Proxy API失败，回退到本地计算
+      this.logger.warn('[Get Realtime Price] Falling back to local calculation');
+      
+      return this.calculatePrice({
+        productType: dto.productType,
+        buyData: dto.locations.map(loc => ({
+          country_code: loc.country,
+          city_name: loc.city || '',
+          count: loc.quantity,
+        })),
+        timePeriod: dto.duration,
+      });
+    }
   }
 
   /**

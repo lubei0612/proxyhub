@@ -19,6 +19,7 @@ import { CalculatePriceDto } from './dto/calculate-price.dto';
 import { CreatePriceOverrideDto, UpdatePriceOverrideDto } from './dto/create-price-override.dto';
 import { UpdatePriceConfigDto } from './dto/update-price-config.dto';
 import { UpdateExchangeRateDto } from './dto/update-exchange-rate.dto';
+import { GetRealtimePriceDto } from './dto/get-realtime-price.dto';
 
 @Controller('price')
 export class PricingController {
@@ -31,6 +32,15 @@ export class PricingController {
   @UseGuards(JwtAuthGuard)
   async calculatePrice(@Body() dto: CalculatePriceDto) {
     return this.pricingService.calculatePrice(dto);
+  }
+
+  /**
+   * 获取实时价格（集成985Proxy API）
+   */
+  @Post('realtime')
+  @UseGuards(JwtAuthGuard)
+  async getRealtimePrice(@Body() dto: GetRealtimePriceDto) {
+    return this.pricingService.getRealtimePrice(dto);
   }
 
   /**

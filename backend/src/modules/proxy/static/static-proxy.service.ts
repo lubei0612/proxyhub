@@ -698,24 +698,40 @@ export class StaticProxyService {
     this.logger.log(`[Check Order Status] User: ${userId}, Order: ${orderNo}`);
 
     try {
-      // 验证用户拥有该订单（检查transaction表）
-      const transaction = await this.transactionRepo.findOne({
+      // 验证用户拥有该订单（先检查order表，再检查transaction表）
+      const order = await this.orderRepo.findOne({
         where: { 
           userId: parseInt(userId),
-          transactionNo: orderNo,
+          orderNo: orderNo,
         },
       });
 
-      if (!transaction) {
-        throw new NotFoundException('订单不存在或您无权访问');
+      // 如果order表没有，检查transaction表（可能是续费订单）
+      if (!order) {
+        const transaction = await this.transactionRepo.findOne({
+          where: { 
+            userId: parseInt(userId),
+            transactionNo: orderNo,
+          },
+        });
+
+        if (!transaction) {
+          this.logger.warn(`[Check Order Status] Order not found: ${orderNo} for user: ${userId}`);
+          throw new NotFoundException('订单不存在或您无权访问');
+        }
       }
+
+      this.logger.log(`[Check Order Status] Order found, querying 985Proxy API...`);
 
       // 调用985Proxy API查询订单状态
       const response = await this.proxy985Service.getOrderResult({ order_no: orderNo });
 
       if (response.code !== 0) {
+        this.logger.error(`[Check Order Status] 985Proxy API error: ${response.msg}`);
         throw new BadRequestException(`查询订单失败: ${response.msg}`);
       }
+
+      this.logger.log(`[Check Order Status] Success: ${response.data.status}`);
 
       return {
         orderNo,
@@ -724,6 +740,7 @@ export class StaticProxyService {
         currency: 'USD',
         orderTime: response.data.info?.order_time_utc,
         completeTime: response.data.info?.complete_time_utc,
+        ipList: response.data.ip_list || [],
       };
     } catch (error) {
       this.logger.error(`[Check Order Status] Failed: ${error.message}`);
