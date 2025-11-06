@@ -28,8 +28,8 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo [信息] 正在启动 Spec-Workflow Dashboard...
 echo.
-echo [提示] Dashboard 通常会在以下地址打开:
-echo         http://localhost:3000 (或其他端口)
+echo [提示] Dashboard 将在以下地址打开:
+echo         http://localhost:5678
 echo.
 echo [提示] 按 Ctrl+C 可以停止服务
 echo.
@@ -37,24 +37,24 @@ echo ==========================================
 echo.
 
 REM 尝试多种启动方式
-echo [尝试 1] 使用 npx 启动...
-npx @pimzino/spec-workflow-mcp 2>nul
-if %ERRORLEVEL% EQU 0 goto :success
-
-echo.
-echo [尝试 2] 检查全局安装...
+echo [尝试 1] 检查全局安装...
 where spec-workflow-mcp >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     echo [信息] 发现全局安装，正在启动...
-    spec-workflow-mcp
+    spec-workflow-mcp --dashboard --port 5678
     goto :success
 )
+
+echo.
+echo [尝试 2] 使用 npx 启动...
+npx @pimzino/spec-workflow-mcp --dashboard --port 5678
+if %ERRORLEVEL% EQU 0 goto :success
 
 echo.
 echo [尝试 3] 检查本地安装...
 if exist "node_modules\.bin\spec-workflow-mcp.cmd" (
     echo [信息] 发现本地安装，正在启动...
-    call node_modules\.bin\spec-workflow-mcp.cmd
+    call node_modules\.bin\spec-workflow-mcp.cmd --dashboard --port 5678
     goto :success
 )
 

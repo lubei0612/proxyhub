@@ -20,8 +20,8 @@ try {
 Write-Host ""
 Write-Host "[信息] 正在启动 Spec-Workflow Dashboard..." -ForegroundColor Cyan
 Write-Host ""
-Write-Host "[提示] Dashboard 通常会在以下地址打开:" -ForegroundColor Yellow
-Write-Host "        http://localhost:3000 (或其他端口)" -ForegroundColor Yellow
+Write-Host "[提示] Dashboard 将在以下地址打开:" -ForegroundColor Yellow
+Write-Host "        http://localhost:5678" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "[提示] 按 Ctrl+C 可以停止服务" -ForegroundColor Yellow
 Write-Host ""
@@ -45,8 +45,8 @@ try {
         # 设置环境变量
         $env:PROJECT_PATH = $projectPath
         
-        # 启动服务
-        spec-workflow-mcp
+        # 启动服务（Dashboard模式，端口5678）
+        spec-workflow-mcp --dashboard --port 5678
     } else {
         Write-Host "[信息] 未发现全局安装，使用 npx 启动..." -ForegroundColor Yellow
         Write-Host ""
@@ -54,8 +54,8 @@ try {
         # 设置环境变量
         $env:PROJECT_PATH = $projectPath
         
-        # 使用 npx
-        npx @pimzino/spec-workflow-mcp
+        # 使用 npx（Dashboard模式，端口5678）
+        npx @pimzino/spec-workflow-mcp --dashboard --port 5678
     }
 } catch {
     Write-Host ""

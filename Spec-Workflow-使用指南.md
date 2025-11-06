@@ -27,9 +27,9 @@ npx @pimzino/spec-workflow-mcp
 
 ## 🌐 访问Dashboard
 
-启动后，Dashboard通常会在以下地址自动打开：
-- **默认地址**: http://localhost:3000
-- 如果端口被占用，会自动使用其他端口（查看终端输出）
+启动后，Dashboard将在以下地址打开：
+- **默认地址**: http://localhost:5678
+- 端口已设置为5678，避免与常用端口冲突
 
 ## 📋 Dashboard功能
 
