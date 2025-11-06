@@ -482,7 +482,7 @@ export class StaticProxyService {
           channelName: proxy.channelName || '985Proxy',
           nodeId: proxy.id?.toString() || '', // 添加nodeId
           remark: proxy.remark || '', // 添加remark
-          autoRenew: proxy.autoRenew || false,
+          autoRenew: proxy.auto_renew || false,
         };
       });
 
