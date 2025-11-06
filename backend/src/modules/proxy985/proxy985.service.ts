@@ -123,6 +123,72 @@ export class Proxy985Service {
   // ============================================================
 
   /**
+   * 获取静态代理IP库存列表
+   * GET /res_static/inventory
+   * @param params 查询参数
+   * @param params.static_proxy_type 代理类型（shared: 普通IP, premium: 原生IP）
+   * @param params.purpose_web 业务场景（可选）
+   * @returns 返回各国家/城市的库存数量和价格
+   */
+  async getInventory(params: {
+    static_proxy_type: 'shared' | 'premium';
+    purpose_web?: string;
+  }) {
+    this.logger.log(`[985Proxy] Getting inventory: ${JSON.stringify(params)}`);
+
+    try {
+      const response = await this.client.get('/res_static/inventory', {
+        params,
+      });
+      this.logger.log(`[985Proxy] Inventory fetched: ${response.data.data?.length || 0} locations`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`[985Proxy] Failed to get inventory: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * 计算静态代理购买或续费价格
+   * POST /res_static/calculate
+   * @param data 计算数据
+   * @param data.action 计算类型（buy: 购买, renew: 续费）
+   * @param data.time_period 时长（天，必须是30的倍数）
+   * @param data.static_proxy_type 代理类型（action=buy时必填）
+   * @param data.buy_data 购买明细（action=buy时必填）
+   * @param data.zone 通道标识（action=renew时必填）
+   * @param data.renew_ip_list IP列表（action=renew时必填）
+   * @param data.promo_code 优惠码（可选）
+   * @param data.purpose_web 业务场景（可选）
+   * @returns 返回总价、优惠价和实付价
+   */
+  async calculatePrice(data: {
+    action: 'buy' | 'renew';
+    time_period: number;
+    static_proxy_type?: 'shared' | 'premium';
+    buy_data?: Array<{
+      country_code: string;
+      city_name: string;
+      count: string | number;
+    }>;
+    zone?: string;
+    renew_ip_list?: string[];
+    promo_code?: string;
+    purpose_web?: string;
+  }) {
+    this.logger.log(`[985Proxy] Calculating price: ${JSON.stringify(data)}`);
+
+    try {
+      const response = await this.client.post('/res_static/calculate', data);
+      this.logger.log(`[985Proxy] Price calculated: ${response.data.data?.pay_price || 'N/A'}`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`[985Proxy] Failed to calculate price: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * 获取静态代理IP列表
    * GET /res_static/ip_list
    * @param params 查询参数
@@ -159,6 +225,23 @@ export class Proxy985Service {
   }
 
   /**
+   * 获取IP列表（简洁别名）
+   * Alias for getStaticProxyList
+   */
+  async getIPList(params: {
+    zone: string;
+    static_proxy_type: 'all' | 'shared' | 'premium';
+    purpose_web?: string;
+    page?: number;
+    limit?: number;
+    ips?: string[];
+    is_expired?: number;
+    is_release?: string;
+  }) {
+    return this.getStaticProxyList(params);
+  }
+
+  /**
    * 获取静态代理IP详情
    * GET /res_static/ip_detail
    * @param id 代理ID
@@ -175,6 +258,14 @@ export class Proxy985Service {
       this.logger.error(`[985Proxy] Failed to get static proxy detail: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * 获取IP详情（简洁别名）
+   * Alias for getStaticProxyDetail
+   */
+  async getIPDetail(id: string | number) {
+    return this.getStaticProxyDetail(id);
   }
 
   /**
@@ -215,26 +306,81 @@ export class Proxy985Service {
 
   /**
    * 续费静态代理IP
-   * POST /res_static/renew_ip
+   * POST /res_static/renew
    * @param data 续费数据
    * @param data.zone 通道标识
-   * @param data.amount 续费金额（美元）
-   * @param data.duration 时长（天）
-   * @param data.ip_ids 代理ID数组
+   * @param data.time_period 续费时长（天，必须是30的倍数）
+   * @param data.renew_ip_list IP列表（字符串数组）
+   * @param data.pay_type 支付方式（balance/gift，默认balance）
+   * @param data.promo_code 优惠码（可选）
    */
   async renewStaticProxy(data: {
     zone: string;
-    amount: number;
-    duration: number;
-    ip_ids: number[];
+    time_period: number;
+    renew_ip_list: string[];
+    pay_type?: string;
+    promo_code?: string;
   }) {
     this.logger.log(`[985Proxy] Renewing static proxies: ${JSON.stringify(data)}`);
 
     try {
-      const response = await this.client.post('/res_static/renew_ip', data);
+      const response = await this.client.post('/res_static/renew', data);
+      this.logger.log(`[985Proxy] Renewal successful: ${response.data.data?.order_no || 'N/A'}`);
       return response.data;
     } catch (error) {
       this.logger.error(`[985Proxy] Failed to renew static proxies: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * 续费IP（简洁别名）
+   * Alias for renewStaticProxy
+   */
+  async renewIP(data: {
+    zone: string;
+    time_period: number;
+    renew_ip_list: string[];
+    pay_type?: string;
+    promo_code?: string;
+  }) {
+    return this.renewStaticProxy(data);
+  }
+
+  /**
+   * 获取订单结果
+   * POST /res_static/order_result
+   * @param data 查询数据
+   * @param data.order_no 订单号
+   * @returns 返回订单状态（status）和详细信息（info），包括IP列表
+   */
+  async getOrderResult(data: { order_no: string }) {
+    this.logger.log(`[985Proxy] Getting order result: ${data.order_no}`);
+
+    try {
+      const response = await this.client.post('/res_static/order_result', data);
+      this.logger.log(`[985Proxy] Order status: ${response.data.data?.status || 'N/A'}`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`[985Proxy] Failed to get order result: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取业务通道列表
+   * GET /res_static/business_list
+   * @returns 返回用户可用的所有Zone列表（通道标识数组）
+   */
+  async getBusinessList() {
+    this.logger.log('[985Proxy] Getting business list (zones)');
+
+    try {
+      const response = await this.client.get('/res_static/business_list');
+      this.logger.log(`[985Proxy] Business list retrieved: ${response.data.data?.length || 0} zones`);
+      return response.data;
+    } catch (error) {
+      this.logger.error(`[985Proxy] Failed to get business list: ${error.message}`);
       throw error;
     }
   }

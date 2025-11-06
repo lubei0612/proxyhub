@@ -85,8 +85,8 @@ export class StaticProxyController {
    * 获取库存信息
    */
   @Get('inventory')
-  async getInventory() {
-    return this.staticProxyService.getInventory();
+  async getInventory(@Query('ipType') ipType: string = 'shared', @Query('duration') duration: number = 30) {
+    return this.staticProxyService.getInventory(ipType, duration);
   }
 
   /**

@@ -114,6 +114,85 @@ export class StaticProxyService {
   }
 
   /**
+   * 获取库存信息
+   * Get real-time inventory from 985Proxy
+   */
+  async getInventory(ipType: string, duration: number) {
+    this.logger.log(`[Get Inventory] IP Type: ${ipType}, Duration: ${duration}`);
+
+    try {
+      const static_proxy_type = ipType === 'native' ? 'premium' : 'shared';
+      const response = await this.proxy985Service.getInventory({ static_proxy_type });
+
+      if (response.code !== 0) {
+        throw new BadRequestException(`获取库存失败: ${response.msg}`);
+      }
+
+      const inventory = {
+        countries: (response.data || []).map((item: any) => ({
+          countryCode: item.country_code,
+          countryName: item.country_code,
+          stock: item.number || 0,
+          price: item.price || 0,
+          cities: item.city_name ? [{ cityName: item.city_name, stock: item.number || 0 }] : [],
+        })),
+      };
+
+      this.logger.log(`[Get Inventory] Found ${inventory.countries.length} locations`);
+      return inventory;
+    } catch (error) {
+      this.logger.error(`[Get Inventory] Failed: ${error.message}`);
+      throw new BadRequestException(`获取库存失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 计算购买价格
+   * Calculate purchase price before actual purchase
+   */
+  async calculatePurchasePrice(dto: PurchaseStaticProxyDto) {
+    this.logger.log(`[Calculate Price] Items: ${JSON.stringify(dto.items)}`);
+
+    try {
+      const static_proxy_type = dto.ipType === 'native' ? 'premium' : 'shared';
+      const buy_data = dto.items.map(item => ({
+        country_code: item.country,
+        city_name: item.city || '',
+        count: item.quantity.toString(),
+      }));
+
+      const response = await this.proxy985Service.calculatePrice({
+        action: 'buy',
+        time_period: dto.duration,
+        static_proxy_type,
+        buy_data,
+      });
+
+      if (response.code !== 0) {
+        throw new BadRequestException(`价格计算失败: ${response.msg}`);
+      }
+
+      const totalQuantity = dto.items.reduce((sum, item) => sum + item.quantity, 0);
+      const totalPrice = parseFloat(response.data.pay_price || '0');
+
+      return {
+        amount: totalPrice,
+        currency: 'USD',
+        breakdown: dto.items.map(item => ({
+          country: item.country,
+          city: item.city,
+          quantity: item.quantity,
+          unitPrice: totalPrice / totalQuantity,
+          subtotal: (totalPrice / totalQuantity) * item.quantity,
+        })),
+      };
+    } catch (error) {
+      this.logger.error(`[Calculate Price] Failed: ${error.message}`);
+      throw new BadRequestException(`价格计算失败: ${error.message}`);
+    }
+  }
+
+  /**
    * Purchase static proxy IPs
    * Transactional method that:
    * 1. Validates user balance
@@ -356,23 +435,6 @@ export class StaticProxyService {
       // Release query runner
       await queryRunner.release();
     }
-  }
-
-  /**
-   * 获取库存信息（Mock）
-   */
-  async getInventory() {
-    // Mock inventory data
-    return {
-      success: true,
-      data: [
-        { country: 'US', city: 'New York', available: 500, price: 5 },
-        { country: 'US', city: 'Los Angeles', available: 300, price: 5 },
-        { country: 'GB', city: 'London', available: 200, price: 5 },
-        { country: 'JP', city: 'Tokyo', available: 150, price: 5 },
-        { country: 'DE', city: 'Berlin', available: 100, price: 5 },
-      ],
-    };
   }
 
   /**
