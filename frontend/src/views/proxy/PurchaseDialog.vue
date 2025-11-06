@@ -65,11 +65,11 @@
               </div>
               <div class="quantity-selector" v-if="isLocationSelected(item)" @click.stop>
                 <el-input-number
-                  v-model="getLocationQuantity(item)"
+                  :model-value="getLocationQuantity(item)"
                   :min="1"
                   :max="Math.min(item.stock, 100)"
                   size="small"
-                  @change="updateLocationQuantity(item, $event)"
+                  @update:model-value="updateLocationQuantity(item, $event)"
                 />
               </div>
             </div>
