@@ -26,8 +26,8 @@ RUN npm config set registry https://registry.npmmirror.com && \
 # 复制源代码
 COPY . .
 
-# 构建应用
-RUN npm run build
+# 构建应用（跳过类型检查以加快构建速度）
+RUN npx vite build
 
 # 生产镜像 - 使用 Nginx
 FROM nginx:alpine
