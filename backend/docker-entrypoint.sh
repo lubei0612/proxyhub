@@ -8,7 +8,10 @@ echo "========================================="
 # 加载环境变量
 if [ -f /app/.env ]; then
   echo "📁 加载环境变量配置..."
-  export $(grep -v '^#' /app/.env | xargs)
+  # 使用 set -a 和 source 来正确处理带特殊字符的环境变量
+  set -a
+  . /app/.env
+  set +a
   echo "✅ 环境变量已加载"
   echo "   数据库: ${DATABASE_HOST}:${DATABASE_PORT}"
   echo "   用户: ${DATABASE_USER}"
