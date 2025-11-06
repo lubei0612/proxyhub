@@ -84,7 +84,7 @@ fi
 # 7. 停止旧容器
 echo ""
 echo "🛑 步骤7: 停止旧容器"
-docker-compose -f docker-compose.cn.yml down 2>/dev/null || echo "没有运行中的容器"
+docker compose -f docker-compose.cn.yml down 2>/dev/null || echo "没有运行中的容器"
 
 # 8. 构建Docker镜像（使用国内加速版）
 echo ""
@@ -98,18 +98,18 @@ echo ""
 
 # 构建backend
 echo "📦 构建后端镜像..."
-docker-compose -f docker-compose.cn.yml build --no-cache backend
+docker compose -f docker-compose.cn.yml build --no-cache backend
 
 # 构建frontend
 echo "📦 构建前端镜像..."
-docker-compose -f docker-compose.cn.yml build --no-cache frontend
+docker compose -f docker-compose.cn.yml build --no-cache frontend
 
 echo "✅ Docker镜像构建完成"
 
 # 9. 启动容器
 echo ""
 echo "🚀 步骤9: 启动所有服务"
-docker-compose -f docker-compose.cn.yml up -d
+docker compose -f docker-compose.cn.yml up -d
 
 # 10. 等待服务启动
 echo ""
@@ -119,7 +119,7 @@ sleep 30
 # 11. 检查容器状态
 echo ""
 echo "📊 步骤11: 检查容器状态"
-docker-compose -f docker-compose.cn.yml ps
+docker compose -f docker-compose.cn.yml ps
 
 # 12. 初始化数据库
 echo ""
@@ -149,13 +149,13 @@ echo "   管理员: admin@example.com / admin123"
 echo "   普通用户: alice@test.com / password123"
 echo ""
 echo "📝 查看日志："
-echo "   docker-compose -f docker-compose.cn.yml logs -f backend"
-echo "   docker-compose -f docker-compose.cn.yml logs -f frontend"
+echo "   docker compose -f docker-compose.cn.yml logs -f backend"
+echo "   docker compose -f docker-compose.cn.yml logs -f frontend"
 echo ""
 echo "🛠️ 管理命令："
-echo "   停止服务: docker-compose -f docker-compose.cn.yml down"
-echo "   重启服务: docker-compose -f docker-compose.cn.yml restart"
-echo "   查看状态: docker-compose -f docker-compose.cn.yml ps"
+echo "   停止服务: docker compose -f docker-compose.cn.yml down"
+echo "   重启服务: docker compose -f docker-compose.cn.yml restart"
+echo "   查看状态: docker compose -f docker-compose.cn.yml ps"
 echo ""
 echo "=========================================="
 echo "⚡ 国内镜像加速版部署完成！"
