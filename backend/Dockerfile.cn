@@ -12,7 +12,7 @@ COPY package*.json ./
 
 # 使用淘宝npm镜像（速度提升5-10倍）
 RUN npm config set registry https://registry.npmmirror.com && \
-    npm ci --only=production && \
+    npm ci && \
     npm cache clean --force
 
 # 复制源代码
@@ -20,6 +20,9 @@ COPY . .
 
 # 构建应用
 RUN npm run build
+
+# 安装生产依赖
+RUN npm ci --only=production && npm cache clean --force
 
 # 生产镜像
 FROM node:20-alpine
