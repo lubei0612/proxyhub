@@ -38,23 +38,23 @@ echo.
 
 REM 尝试多种启动方式
 echo [尝试 1] 使用 npx 启动...
-npx @modelcontextprotocol/spec-workflow 2>nul
+npx @pimzino/spec-workflow-mcp 2>nul
 if %ERRORLEVEL% EQU 0 goto :success
 
 echo.
-echo [尝试 2] 检查本地安装...
-if exist "node_modules\.bin\spec-workflow.cmd" (
-    echo [信息] 发现本地安装，正在启动...
-    call node_modules\.bin\spec-workflow.cmd
+echo [尝试 2] 检查全局安装...
+where spec-workflow-mcp >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    echo [信息] 发现全局安装，正在启动...
+    spec-workflow-mcp
     goto :success
 )
 
 echo.
-echo [尝试 3] 检查全局安装...
-where spec-workflow >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo [信息] 发现全局安装，正在启动...
-    spec-workflow start
+echo [尝试 3] 检查本地安装...
+if exist "node_modules\.bin\spec-workflow-mcp.cmd" (
+    echo [信息] 发现本地安装，正在启动...
+    call node_modules\.bin\spec-workflow-mcp.cmd
     goto :success
 )
 
@@ -65,14 +65,14 @@ echo ==========================================
 echo.
 echo 请选择以下安装方式:
 echo.
-echo 1. 本地安装 (推荐):
-echo    npm install @modelcontextprotocol/spec-workflow --save-dev
+echo 1. 全局安装 (推荐):
+echo    npm install -g @pimzino/spec-workflow-mcp
 echo.
-echo 2. 全局安装:
-echo    npm install -g @modelcontextprotocol/spec-workflow
+echo 2. 本地安装:
+echo    npm install @pimzino/spec-workflow-mcp --save-dev
 echo.
 echo 3. 使用 npx (无需安装):
-echo    npx @modelcontextprotocol/spec-workflow
+echo    npx @pimzino/spec-workflow-mcp
 echo.
 echo ==========================================
 echo.

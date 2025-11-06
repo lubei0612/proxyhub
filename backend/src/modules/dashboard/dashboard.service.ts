@@ -103,14 +103,11 @@ export class DashboardService {
 
   /**
    * 获取用户流量统计（按代理类型）- 条形图数据
+   * 注意：当前系统没有真实流量记录，返回全0
    */
   async getTrafficByType(userId: string) {
-    // 获取用户所有静态代理
-    const proxies = await this.staticProxyRepo.find({
-      where: { userId: parseInt(userId) },
-    });
-
-    // 按类型统计（基于代理数量估算流量，每个代理假设平均使用量）
+    // TODO: 集成真实流量统计后替换此方法
+    // 当前返回全0，因为没有真实的流量记录表
     const typeStats: Record<string, number> = {
       '数据中心': 0,
       '移动代理': 0,
@@ -118,68 +115,33 @@ export class DashboardService {
       '双ISP静态': 0,
     };
 
-    proxies.forEach((proxy) => {
-      // 基于IP类型和国家估算使用量（GB）
-      const baseUsage = proxy.status === 'active' ? 2.5 : 0.5;
-      const typeKey = proxy.country === 'US' ? '双ISP静态' : '数据中心';
-      typeStats[typeKey] += baseUsage;
-    });
-
-    // 动态代理和移动代理基于订单数量估算
-    const dynamicOrders = await this.orderRepo.count({
-      where: { userId: parseInt(userId), type: 'dynamic_proxy' },
-    });
-    typeStats['动态住宅'] = dynamicOrders * 3.5;
-    typeStats['移动代理'] = dynamicOrders * 1.8;
-
     return {
       categories: Object.keys(typeStats),
-      data: Object.values(typeStats).map(v => parseFloat(v.toFixed(1))),
+      data: Object.values(typeStats),
     };
   }
 
   /**
    * 获取网络请求分布 - 饼图数据
+   * 注意：当前系统没有真实请求记录，返回全0
    */
   async getRequestDistribution(userId: string) {
-    // 基于用户的代理使用情况生成请求分布
-    const proxiesCount = await this.staticProxyRepo.count({
-      where: { userId: parseInt(userId) },
-    });
-
-    const ordersCount = await this.orderRepo.count({
-      where: { userId: parseInt(userId) },
-    });
-
-    // 根据使用量生成请求分布（模拟但基于真实数据）
-    const total = Math.max(proxiesCount * 100 + ordersCount * 50, 100);
-    
+    // TODO: 集成真实请求统计后替换此方法
+    // 当前返回全0，因为没有真实的请求记录表
     return [
-      { name: 'HTTP请求', value: Math.floor(total * 0.45) },
-      { name: 'HTTPS请求', value: Math.floor(total * 0.35) },
-      { name: 'WebSocket', value: Math.floor(total * 0.12) },
-      { name: '其他', value: Math.floor(total * 0.08) },
+      { name: 'HTTP请求', value: 0 },
+      { name: 'HTTPS请求', value: 0 },
+      { name: 'WebSocket', value: 0 },
+      { name: '其他', value: 0 },
     ];
   }
 
   /**
    * 获取7天流量趋势 - 折线图数据
+   * 注意：当前系统没有真实流量记录，返回全0
    */
   async getTrafficTrend(userId: string) {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    // 获取最近7天的代理活动
-    const proxies = await this.staticProxyRepo.find({
-      where: { userId: parseInt(userId) },
-    });
-
-    const orders = await this.orderRepo
-      .createQueryBuilder('order')
-      .where('order.userId = :userId', { userId })
-      .andWhere('order.createdAt >= :date', { date: sevenDaysAgo })
-      .getMany();
-
+    // TODO: 集成真实流量统计后替换此方法
     // 生成7天日期
     const dates: string[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -187,9 +149,9 @@ export class DashboardService {
       date.setDate(date.getDate() - i);
       dates.push(date.toISOString().split('T')[0]);
     }
-
-    // 按日期和类型生成流量数据（基于订单和代理数量）
-    const baseTraffic = proxies.length * 0.3;
+    
+    // 返回全0数据，因为没有真实的流量记录表
+    const zeroData = dates.map(() => '0.00');
     
     return {
       dates: dates.map(d => {
@@ -199,19 +161,19 @@ export class DashboardService {
       series: [
         {
           name: '数据中心 (DC)',
-          data: dates.map((_, i) => (baseTraffic * 0.4 + Math.random() * 0.3).toFixed(2)),
+          data: zeroData,
         },
         {
           name: '移动代理 (Mobile)',
-          data: dates.map((_, i) => (baseTraffic * 0.2 + Math.random() * 0.2).toFixed(2)),
+          data: zeroData,
         },
         {
           name: '动态住宅 (Res Rotating)',
-          data: dates.map((_, i) => (baseTraffic * 0.7 + Math.random() * 0.4).toFixed(2)),
+          data: zeroData,
         },
         {
           name: '双ISP静态 (Res Static)',
-          data: dates.map((_, i) => (baseTraffic * 0.5 + Math.random() * 0.3).toFixed(2)),
+          data: zeroData,
         },
       ],
     };
