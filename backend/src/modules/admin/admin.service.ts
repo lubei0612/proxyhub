@@ -78,10 +78,10 @@ export class AdminService {
     // 计算总收入（从所有完成的订单计算）
     const completedOrdersWithAmount = await this.orderRepo.find({ 
       where: { status: 'completed' },
-      select: ['totalPrice']
+      select: ['amount']
     });
     const totalIncome = completedOrdersWithAmount.reduce((sum, order) => {
-      return sum + (parseFloat(order.totalPrice as any) || 0);
+      return sum + (parseFloat(order.amount as any) || 0);
     }, 0);
 
     // 计算今日数据（UTC 0点到现在）
@@ -99,7 +99,7 @@ export class AdminService {
       .getMany();
     
     const todayIncome = todayCompletedOrders.reduce((sum, order) => {
-      return sum + (parseFloat(order.totalPrice as any) || 0);
+      return sum + (parseFloat(order.amount as any) || 0);
     }, 0);
 
     return {
