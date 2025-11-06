@@ -1,0 +1,12 @@
+# Spec Workflow Configuration
+
+# Project directory
+projectDir = "."
+
+# Dashboard settings
+port = 8888
+autoStartDashboard = false
+
+# Language
+lang = "en"
+

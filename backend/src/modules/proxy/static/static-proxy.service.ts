@@ -438,6 +438,257 @@ export class StaticProxyService {
   }
 
   /**
+   * 获取用户的IP列表（增强版 - 与985Proxy同步）
+   * List user's purchased IPs with optional sync from 985Proxy
+   */
+  async listMyIPs(userId: string, page: number = 1, limit: number = 20) {
+    this.logger.log(`[List My IPs] User: ${userId}, Page: ${page}, Limit: ${limit}`);
+
+    try {
+      // 从数据库获取用户的IP列表
+      const skip = (page - 1) * limit;
+      const [proxies, total] = await this.staticProxyRepo.findAndCount({
+        where: { userId: parseInt(userId) },
+        skip,
+        take: limit,
+        order: { createdAt: 'DESC' },
+      });
+
+      // 转换为前端格式，计算过期状态
+      const data = proxies.map(proxy => {
+        const expiresAt = proxy.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const daysRemaining = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        
+        let status: 'active' | 'expiring_soon' | 'expired' = 'active';
+        if (daysRemaining <= 0) status = 'expired';
+        else if (daysRemaining <= 7) status = 'expiring_soon';
+
+        return {
+          ip: proxy.ip,
+          port: proxy.port,
+          username: proxy.username,
+          password: proxy.password,
+          country: proxy.country,
+          city: proxy.cityName,
+          expiresAt: expiresAt.toISOString(),
+          daysRemaining,
+          status,
+        };
+      });
+
+      return {
+        data,
+        total,
+        page,
+        perPage: limit,
+      };
+    } catch (error) {
+      this.logger.error(`[List My IPs] Failed: ${error.message}`);
+      throw new BadRequestException(`获取IP列表失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 获取单个IP详情
+   * Get details for a specific IP with ownership verification
+   */
+  async getIPDetails(userId: string, ip: string) {
+    this.logger.log(`[Get IP Detail] User: ${userId}, IP: ${ip}`);
+
+    try {
+      // 验证用户拥有该IP
+      const proxy = await this.staticProxyRepo.findOne({
+        where: { 
+          userId: parseInt(userId),
+          ip,
+        },
+      });
+
+      if (!proxy) {
+        throw new NotFoundException('IP不存在或您无权访问');
+      }
+
+      // 返回详细信息
+      const expiresAt = proxy.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const daysRemaining = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+      return {
+        ip: proxy.ip,
+        port: proxy.port,
+        username: proxy.username,
+        password: proxy.password,
+        country: proxy.country,
+        city: proxy.cityName,
+        expiresAt: expiresAt.toISOString(),
+        daysRemaining,
+        status: proxy.status,
+        ipType: proxy.ipType,
+        channelName: proxy.channelName,
+        remark: proxy.remark,
+        autoRenew: proxy.auto_renew,
+      };
+    } catch (error) {
+      this.logger.error(`[Get IP Detail] Failed: ${error.message}`);
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException(`获取IP详情失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 续费IP（调用985Proxy API）
+   * Renew an IP using 985Proxy renewal API
+   */
+  async renewIPVia985Proxy(userId: string, ip: string, duration: number) {
+    this.logger.log(`[Renew IP via 985Proxy] User: ${userId}, IP: ${ip}, Duration: ${duration} days`);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. 验证用户拥有该IP
+      const proxy = await queryRunner.manager.findOne(StaticProxy, {
+        where: { userId: parseInt(userId), ip },
+      });
+
+      if (!proxy) {
+        throw new NotFoundException('IP不存在或您无权访问');
+      }
+
+      // 2. 验证IP未过期（可选，985Proxy可能允许续费已过期的IP）
+      const expiresAt = proxy.expiresAt || new Date();
+      if (expiresAt < new Date()) {
+        this.logger.warn(`[Renew IP] IP已过期: ${ip}`);
+        // 不阻止续费，只是警告
+      }
+
+      // 3. 计算续费价格
+      const zone = process.env.PROXY_985_ZONE || '';
+      const static_proxy_type = proxy.ipType === 'native' ? 'premium' : 'shared';
+      
+      const priceResponse = await this.proxy985Service.calculatePrice({
+        action: 'renew',
+        time_period: duration,
+        zone,
+        renew_ip_list: [ip],
+      });
+
+      if (priceResponse.code !== 0) {
+        throw new BadRequestException(`价格计算失败: ${priceResponse.msg}`);
+      }
+
+      const renewalCost = parseFloat(priceResponse.data.pay_price || '0');
+
+      // 4. 验证用户余额
+      const user = await queryRunner.manager.findOne(User, { 
+        where: { id: parseInt(userId) } 
+      });
+      
+      if (!user) {
+        throw new NotFoundException('用户不存在');
+      }
+
+      if (user.balance < renewalCost) {
+        throw new BadRequestException(`余额不足，需要 $${renewalCost}，当前余额 $${user.balance}`);
+      }
+
+      // 5. 调用985Proxy续费API
+      const renewResponse = await this.proxy985Service.renewIP({
+        zone,
+        time_period: duration,
+        renew_ip_list: [ip],
+        pay_type: 'balance',
+      });
+
+      if (renewResponse.code !== 0) {
+        throw new BadRequestException(`续费失败: ${renewResponse.msg}`);
+      }
+
+      const orderNo = renewResponse.data?.order_no;
+
+      // 6. 扣除余额
+      user.balance -= renewalCost;
+      await queryRunner.manager.save(user);
+
+      // 7. 创建交易记录
+      const transaction = queryRunner.manager.create(Transaction, {
+        userId: parseInt(userId),
+        type: TransactionType.PURCHASE,
+        amount: renewalCost,
+        balance_after: user.balance,
+        description: `续费静态代理IP: ${ip} (${duration}天)`,
+        order_no: orderNo,
+      });
+      await queryRunner.manager.save(transaction);
+
+      // 8. 更新IP过期时间（新过期时间 = 当前过期时间 + duration）
+      const newExpiresAt = new Date(expiresAt.getTime() + duration * 24 * 60 * 60 * 1000);
+      proxy.expiresAt = newExpiresAt;
+      await queryRunner.manager.save(proxy);
+
+      await queryRunner.commitTransaction();
+
+      this.logger.log(`[Renew IP] Success: ${ip}, New expiration: ${newExpiresAt.toISOString()}`);
+
+      return {
+        success: true,
+        orderNo,
+        newExpirationDate: newExpiresAt.toISOString(),
+        amountCharged: renewalCost,
+      };
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(`[Renew IP] Failed: ${error.message}`);
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 检查订单状态
+   * Check order status from 985Proxy
+   */
+  async checkOrderStatus(userId: string, orderNo: string) {
+    this.logger.log(`[Check Order Status] User: ${userId}, Order: ${orderNo}`);
+
+    try {
+      // 验证用户拥有该订单（检查transaction表）
+      const transaction = await this.transactionRepo.findOne({
+        where: { 
+          userId: parseInt(userId),
+          order_no: orderNo,
+        },
+      });
+
+      if (!transaction) {
+        throw new NotFoundException('订单不存在或您无权访问');
+      }
+
+      // 调用985Proxy API查询订单状态
+      const response = await this.proxy985Service.getOrderResult({ order_no: orderNo });
+
+      if (response.code !== 0) {
+        throw new BadRequestException(`查询订单失败: ${response.msg}`);
+      }
+
+      return {
+        orderNo,
+        status: response.data.status, // pending/completed/failed
+        amount: response.data.info?.pay_price || 0,
+        currency: 'USD',
+        orderTime: response.data.info?.order_time_utc,
+        completeTime: response.data.info?.complete_time_utc,
+      };
+    } catch (error) {
+      this.logger.error(`[Check Order Status] Failed: ${error.message}`);
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException(`查询订单状态失败: ${error.message}`);
+    }
+  }
+
+  /**
    * 续费静态代理
    */
   async renewProxy(userId: string, proxyId: string, duration: number) {
