@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试订单轮询功能</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #409eff;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #409eff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #66b1ff;
+        }
+        .btn:disabled {
+            background: #c0c4cc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .log-info { color: #3498db; }
+        .log-success { color: #2ecc71; }
+        .log-error { color: #e74c3c; }
+        .log-warning { color: #f39c12; }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .status-processing { background: #409eff; color: white; }
+        .status-completed { background: #67c23a; color: white; }
+        .status-failed { background: #f56c6c; color: white; }
+        input {
+            padding: 8px;
+            width: 100%;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .info-box {
+            background: #ecf5ff;
+            border: 1px solid #d9ecff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 订单轮询功能测试</h1>
+        
+        <div class="info-box">
+            <strong>📝 说明:</strong>
+            <ul>
+                <li>订单号: <code>ORD-1762405269176-17OV90</code> (刚购买的IP)</li>
+                <li>IP: <code>127.134.129.183</code></li>
+                <li>预计同步时间: 5-10分钟</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h3>1. 配置测试参数</h3>
+            <label>订单号:</label>
+            <input type="text" id="orderNo" value="ORD-1762405269176-17OV90" />
+            <br><br>
+            <label>轮询间隔 (毫秒):</label>
+            <input type="number" id="interval" value="3000" />
+            <br><br>
+            <label>最大重试次数:</label>
+            <input type="number" id="maxRetries" value="20" />
+        </div>
+
+        <div class="section">
+            <h3>2. 开始测试</h3>
+            <button class="btn" id="startBtn" onclick="startPolling()">▶️ 开始轮询</button>
+            <button class="btn" id="stopBtn" onclick="stopPolling()" disabled>⏸️ 停止轮询</button>
+            <button class="btn" onclick="clearLog()">🗑️ 清空日志</button>
+            <br><br>
+            <div>
+                当前状态: <span id="status" class="status status-processing">未开始</span>
+            </div>
+            <div>
+                重试次数: <span id="retryCount">0</span> / <span id="maxRetriesDisplay">20</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>3. 实时日志</h3>
+            <div class="log" id="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let pollTimer = null;
+        let retryCount = 0;
+        const API_BASE = 'http://localhost:3000/api/v1';
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(status) {
+            const statusSpan = document.getElementById('status');
+            statusSpan.textContent = status;
+            statusSpan.className = `status status-${status}`;
+        }
+
+        function updateRetryCount(count) {
+            document.getElementById('retryCount').textContent = count;
+        }
+
+        async function checkOrderStatus() {
+            const orderNo = document.getElementById('orderNo').value;
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                log('❌ 未找到登录Token，请先登录', 'error');
+                stopPolling();
+                return;
+            }
+
+            retryCount++;
+            updateRetryCount(retryCount);
+
+            log(`🔍 第 ${retryCount} 次查询订单状态...`, 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/proxy/static/order/${orderNo}/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    log(`⚠️ API错误: ${data.message}`, 'warning');
+                    
+                    // 如果是"Node does not exist"，继续重试
+                    if (data.message && data.message.includes('Node does not exist')) {
+                        log('📡 IP还未同步到985Proxy系统，继续等待...', 'info');
+                        scheduleNextCheck();
+                        return;
+                    }
+                    
+                    throw new Error(data.message || 'Unknown error');
+                }
+
+                log(`✅ 获取订单状态成功`, 'success');
+                log(`📦 数据: ${JSON.stringify(data, null, 2)}`, 'info');
+
+                const status = data.status || 'processing';
+                updateStatus(status);
+
+                if (status === 'completed') {
+                    log('🎉 订单已完成！', 'success');
+                    stopPolling();
+                    return;
+                }
+
+                if (status === 'failed') {
+                    log('❌ 订单失败', 'error');
+                    stopPolling();
+                    return;
+                }
+
+                // 继续轮询
+                log(`⏱️ 状态为 ${status}，继续轮询...`, 'info');
+                scheduleNextCheck();
+
+            } catch (error) {
+                log(`❌ 请求失败: ${error.message}`, 'error');
+                
+                const maxRetries = parseInt(document.getElementById('maxRetries').value);
+                if (retryCount < maxRetries) {
+                    log(`🔄 将在 ${document.getElementById('interval').value}ms 后重试...`, 'info');
+                    scheduleNextCheck();
+                } else {
+                    log('⛔ 达到最大重试次数，停止轮询', 'error');
+                    stopPolling();
+                }
+            }
+        }
+
+        function scheduleNextCheck() {
+            const interval = parseInt(document.getElementById('interval').value);
+            const maxRetries = parseInt(document.getElementById('maxRetries').value);
+
+            if (retryCount >= maxRetries) {
+                log('⛔ 达到最大重试次数，停止轮询', 'error');
+                stopPolling();
+                return;
+            }
+
+            pollTimer = setTimeout(checkOrderStatus, interval);
+        }
+
+        function startPolling() {
+            if (pollTimer) {
+                log('⚠️ 轮询已在进行中', 'warning');
+                return;
+            }
+
+            const orderNo = document.getElementById('orderNo').value;
+            if (!orderNo) {
+                log('❌ 请输入订单号', 'error');
+                return;
+            }
+
+            retryCount = 0;
+            updateRetryCount(0);
+            updateStatus('processing');
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('maxRetriesDisplay').textContent = 
+                document.getElementById('maxRetries').value;
+
+            log(`🚀 开始轮询订单: ${orderNo}`, 'success');
+            log(`⚙️ 轮询间隔: ${document.getElementById('interval').value}ms`, 'info');
+            log(`🔢 最大重试: ${document.getElementById('maxRetries').value}次`, 'info');
+
+            checkOrderStatus();
+        }
+
+        function stopPolling() {
+            if (pollTimer) {
+                clearTimeout(pollTimer);
+                pollTimer = null;
+            }
+
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+
+            log('⏹️ 轮询已停止', 'warning');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('📋 日志已清空', 'info');
+        }
+
+        // 页面加载时的提示
+        window.addEventListener('load', () => {
+            log('👋 订单轮询测试工具已就绪', 'success');
+            log('💡 提示: 请确保已在前端登录并获取Token', 'info');
+            log('📍 当前API地址: ' + API_BASE, 'info');
+        });
+    </script>
+</body>
+</html>
+
