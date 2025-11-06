@@ -41,65 +41,57 @@ const routes: RouteRecordRaw[] = [
           icon: 'DataLine',
         },
       },
-      // 动态住宅代理
+      // 动态住宅代理（直接路由，无嵌套）
       {
-        path: 'proxy/dynamic',
+        path: 'proxy/dynamic/buy',
+        name: 'DynamicProxyBuy',
+        component: () => import('@/views/proxy/DynamicBuy.vue'),
         meta: {
-          title: '动态住宅',
+          title: '动态住宅选购',
           icon: 'Lightning',
+          group: 'dynamic-proxy',
         },
-        children: [
-          {
-            path: 'buy',
-            name: 'DynamicProxyBuy',
-            component: () => import('@/views/proxy/DynamicBuy.vue'),
-            meta: {
-              title: '动态住宅选购',
-            },
-          },
-          {
-            path: 'manage',
-            name: 'DynamicProxyManage',
-            component: () => import('@/views/proxy/DynamicManage.vue'),
-            meta: {
-              title: '动态住宅概览',
-            },
-          },
-          {
-            path: 'channels',
-            name: 'DynamicChannels',
-            component: () => import('@/views/proxy/DynamicChannels.vue'),
-            meta: {
-              title: '动态通道管理',
-            },
-          },
-        ],
       },
-      // 静态住宅代理
       {
-        path: 'proxy/static',
+        path: 'proxy/dynamic/manage',
+        name: 'DynamicProxyManage',
+        component: () => import('@/views/proxy/DynamicManage.vue'),
         meta: {
-          title: '静态住宅',
-          icon: 'House',
+          title: '动态住宅管理',
+          icon: 'Lightning',
+          group: 'dynamic-proxy',
         },
-        children: [
-          {
-            path: 'buy',
-            name: 'StaticProxyBuy',
-            component: () => import('@/views/proxy/StaticBuy.vue'),
-            meta: {
-              title: '静态住宅选购',
-            },
-          },
-          {
-            path: 'manage',
-            name: 'StaticProxyManage',
-            component: () => import('@/views/proxy/StaticManage.vue'),
-            meta: {
-              title: '静态住宅管理',
-            },
-          },
-        ],
+      },
+      {
+        path: 'proxy/dynamic/channels',
+        name: 'DynamicChannels',
+        component: () => import('@/views/proxy/DynamicChannels.vue'),
+        meta: {
+          title: '动态通道管理',
+          icon: 'Lightning',
+          group: 'dynamic-proxy',
+        },
+      },
+      // 静态住宅代理（直接路由，无嵌套）
+      {
+        path: 'proxy/static/buy',
+        name: 'StaticProxyBuy',
+        component: () => import('@/views/proxy/StaticBuy.vue'),
+        meta: {
+          title: '静态住宅选购',
+          icon: 'House',
+          group: 'static-proxy',
+        },
+      },
+      {
+        path: 'proxy/static/manage',
+        name: 'StaticProxyManage',
+        component: () => import('@/views/proxy/StaticManage.vue'),
+        meta: {
+          title: '静态住宅管理',
+          icon: 'House',
+          group: 'static-proxy',
+        },
       },
       // 移动代理（占位）
       {
@@ -131,97 +123,97 @@ const routes: RouteRecordRaw[] = [
           icon: 'Wallet',
         },
       },
-      // 账单明细
+      // 账单明细（直接路由，无嵌套）
       {
-        path: 'billing',
+        path: 'billing/orders',
+        name: 'BillingOrders',
+        component: () => import('@/views/billing/Orders.vue'),
         meta: {
-          title: '账单明细',
+          title: '充值订单',
           icon: 'Tickets',
+          group: 'billing',
         },
-        children: [
-          {
-            path: 'orders',
-            name: 'BillingOrders',
-            component: () => import('@/views/billing/Orders.vue'),
-            meta: {
-              title: '充值订单',
-            },
-          },
-          {
-            path: 'transactions',
-            name: 'Transactions',
-            component: () => import('@/views/billing/Transactions.vue'),
-            meta: {
-              title: '交易明细',
-            },
-          },
-          {
-            path: 'expenses',
-            name: 'Expenses',
-            component: () => import('@/views/billing/Expenses.vue'),
-            meta: {
-              title: '消费记录',
-            },
-          },
-          {
-            path: 'settlement',
-            name: 'Settlement',
-            component: () => import('@/views/billing/Settlement.vue'),
-            meta: {
-              title: '结算记录',
-            },
-          },
-          {
-            path: 'recharge-orders',
-            name: 'RechargeOrders',
-            component: () => import('@/views/billing/RechargeOrders.vue'),
-            meta: {
-              title: '充值订单',
-            },
-          },
-        ],
       },
-      // 我的账户
       {
-        path: 'account',
+        path: 'billing/transactions',
+        name: 'Transactions',
+        component: () => import('@/views/billing/Transactions.vue'),
         meta: {
-          title: '我的账户',
-          icon: 'User',
+          title: '交易明细',
+          icon: 'Tickets',
+          group: 'billing',
         },
-        children: [
-          {
-            path: 'center',
-            name: 'AccountCenter',
-            component: () => import('@/views/account/Center.vue'),
-            meta: {
-              title: '账户中心',
-            },
-          },
-          {
-            path: 'event-log',
-            name: 'EventLog',
-            component: () => import('@/views/account/EventLog.vue'),
-            meta: {
-              title: '事件日志',
-            },
-          },
-          {
-            path: 'profile',
-            name: 'Profile',
-            component: () => import('@/views/profile/Index.vue'),
-            meta: {
-              title: '个人中心',
-            },
-          },
-          {
-            path: 'my-proxies',
-            name: 'MyProxies',
-            component: () => import('@/views/proxy/MyProxies.vue'),
-            meta: {
-              title: '我的代理',
-            },
-          },
-        ],
+      },
+      {
+        path: 'billing/expenses',
+        name: 'Expenses',
+        component: () => import('@/views/billing/Expenses.vue'),
+        meta: {
+          title: '消费记录',
+          icon: 'Tickets',
+          group: 'billing',
+        },
+      },
+      {
+        path: 'billing/settlement',
+        name: 'Settlement',
+        component: () => import('@/views/billing/Settlement.vue'),
+        meta: {
+          title: '结算记录',
+          icon: 'Tickets',
+          group: 'billing',
+        },
+      },
+      {
+        path: 'billing/recharge-orders',
+        name: 'RechargeOrders',
+        component: () => import('@/views/billing/RechargeOrders.vue'),
+        meta: {
+          title: '充值订单',
+          icon: 'Tickets',
+          group: 'billing',
+        },
+      },
+      // 我的账户（直接路由，无嵌套）
+      {
+        path: 'account/center',
+        name: 'AccountCenter',
+        component: () => import('@/views/account/Center.vue'),
+        meta: {
+          title: '账户中心',
+          icon: 'User',
+          group: 'account',
+        },
+      },
+      {
+        path: 'account/event-log',
+        name: 'EventLog',
+        component: () => import('@/views/account/EventLog.vue'),
+        meta: {
+          title: '事件日志',
+          icon: 'User',
+          group: 'account',
+        },
+      },
+      {
+        path: 'account/profile',
+        name: 'Profile',
+        component: () => import('@/views/profile/Index.vue'),
+        meta: {
+          title: '个人中心',
+          icon: 'User',
+          group: 'account',
+        },
+      },
+      {
+        path: 'account/my-proxies',
+        name: 'MyProxies',
+        component: () => import('@/views/proxy/MyProxies.vue'),
+        meta: {
+          title: '我的代理',
+          icon: 'User',
+          group: 'account',
+        },
       },
       // 通知管理
       {

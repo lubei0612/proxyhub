@@ -1,0 +1,38 @@
+======================================
+985Proxy API配置修正 - 重要
+======================================
+
+当前问题：
+backend/.env 中的 PROXY_985_API_KEY 格式错误
+
+❌ 当前错误配置：
+PROXY_985_API_KEY=ne_hj06qomI-6jd4ftbl7kv3-bmVfaGowNnFvYk2amQ0ZnRibDdrdjM4Yzc0MTc2MTc0MjUwMA==
+
+✅ 正确配置应该是：
+PROXY_985_API_KEY=ne_hj06qomI-bmVfaGowNnFvbUk0YzIzMTc2MTQ1Nzk1Mw==
+
+完整的985Proxy配置（backend/.env）：
+==========================================
+PROXY_985_API_KEY=ne_hj06qomI-bmVfaGowNnFvbUk0YzIzMTc2MTQ1Nzk1Mw==
+PROXY_985_BASE_URL=https://open-api.985proxy.com
+PROXY_985_ZONE=6jd4ftbl7kv3
+PROXY_985_TEST_MODE=false
+==========================================
+
+修正步骤：
+1. 打开 backend/.env 文件
+2. 找到 PROXY_985_API_KEY 这一行
+3. 替换为上面的正确值
+4. 保存文件
+5. 重启后端服务
+
+重启后端命令：
+cd backend
+npm run start:dev
+
+修正后可测试的功能：
+- 查询实时库存（inventory）
+- 计算购买价格（calculate-price）
+- IP续费（renew）
+- 订单状态查询（order status）
+
