@@ -309,11 +309,7 @@ const userChartOption = ref({
           fontWeight: 'bold',
         },
       },
-      data: [
-        { value: 680, name: '普通用户', itemStyle: { color: '#409eff' } },
-        { value: 150, name: 'VIP用户', itemStyle: { color: '#67c23a' } },
-        { value: 20, name: '管理员', itemStyle: { color: '#e6a23c' } },
-      ],
+      data: [], // 动态加载，从统计API获取
     },
   ],
 });
@@ -346,6 +342,13 @@ onMounted(async () => {
     stats.value.todayOrders = data.orders?.today || 0;
     stats.value.totalProxies = data.proxies?.total || 0;
     stats.value.todayProxies = 0; // 暂无今日新增代理API，需要后端添加
+    
+    // 更新用户增长图表数据
+    const normalUsers = (data.users?.total || 0) - 1; // 减去1个管理员
+    userChartOption.value.series[0].data = [
+      { value: normalUsers, name: '普通用户', itemStyle: { color: '#409eff' } },
+      { value: 1, name: '管理员', itemStyle: { color: '#e6a23c' } },
+    ];
   } catch (error: any) {
     console.error('[AdminDashboard] 加载统计数据失败:', error);
   }
