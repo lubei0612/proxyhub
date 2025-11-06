@@ -39,13 +39,29 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: false,
     chunkSizeWarningLimit: 1500,
+    // 使用esbuild压缩（更快，更稳定）
+    minify: 'esbuild',
     rollupOptions: {
       output: {
-        manualChunks: {
-          'element-plus': ['element-plus'],
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'echarts': ['echarts', 'vue-echarts'],
-        }
+        // 简化分包策略，避免循环依赖
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // Element Plus单独打包
+            if (id.includes('element-plus')) {
+              return 'element-plus';
+            }
+            // Vue全家桶打包
+            if (id.includes('vue') || id.includes('pinia') || id.includes('@vue') || id.includes('vue-router')) {
+              return 'vue-vendor';
+            }
+            // ECharts单独打包
+            if (id.includes('echarts')) {
+              return 'echarts';
+            }
+            // 其他第三方库
+            return 'vendor';
+          }
+        },
       }
     }
   }
