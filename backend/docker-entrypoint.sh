@@ -5,6 +5,18 @@ echo "========================================="
 echo "🚀 ProxyHub Backend 启动中..."
 echo "========================================="
 
+# 加载环境变量
+if [ -f /app/.env ]; then
+  echo "📁 加载环境变量配置..."
+  export $(grep -v '^#' /app/.env | xargs)
+  echo "✅ 环境变量已加载"
+  echo "   数据库: ${DATABASE_HOST}:${DATABASE_PORT}"
+  echo "   用户: ${DATABASE_USER}"
+  echo "   数据库名: ${DATABASE_NAME}"
+else
+  echo "⚠️  警告: .env 文件不存在"
+fi
+
 # 等待数据库就绪
 echo "⏳ 等待数据库就绪..."
 max_retries=30
