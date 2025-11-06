@@ -1,14 +1,14 @@
 const { DataSource } = require('typeorm');
 const bcrypt = require('bcrypt');
 
-// 数据库配置
+// 数据库配置（匹配 docker-compose 的环境变量）
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.DB_HOST || 'db',
-  port: parseInt(process.env.DB_PORT, 10) || 5432,
-  username: process.env.DB_USERNAME || 'proxyhub',
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE || 'proxyhub',
+  host: process.env.DATABASE_HOST || 'postgres',
+  port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+  username: process.env.DATABASE_USER || 'postgres',
+  password: process.env.DATABASE_PASSWORD || 'postgres123',
+  database: process.env.DATABASE_NAME || 'proxyhub',
   entities: ['dist/**/*.entity.js'],
   synchronize: true, // 自动创建表结构
   logging: false,
