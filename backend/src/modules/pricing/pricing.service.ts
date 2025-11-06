@@ -280,6 +280,39 @@ export class PricingService implements OnModuleInit {
   }
 
   /**
+   * 获取指定产品类型的价格覆盖（用于inventory API）
+   */
+  async getPriceOverridesForInventory(productType: string) {
+    this.logger.log(`[Get Price Overrides] Product Type: ${productType}`);
+
+    try {
+      // 查找价格配置
+      const priceConfig = await this.priceConfigRepo.findOne({
+        where: { productType, isActive: true },
+      });
+
+      if (!priceConfig) {
+        this.logger.warn(`[Get Price Overrides] No price config found for ${productType}`);
+        return [];
+      }
+
+      // 查找所有该产品类型的价格覆盖
+      const overrides = await this.priceOverrideRepo.find({
+        where: { 
+          priceConfigId: priceConfig.id,
+          isActive: true 
+        },
+      });
+
+      this.logger.log(`[Get Price Overrides] Found ${overrides.length} overrides for ${productType}`);
+      return overrides;
+    } catch (error) {
+      this.logger.error(`[Get Price Overrides] Failed: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
    * 获取所有价格覆盖
    */
   async getAllPriceOverrides(productType?: string) {

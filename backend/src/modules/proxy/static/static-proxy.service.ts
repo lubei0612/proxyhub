@@ -115,7 +115,7 @@ export class StaticProxyService {
 
   /**
    * 获取库存信息
-   * Get real-time inventory from 985Proxy
+   * Get real-time inventory from 985Proxy with price overrides
    */
   async getInventory(ipType: string, duration: number) {
     this.logger.log(`[Get Inventory] IP Type: ${ipType}, Duration: ${duration}`);
@@ -123,27 +123,58 @@ export class StaticProxyService {
     try {
       // 支持前端传递 'native' 或 'premium' 两种格式
       const static_proxy_type = (ipType === 'native' || ipType === 'premium') ? 'premium' : 'shared';
-      const response = await this.proxy985Service.getInventory({ static_proxy_type });
+      
+      // 并行获取库存和价格覆盖
+      const [response, priceOverrides] = await Promise.all([
+        this.proxy985Service.getInventory({ static_proxy_type }),
+        this.pricingService.getPriceOverridesForInventory(
+          static_proxy_type === 'premium' ? 'static-residential-native' : 'static-residential'
+        ),
+      ]);
 
       if (response.code !== 0) {
         throw new BadRequestException(`获取库存失败: ${response.msg}`);
       }
 
-      // 价格映射：985Proxy的inventory API返回的价格不区分shared/premium
-      // 需要根据ipType设置正确的价格
-      const pricePerMonth = static_proxy_type === 'premium' ? 8 : 5;
+      // 默认价格
+      const defaultPrice = static_proxy_type === 'premium' ? 8 : 5;
+
+      // 构建覆盖价格Map（O(1)查找）
+      const overrideMap = new Map<string, number>();
+      priceOverrides.forEach((override: any) => {
+        const key = override.cityName 
+          ? `${override.countryCode}:${override.cityName}`
+          : override.countryCode;
+        overrideMap.set(key, parseFloat(override.overridePrice));
+      });
 
       const inventory = {
-        countries: (response.data || []).map((item: any) => ({
-          countryCode: item.country_code,
-          countryName: item.country_code,
-          stock: item.number || 0,
-          price: pricePerMonth, // 使用映射后的价格
-          cities: item.city_name ? [{ cityName: item.city_name, stock: item.number || 0 }] : [],
-        })),
+        countries: (response.data || []).map((item: any) => {
+          // 查找价格（城市级 > 国家级 > 默认价格）
+          const cityKey = item.city_name ? `${item.country_code}:${item.city_name}` : null;
+          const countryKey = item.country_code;
+          
+          const price = 
+            (cityKey && overrideMap.get(cityKey)) ||
+            overrideMap.get(countryKey) ||
+            defaultPrice;
+
+          return {
+            countryCode: item.country_code,
+            countryName: item.country_code,
+            stock: item.number || 0,
+            price, // 使用覆盖价格或默认价格
+            cities: item.city_name ? [{ cityName: item.city_name, stock: item.number || 0 }] : [],
+          };
+        }),
       };
 
-      this.logger.log(`[Get Inventory] Found ${inventory.countries.length} locations (${static_proxy_type} @ $${pricePerMonth}/month)`);
+      const overrideCount = inventory.countries.filter(c => 
+        overrideMap.has(c.countryCode) || 
+        c.cities.some((city: any) => overrideMap.has(`${c.countryCode}:${city.cityName}`))
+      ).length;
+
+      this.logger.log(`[Get Inventory] Found ${inventory.countries.length} locations (${static_proxy_type}), ${overrideCount} with price overrides`);
       return inventory;
     } catch (error) {
       this.logger.error(`[Get Inventory] Failed: ${error.message}`);
