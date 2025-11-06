@@ -109,7 +109,13 @@ export class DashboardService {
    * ✅ 已集成真实流量统计系统
    */
   async getTrafficByType(userId: string) {
-    return await this.trafficService.getTrafficByType(parseInt(userId), 7);
+    try {
+      return await this.trafficService.getTrafficByType(parseInt(userId), 7);
+    } catch (error) {
+      console.error('[Dashboard] getTrafficByType error:', error.message);
+      // 返回空数据避免前端报错
+      return [];
+    }
   }
 
   /**
@@ -117,7 +123,13 @@ export class DashboardService {
    * ✅ 已集成真实请求统计系统
    */
   async getRequestDistribution(userId: string) {
-    return await this.trafficService.getRequestDistribution(parseInt(userId), 7);
+    try {
+      return await this.trafficService.getRequestDistribution(parseInt(userId), 7);
+    } catch (error) {
+      console.error('[Dashboard] getRequestDistribution error:', error.message);
+      // 返回空数据避免前端报错
+      return [];
+    }
   }
 
   /**
@@ -125,7 +137,13 @@ export class DashboardService {
    * ✅ 已集成真实流量统计系统
    */
   async getTrafficTrend(userId: string) {
-    return await this.trafficService.getTrafficTrend(parseInt(userId), 7);
+    try {
+      return await this.trafficService.getTrafficTrend(parseInt(userId), 7);
+    } catch (error) {
+      console.error('[Dashboard] getTrafficTrend error:', error.message);
+      // 返回空数据避免前端报错
+      return [];
+    }
   }
 }
 
