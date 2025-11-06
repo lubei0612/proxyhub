@@ -8,6 +8,7 @@ import { StaticProxy } from '../proxy/static/entities/static-proxy.entity';
 import { SystemSettings } from './entities/system-settings.entity';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
+import { CleanMockController } from './clean-mock.controller';
 import { EventLogModule } from '../event-log/event-log.module';
 
 @Module({
@@ -23,7 +24,7 @@ import { EventLogModule } from '../event-log/event-log.module';
     forwardRef(() => EventLogModule),
   ],
   providers: [AdminService],
-  controllers: [AdminController],
+  controllers: [AdminController, CleanMockController],
   exports: [AdminService],
 })
 export class AdminModule {}
