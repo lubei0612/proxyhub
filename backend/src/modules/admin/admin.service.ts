@@ -75,9 +75,14 @@ export class AdminService {
     const activeProxies = await this.staticProxyRepo.count({ where: { status: 'active' } });
     const pendingRecharges = await this.rechargeRepo.count({ where: { status: 'pending' } });
 
-    // 计算总收入
-    const transactions = await this.transactionRepo.find({ where: { type: 'income' } });
-    const totalIncome = transactions.reduce((sum, t) => sum + parseFloat(t.amount as any), 0);
+    // 计算总收入（从所有完成的订单计算）
+    const completedOrdersWithAmount = await this.orderRepo.find({ 
+      where: { status: 'completed' },
+      select: ['totalPrice']
+    });
+    const totalIncome = completedOrdersWithAmount.reduce((sum, order) => {
+      return sum + (parseFloat(order.totalPrice as any) || 0);
+    }, 0);
 
     // 计算今日数据（UTC 0点到现在）
     const today = new Date();
@@ -87,12 +92,15 @@ export class AdminService {
       .where('order.createdAt >= :today', { today })
       .getCount();
     
-    const todayTransactions = await this.transactionRepo.createQueryBuilder('transaction')
-      .where('transaction.createdAt >= :today', { today })
-      .andWhere('transaction.type IN (:...types)', { types: ['purchase', 'renewal'] })
+    // 计算今日收入（从今日完成的订单）
+    const todayCompletedOrders = await this.orderRepo.createQueryBuilder('order')
+      .where('order.createdAt >= :today', { today })
+      .andWhere('order.status = :status', { status: 'completed' })
       .getMany();
     
-    const todayIncome = todayTransactions.reduce((sum, t) => sum + Math.abs(parseFloat(t.amount as any)), 0);
+    const todayIncome = todayCompletedOrders.reduce((sum, order) => {
+      return sum + (parseFloat(order.totalPrice as any) || 0);
+    }, 0);
 
     return {
       users: {

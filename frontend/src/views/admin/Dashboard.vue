@@ -203,6 +203,7 @@ import {
   LegendComponent,
   GridComponent,
 } from 'echarts/components';
+import { PieChart } from 'echarts/charts';
 import {
   User,
   Money,
@@ -219,6 +220,7 @@ use([
   CanvasRenderer,
   LineChart,
   BarChart,
+  PieChart,
   TitleComponent,
   TooltipComponent,
   LegendComponent,

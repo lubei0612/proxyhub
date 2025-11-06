@@ -1,64 +1,37 @@
-# ProxyHub - 代理IP管理平台
+# ProxyHub - 智能代理管理平台
 
-<div align="center">
+## 📋 项目概述
 
-![ProxyHub](https://img.shields.io/badge/ProxyHub-v1.0.0-blue)
-![Vue3](https://img.shields.io/badge/Vue-3.x-green)
-![NestJS](https://img.shields.io/badge/NestJS-10.x-red)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
-![Docker](https://img.shields.io/badge/Docker-ready-blue)
+ProxyHub是一个全功能的代理IP管理平台，集成985Proxy服务，提供静态住宅代理、动态住宅代理管理等功能。
 
-一个功能完整的代理IP管理平台，支持静态住宅代理、动态住宅代理、移动代理的选购和管理。
-
-</div>
-
----
-
-## ✨ 功能特性
-
-### 用户端功能
-- 🔐 **用户认证** - 注册、登录、JWT身份验证
-- 📊 **数据仪表盘** - 实时统计代理使用情况、订单、消费数据
-- 🏠 **静态住宅代理** - 选购和管理静态IP，支持多国家/城市
-- ⚡ **动态住宅代理** - 动态IP选购和管理（开发中）
-- 📱 **移动代理** - 移动IP管理（计划中）
-- 💰 **钱包充值** - 多种支付方式，管理员审核
-- 📝 **订单管理** - 查看所有购买订单和状态
-- 💳 **交易记录** - 详细的账户交易明细
-- 👤 **账户中心** - 个人信息、密码修改、API密钥管理
-
-### 管理后台功能
-- 👥 **用户管理** - 查看所有用户，管理状态和角色
-- 💵 **充值审核** - 审批用户充值申请
-- 📦 **订单管理** - 查看所有订单
-- 📈 **系统统计** - 平台运营数据概览
-- ⚙️ **系统设置** - 配置系统参数
+**当前版本**: v1.0.0  
+**最后更新**: 2025-11-06
 
 ---
 
 ## 🚀 快速开始
 
-### 前置要求
-- Node.js >= 18.0
-- PostgreSQL >= 15
-- Docker & Docker Compose
-- npm 或 yarn
+### 环境要求
+- Node.js >= 18.x
+- PostgreSQL >= 14.x
+- Redis >= 6.x (可选，用于订单队列)
+- npm >= 9.x
 
 ### 安装步骤
 
 1. **克隆项目**
 ```bash
-git clone <repository-url>
+git clone https://github.com/lubei0612/proxyhub.git
 cd proxyhub
 ```
 
 2. **安装依赖**
 ```bash
-# 安装后端依赖
+# 后端
 cd backend
 npm install
 
-# 安装前端依赖
+# 前端
 cd ../frontend
 npm install
 ```
@@ -66,58 +39,28 @@ npm install
 3. **配置环境变量**
 ```bash
 # 复制环境变量模板
-cp docs/ENV_TEMPLATE.txt backend/.env
+cp backend/.env.example backend/.env
 
-# 编辑.env文件，配置数据库连接等信息
+# 编辑.env文件，配置数据库和985Proxy API密钥
 ```
 
-4. **启动数据库**
-```bash
-# 返回项目根目录
-cd ..
-
-# 启动PostgreSQL
-docker-compose up -d postgres
-```
-
-5. **运行数据库迁移和种子数据**
+4. **初始化数据库**
 ```bash
 cd backend
 npm run migration:run
-npm run seed
+npm run seed:run
 ```
 
-6. **启动服务**
-
-**方法1：一键启动（推荐）**
+5. **启动服务**
 ```bash
-.\启动ProxyHub.bat
-```
-
-**方法2：手动启动**
-```bash
-# 终端1：启动后端
+# 后端 (http://localhost:3000)
 cd backend
 npm run start:dev
 
-# 终端2：启动前端
+# 前端 (http://localhost:8080)
 cd frontend
 npm run dev
 ```
-
-7. **访问应用**
-- 前端：http://localhost:8080
-- 后端API：http://localhost:3000
-- API文档：http://localhost:3000/api
-
----
-
-## 👤 测试账号
-
-| 角色 | 邮箱 | 密码 | 初始余额 |
-|------|------|------|---------|
-| 管理员 | admin@example.com | admin123 | $10,000.00 |
-| 普通用户 | user@example.com | password123 | $1,000.00 |
 
 ---
 
@@ -127,43 +70,118 @@ npm run dev
 proxyhub/
 ├── backend/                 # NestJS后端
 │   ├── src/
-│   │   ├── modules/        # 业务模块
-│   │   │   ├── auth/       # 认证模块
-│   │   │   ├── user/       # 用户模块
-│   │   │   ├── proxy/      # 代理模块
-│   │   │   ├── billing/    # 账单模块
-│   │   │   ├── order/      # 订单模块
-│   │   │   ├── admin/      # 管理模块
-│   │   │   └── dashboard/  # 仪表盘模块
-│   │   ├── common/         # 公共模块（guards, decorators）
-│   │   ├── config/         # 配置文件
-│   │   └── database/       # 数据库相关（migrations, seeds）
+│   │   ├── modules/         # 功能模块
+│   │   │   ├── auth/        # 认证模块
+│   │   │   ├── user/        # 用户管理
+│   │   │   ├── proxy/       # 代理管理
+│   │   │   ├── proxy985/    # 985Proxy集成
+│   │   │   ├── order/       # 订单管理
+│   │   │   ├── billing/     # 账单管理
+│   │   │   ├── pricing/     # 价格管理
+│   │   │   ├── dashboard/   # 仪表盘
+│   │   │   ├── admin/       # 管理后台
+│   │   │   └── ...
+│   │   ├── common/          # 通用组件
+│   │   ├── config/          # 配置文件
+│   │   └── database/        # 数据库迁移和种子
 │   └── package.json
-│
-├── frontend/               # Vue3前端
+├── frontend/                # Vue 3前端
 │   ├── src/
-│   │   ├── api/           # API请求封装
-│   │   ├── assets/        # 静态资源
-│   │   ├── components/    # 公共组件
-│   │   ├── layouts/       # 布局组件
-│   │   ├── router/        # 路由配置
-│   │   ├── stores/        # Pinia状态管理
-│   │   ├── views/         # 页面组件
-│   │   └── utils/         # 工具函数
+│   │   ├── views/           # 页面组件
+│   │   ├── components/      # 通用组件
+│   │   ├── api/             # API接口
+│   │   ├── router/          # 路由配置
+│   │   ├── stores/          # Pinia状态管理
+│   │   └── locales/         # 国际化
 │   └── package.json
-│
-├── docs/                   # 项目文档
-│   ├── requirements.md     # 需求文档
-│   ├── design.md          # 设计文档
-│   ├── tasks.md           # 任务清单
-│   └── CODE-REFERENCE/    # 代码参考
-│
-├── docker-compose.yml     # Docker编排配置
-├── 启动ProxyHub.bat       # Windows一键启动脚本
-├── 停止ProxyHub.bat       # Windows停止服务脚本
-├── ACCEPTANCE_TEST.md     # 验收测试方案
-└── README.md              # 项目说明
+├── docs/                    # 项目文档
+├── docs-archive/            # 历史文档归档
+├── scripts/                 # 工具脚本
+└── README.md
 ```
+
+---
+
+## 🔑 默认账户
+
+### 管理员账户
+- 邮箱: `admin@example.com`
+- 密码: `Admin123456!`
+
+### 测试用户账户
+- 邮箱: `user@example.com`
+- 密码: `User123456!`
+
+---
+
+## 📊 核心功能
+
+### ✅ 已完成功能
+
+#### 用户功能
+- [x] 用户注册/登录/登出
+- [x] JWT认证
+- [x] 个人资料管理
+- [x] 密码修改
+- [x] API密钥生成
+
+#### 代理管理
+- [x] 静态住宅代理购买
+- [x] 静态代理IP列表查看
+- [x] IP续费功能
+- [x] IP释放
+- [x] 自动续费设置
+- [x] 代理使用统计
+
+#### 账单系统
+- [x] 账户余额管理
+- [x] 充值申请
+- [x] 充值审核（管理员）
+- [x] 交易记录查询
+- [x] 账单明细导出
+
+#### 订单系统
+- [x] 订单创建
+- [x] 订单状态跟踪
+- [x] 订单历史查询
+- [x] 订单取消
+
+#### 管理后台
+- [x] 用户管理
+- [x] 订单管理
+- [x] 充值审核
+- [x] 系统统计
+- [x] 事件日志
+- [x] 价格覆盖管理
+
+#### 985Proxy集成
+- [x] 库存查询
+- [x] 价格计算
+- [x] 静态IP购买
+- [x] IP续费
+- [x] 我的IP列表查询
+- [x] 订单状态查询
+
+---
+
+### 🚧 进行中的功能
+
+根据spec-workflow任务列表：
+
+#### P0 - 严重问题
+- [ ] IP续费API完整测试（Task 1）
+- [x] 管理后台路由修复（Task 2） - 部分完成
+- [ ] 管理后台数据显示修复
+
+#### P1 - 重要功能
+- [ ] 订单状态轮询机制（Task 3）
+- [ ] 价格显示一致性（Task 4）
+- [ ] 实时价格集成985Proxy API
+
+#### P2 - 优化项
+- [ ] 代码优化和重构（Task 5）
+- [ ] 性能优化
+- [ ] Docker部署优化
 
 ---
 
@@ -171,315 +189,133 @@ proxyhub/
 
 ### 后端
 - **框架**: NestJS 10.x
-- **语言**: TypeScript
-- **数据库**: PostgreSQL 15
-- **ORM**: TypeORM
-- **认证**: JWT + Passport.js
-- **验证**: class-validator
-- **API文档**: Swagger
-- **限流**: @nestjs/throttler
+- **数据库**: PostgreSQL 14.x + TypeORM
+- **认证**: JWT + Passport
+- **缓存**: Redis (可选)
+- **队列**: Bull (可选)
+- **文档**: Swagger/OpenAPI
 
 ### 前端
-- **框架**: Vue 3
-- **语言**: TypeScript
-- **构建工具**: Vite
-- **UI组件**: Element Plus
+- **框架**: Vue 3 + TypeScript
+- **UI库**: Element Plus
 - **状态管理**: Pinia
-- **路由**: Vue Router
-- **HTTP客户端**: Axios
+- **路由**: Vue Router 4
+- **HTTP**: Axios
 - **图表**: ECharts
-
-### DevOps
-- **容器化**: Docker & Docker Compose
-- **数据库**: PostgreSQL
-- **反向代理**: Nginx（生产环境）
+- **国际化**: Vue I18n
 
 ---
 
-## 📚 API文档
+## 🔧 开发指南
 
-启动后端服务后，访问 http://localhost:3000/api 查看完整的Swagger API文档。
+### 代码规范
+- 使用TypeScript严格模式
+- 遵循ESLint规则
+- 使用Prettier格式化代码
+- Git提交遵循Conventional Commits
 
-主要API端点：
+### API开发流程
+1. 定义DTO (Data Transfer Object)
+2. 创建Service业务逻辑
+3. 创建Controller路由
+4. 添加Swagger文档
+5. 编写单元测试
 
-### 认证相关
-- `POST /api/v1/auth/register` - 用户注册
-- `POST /api/v1/auth/login` - 用户登录
-- `POST /api/v1/auth/admin-login` - 管理员登录
-- `POST /api/v1/auth/refresh` - 刷新token
-
-### 用户相关
-- `GET /api/v1/users/me` - 获取当前用户信息
-- `GET /api/v1/users/profile` - 获取用户资料
-- `PUT /api/v1/users/profile` - 更新用户资料
-- `POST /api/v1/users/change-password` - 修改密码
-
-### 代理相关
-- `GET /api/v1/proxy/static/list` - 获取代理列表
-- `POST /api/v1/proxy/static/purchase` - 购买静态代理
-- `GET /api/v1/proxy/static/inventory` - 查看可用库存
-
-### 账单相关
-- `POST /api/v1/billing/recharge` - 提交充值
-- `GET /api/v1/billing/recharges` - 获取充值记录
-- `GET /api/v1/billing/transactions` - 获取交易记录
-
-### 订单相关
-- `GET /api/v1/orders` - 获取订单列表
-- `GET /api/v1/orders/:id` - 获取订单详情
-
-### 管理员相关
-- `GET /api/v1/admin/users` - 获取所有用户
-- `GET /api/v1/admin/statistics` - 获取系统统计
-- `PUT /api/v1/billing/recharge/:id/approve` - 审批充值
-
----
-
-## 🧪 测试
-
-### 运行验收测试
-
-完整的验收测试方案请参考 `ACCEPTANCE_TEST.md` 文档。
-
-**快速测试流程**：
-1. 启动所有服务
-2. 访问 http://localhost:8080
-3. 使用测试账号登录
-4. 按照验收文档逐项测试功能
-
-### 使用Chrome DevTools调试
-
-1. 打开浏览器开发者工具（F12）
-2. 切换到Network标签
-3. 执行操作（如登录、购买）
-4. 查看API请求和响应
-5. 检查Console是否有错误
-
-详细调试指南见 `ACCEPTANCE_TEST.md`。
-
----
-
-## 🐛 故障排查
-
-### 常见问题
-
-**问题1：端口被占用**
+### 数据库迁移
 ```bash
-# 停止所有Node进程
-.\停止ProxyHub.bat
+# 生成新迁移
+npm run migration:generate -- -n MigrationName
 
-# 或手动停止
-taskkill /F /IM node.exe
+# 运行迁移
+npm run migration:run
+
+# 回滚迁移
+npm run migration:revert
 ```
 
-**问题2：数据库连接失败**
-```bash
-# 检查Docker是否运行
-docker ps
+---
 
-# 重启数据库
-docker-compose restart postgres
-```
+## 📖 文档索引
 
-**问题3：前端页面空白**
-- 检查浏览器Console是否有错误
-- 检查前端服务是否正常启动
-- 清除浏览器缓存
-
-**问题4：API返回401错误**
-- Token可能过期，重新登录
-- 检查请求头是否包含Authorization
+- [API文档](http://localhost:3000/api) - Swagger UI
+- [数据库设计](docs/database-schema.md)
+- [985Proxy API集成说明](docs/985proxy-integration.md)
+- [Docker部署指南](docs-archive/2025-11-06/DOCKER_DEPLOYMENT_GUIDE.md)
+- [测试指南](docs-archive/2025-11-06/README-测试指南.md)
+- [历史交付报告](docs-archive/2025-11-06/)
 
 ---
 
-## 📖 开发文档
+## 🐛 已知问题
 
-详细开发文档位于 `docs/` 目录：
+### 高优先级
+1. ~~管理后台API返回500错误~~ - ✅ 已修复 (2025-11-06)
+2. ~~静态IP列表字段缺失~~ - ✅ 已修复 (2025-11-06)
+3. **流量统计需要集成985Proxy API** - 🚧 待实现
+4. **事件日志筛选功能** - 🔍 需要调试
 
-- `requirements.md` - 功能需求文档
-- `design.md` - 系统设计文档
-- `tasks.md` - 开发任务清单
-- `IMPLEMENTATION_GUIDE.md` - 实现指南
-- `CODE-REFERENCE/` - 代码参考示例
-- `ENV_TEMPLATE.txt` - 环境变量模板
-
----
-
-## 📋 开发规范与代码修改指南
-
-### 代码修改注意事项
-
-1. **使用全局视角和思维排查问题**
-   - 不要只针对单个问题进行修改
-   - 将问题以及文件有可能关联的文件和问题进行统一处理
-   - 避免其余问题的产生
-
-2. **梳理项目目录**
-   - 开始修复代码前，先梳理项目目录
-   - 确认现有文件的关系和功能
-   - 不能出现功能重复和叠加的问题
-   - 保持文件的代码简洁性和高效性
-
-3. **排查关联文件**
-   - 修改前先排查与问题有关的所有关联文件
-   - 准确定位问题发生的原因以及有可能产生的多项问题
-   - 之后再开始细致全面的修复代码
-
-4. **遵循开发手册**
-   - 修改代码期间遵循开发手册
-   - 不要影响其余无关的代码和功能
-   - 保持项目的完整性
-   - 保持修改的部分与整体项目其它关联功能的一致性
-
-5. **检查定义与导入**
-   - 修改代码后需要检查文件以及关联代码中的定义与导入语句是否正确
-
-6. **创建文件需审批**
-   - 如果需要创建文件必须取得明确同意，并说明原因
-   - 得到允许后才能新建文件
-
-7. **完成后复查**
-   - 完成后仔细复查一遍修改的代码是否还存在问题
-
-8. **避免重复代码**
-   - 修改代码前，先查看代码块的具体位置
-   - 如果存在就不要新建方法或者文件
-   - 不要出现与现有代码重复的代码
-
-9. **复盘关联代码**
-   - 修改代码后，必须要复盘所有关联的代码和文件
-   - 查看是否存在功能重复、冗余的代码及导入语句
-   - 清除相关的冗余代码
-
-10. **使用相对路径**
-    - 所有涉及到路径的问题必须全部使用相对路径
-
-### 开发流程规范
-
-#### 1. 全局思维与代码修改
-
-- **全局视角**：在每次代码修改前，应从全局角度分析当前修改可能对系统其他部分产生的影响
-- **影响评估**：评估该修改对前后端交互、数据流、状态管理、API接口等方面的影响
-- **协调性**：确保每次修改都能与其他模块协调工作，避免"修复一个问题却引入另一个问题"
-
-#### 2. 代码修改流程
-
-**问题定位与排查**
-- 明确问题：准确定位问题的根源，明确问题的具体表现和影响范围
-- 排查步骤：通过日志、调试工具、单元测试等手段，逐步排查问题
-- 问题分析：分析问题的根本原因，确保修改方案能够彻底解决问题
-
-**修改方案设计**
-- 最小化修改：设计最小化的修改方案，只修改必要的代码部分
-- 可读性与可维护性：修改后的代码应保持高可读性和可维护性
-- 兼容性：确保与现有功能兼容，避免引入新的兼容性问题
-
-**测试与验证**
-- 单元测试：修改代码后，确保相关的单元测试通过
-- 集成测试：确保修改后的代码在集成环境中能够正常工作
-- 回归测试：进行回归测试，确保没有引入新的问题或导致现有功能退化
-
-#### 3. 代码修改的权限与范围
-
-- **权限控制**：在没有得到明确允许的情况下，不应修改与当前问题无关的代码
-- **代码保护**：确保在修改过程中，不会意外删除或覆盖现有的有效代码
-- **备份机制**：每次修改前应备份相关代码，以便在出现问题时能够快速回滚
-
-#### 4. 开发效率与代码质量
-
-- **高效开发**：通过自动化工具、代码生成、模板化开发等手段提高开发效率
-- **代码质量**：确保每次修改后的代码符合项目的代码质量标准，遵循最佳实践
-- **文档更新**：修改代码后，确保相关文档（API文档、注释、README等）得到及时更新
-
-#### 5. 前后端协作
-
-- **API接口一致性**：修改后端代码时，确保API接口的输入输出格式与前端保持一致
-- **数据流一致性**：确保前后端的数据流保持一致，避免因数据格式或状态管理不一致导致的问题
-- **状态管理**：在Vue3 UI中，确保修改不会影响其他组件的状态，保持状态的一致性和可预测性
-
-#### 6. 代码审查与反馈
-
-- **代码审查**：每次修改后，应提供详细的代码审查报告，说明修改的内容、原因以及可能的影响
-- **反馈机制**：提供反馈机制，允许在修改后提出意见或建议
-
-#### 7. 持续集成与部署
-
-- **CI/CD集成**：确保每次代码修改都能通过持续集成（CI）流程
-- **自动化部署**：支持自动化部署流程，确保修改后的代码能够快速、安全地部署到生产环境
-
-#### 8. 开发规范总结
-
-- ✅ **全局思维**：始终以全局思维进行代码修改
-- ✅ **最小化修改**：确保每次修改都是最小化的
-- ✅ **高效与质量**：通过自动化工具和最佳实践提高开发效率，同时保持代码的高质量
-- ✅ **保持一致性**：确保代码风格、API设计、错误处理等方面的一致性
-- ✅ **完整性保护**：保持现有有效功能和代码的完整性
+### 中等优先级
+5. 订单状态轮询机制 - 📋 已规划
+6. 价格显示一致性 - 📋 已规划
 
 ---
 
-## 🔒 安全
+## 📝 更新日志
 
-- 所有密码使用 bcrypt 加密存储
-- JWT token 有效期：15分钟（access）/ 7天（refresh）
-- API请求需要JWT认证
-- 管理员权限独立验证
-- API限流：每60秒最多100次请求
+### [v1.0.0] - 2025-11-06
 
----
+#### 新增
+- 完整的用户认证和授权系统
+- 静态住宅代理购买和管理
+- 985Proxy API完整集成
+- 管理后台功能
+- 账单和订单系统
 
-## 🚧 已知限制
+#### 修复
+- 修复管理后台统计API错误
+- 修复静态IP列表数据字段缺失
+- 修复前端ECharts PieChart导入错误
+- 修复auto_renew字段名错误
 
-1. **动态代理模块**：UI已完成，业务逻辑待实现
-2. **移动代理模块**：计划中，暂未开发
-3. **985Proxy API**：暂时使用Mock数据，需集成真实API
-4. **实时流量统计**：待实现
-5. **Telegram通知**：待实现
-
----
-
-## 📝 TODO
-
-- [ ] 集成真实的985Proxy API
-- [ ] 实现动态代理业务逻辑
-- [ ] 添加移动代理模块
-- [ ] 完善前端图表数据
-- [ ] 添加Telegram通知
-- [ ] 优化Docker生产环境
-- [ ] 添加单元测试
-- [ ] 添加E2E测试
-- [ ] 部署到生产环境
+#### 优化
+- 整理项目文件结构
+- 创建文档归档目录
+- 优化Git提交历史
 
 ---
 
-## 🤝 贡献
+## 🤝 贡献指南
 
-欢迎提交Issue和Pull Request！
+1. Fork本项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启Pull Request
 
 ---
 
 ## 📄 许可证
 
-MIT License
+本项目采用MIT许可证 - 详见[LICENSE](LICENSE)文件
 
 ---
 
-## 📞 联系方式
+## 💬 联系方式
 
-如有问题或建议，请通过以下方式联系：
-
-- 提交Issue
-- 发送邮件
+- GitHub: [https://github.com/lubei0612/proxyhub](https://github.com/lubei0612/proxyhub)
+- Issues: [https://github.com/lubei0612/proxyhub/issues](https://github.com/lubei0612/proxyhub/issues)
 
 ---
 
 ## 🙏 致谢
 
-感谢所有开源项目的贡献者！
+- [NestJS](https://nestjs.com/) - 强大的Node.js框架
+- [Vue.js](https://vuejs.org/) - 渐进式JavaScript框架
+- [Element Plus](https://element-plus.org/) - Vue 3 UI组件库
+- [985Proxy](https://www.985proxy.com/) - 代理服务提供商
 
 ---
 
-**项目状态**: 🟢 开发中
+**最后更新**: 2025-11-06  
+**项目状态**: 🚧 积极开发中
 
-**最后更新**: 2025年11月2日
-
-**版本**: v1.0.0
