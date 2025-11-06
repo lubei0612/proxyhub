@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { Order, OrderStatus } from '../order/entities/order.entity';
 import { StaticProxy, ProxyStatus } from '../proxy/static/entities/static-proxy.entity';
 import { Transaction, TransactionType } from '../billing/entities/transaction.entity';
+import { TrafficService } from '../traffic/traffic.service';
 
 @Injectable()
 export class DashboardService {
@@ -17,6 +18,8 @@ export class DashboardService {
     private staticProxyRepo: Repository<StaticProxy>,
     @InjectRepository(Transaction)
     private transactionRepo: Repository<Transaction>,
+    @Inject(forwardRef(() => TrafficService))
+    private trafficService: TrafficService,
   ) {}
 
   /**
@@ -103,80 +106,26 @@ export class DashboardService {
 
   /**
    * 获取用户流量统计（按代理类型）- 条形图数据
-   * 注意：当前系统没有真实流量记录，返回全0
+   * ✅ 已集成真实流量统计系统
    */
   async getTrafficByType(userId: string) {
-    // TODO: 集成真实流量统计后替换此方法
-    // 当前返回全0，因为没有真实的流量记录表
-    const typeStats: Record<string, number> = {
-      '数据中心': 0,
-      '移动代理': 0,
-      '动态住宅': 0,
-      '双ISP静态': 0,
-    };
-
-    return {
-      categories: Object.keys(typeStats),
-      data: Object.values(typeStats),
-    };
+    return await this.trafficService.getTrafficByType(parseInt(userId), 7);
   }
 
   /**
    * 获取网络请求分布 - 饼图数据
-   * 注意：当前系统没有真实请求记录，返回全0
+   * ✅ 已集成真实请求统计系统
    */
   async getRequestDistribution(userId: string) {
-    // TODO: 集成真实请求统计后替换此方法
-    // 当前返回全0，因为没有真实的请求记录表
-    return [
-      { name: 'HTTP请求', value: 0 },
-      { name: 'HTTPS请求', value: 0 },
-      { name: 'WebSocket', value: 0 },
-      { name: '其他', value: 0 },
-    ];
+    return await this.trafficService.getRequestDistribution(parseInt(userId), 7);
   }
 
   /**
    * 获取7天流量趋势 - 折线图数据
-   * 注意：当前系统没有真实流量记录，返回全0
+   * ✅ 已集成真实流量统计系统
    */
   async getTrafficTrend(userId: string) {
-    // TODO: 集成真实流量统计后替换此方法
-    // 生成7天日期
-    const dates: string[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      dates.push(date.toISOString().split('T')[0]);
-    }
-    
-    // 返回全0数据，因为没有真实的流量记录表
-    const zeroData = dates.map(() => '0.00');
-    
-    return {
-      dates: dates.map(d => {
-        const [y, m, day] = d.split('-');
-        return `${m}-${day}`;
-      }),
-      series: [
-        {
-          name: '数据中心 (DC)',
-          data: zeroData,
-        },
-        {
-          name: '移动代理 (Mobile)',
-          data: zeroData,
-        },
-        {
-          name: '动态住宅 (Res Rotating)',
-          data: zeroData,
-        },
-        {
-          name: '双ISP静态 (Res Static)',
-          data: zeroData,
-        },
-      ],
-    };
+    return await this.trafficService.getTrafficTrend(parseInt(userId), 7);
   }
 }
 
