@@ -236,6 +236,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/layouts/AdminPortalLayout.vue'),
     redirect: '/admin/dashboard',
     meta: { 
+      requiresAuth: true,
       requiresAdmin: true 
     },
     children: [
@@ -246,6 +247,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '管理仪表盘',
           icon: 'DataLine',
+          requiresAuth: true,
+          requiresAdmin: true,
         },
       },
       {
@@ -255,6 +258,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '用户管理',
           icon: 'UserFilled',
+          requiresAuth: true,
+          requiresAdmin: true,
         },
       },
       {
@@ -264,6 +269,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '充值审核',
           icon: 'Money',
+          requiresAuth: true,
+          requiresAdmin: true,
         },
       },
       {
@@ -273,6 +280,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '订单管理',
           icon: 'Document',
+          requiresAuth: true,
+          requiresAdmin: true,
         },
       },
       {
@@ -282,6 +291,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '系统设置',
           icon: 'Setting',
+          requiresAuth: true,
+          requiresAdmin: true,
         },
       },
       {
@@ -291,6 +302,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '价格覆盖管理',
           icon: 'Money',
+          requiresAuth: true,
+          requiresAdmin: true,
         },
       },
     ],
@@ -345,30 +358,42 @@ router.beforeEach(async (to, from, next) => {
     localStorage.removeItem('token');
   }
 
-  console.log('[Router Guard] Navigating to:', to.path);
-  console.log('[Router Guard] User:', user);
-  console.log('[Router Guard] User Role:', user?.role);
-  console.log('[Router Guard] Requires Admin:', to.meta.requiresAdmin);
+  console.log('===================================');
+  console.log('[Router Guard] Navigation Check');
+  console.log('[Router Guard] From:', from.path || '(初始)');
+  console.log('[Router Guard] To:', to.path);
+  console.log('[Router Guard] Token exists:', !!token);
+  console.log('[Router Guard] User:', user ? `${user.email} (role: ${user.role})` : 'null');
+  console.log('[Router Guard] Route Meta:', {
+    public: to.meta.public,
+    requiresAuth: to.meta.requiresAuth,
+    requiresAdmin: to.meta.requiresAdmin
+  });
 
   // 公开路由直接通过
   if (to.meta.public) {
+    console.log('[Router Guard] ✅ Public route');
     // 如果已登录访问登录页，跳转到首页
     if (token && user) {
+      console.log('[Router Guard] ℹ️ Already logged in, redirecting...');
       // 根据用户角色跳转
       if (user.role === 'admin') {
+        console.log('[Router Guard] → Admin Dashboard');
         next({ name: 'AdminDashboard' });
       } else {
+        console.log('[Router Guard] → User Dashboard');
         next({ name: 'Dashboard' });
       }
       return;
     }
+    console.log('[Router Guard] ✅ Allowing access');
     next();
     return;
   }
 
   // 检查是否登录
   if (!token || !user) {
-    console.warn('[Router Guard] No token or user, redirecting to login');
+    console.warn('[Router Guard] ⚠️ Not authenticated, redirecting to login');
     next({ 
       name: 'Login', 
       query: { redirect: to.fullPath } 
@@ -378,14 +403,28 @@ router.beforeEach(async (to, from, next) => {
 
   // 检查管理员权限
   if (to.meta.requiresAdmin) {
+    console.log('[Router Guard] 🔐 Checking admin access...');
+    console.log('[Router Guard] User role:', user.role);
+    console.log('[Router Guard] Required role: admin');
+    
     if (user.role !== 'admin') {
-      console.warn('[Router Guard] Access denied: User is not admin');
+      console.error('[Router Guard] ❌ ACCESS DENIED: User is not admin');
+      console.log('[Router Guard] → Redirecting to User Dashboard');
+      
+      // 动态导入ElMessage以避免循环依赖
+      import('element-plus').then(({ ElMessage }) => {
+        ElMessage.error('需要管理员权限才能访问此页面');
+      });
+      
       next({ name: 'Dashboard' });
       return;
     }
-    console.log('[Router Guard] Admin access granted');
+    
+    console.log('[Router Guard] ✅ Admin access granted');
   }
 
+  console.log('[Router Guard] ✅ Navigation allowed');
+  console.log('===================================');
   next();
 });
 

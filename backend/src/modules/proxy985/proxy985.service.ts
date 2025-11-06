@@ -321,14 +321,35 @@ export class Proxy985Service {
     pay_type?: string;
     promo_code?: string;
   }) {
-    this.logger.log(`[985Proxy] Renewing static proxies: ${JSON.stringify(data)}`);
+    // 增强日志记录 - 详细输出所有参数
+    this.logger.log('========================================');
+    this.logger.log('[985Proxy] Renew Request Details:');
+    this.logger.log(`  Zone: ${data.zone}`);
+    this.logger.log(`  Time Period: ${data.time_period} days`);
+    this.logger.log(`  IP List: ${JSON.stringify(data.renew_ip_list, null, 2)}`);
+    this.logger.log(`  Pay Type: ${data.pay_type || 'balance'}`);
+    this.logger.log(`  Promo Code: ${data.promo_code || 'none'}`);
+    this.logger.log(`  Full Request Body: ${JSON.stringify(data, null, 2)}`);
+    this.logger.log('========================================');
 
     try {
       const response = await this.client.post('/res_static/renew', data);
-      this.logger.log(`[985Proxy] Renewal successful: ${response.data.data?.order_no || 'N/A'}`);
+      
+      this.logger.log('========================================');
+      this.logger.log('[985Proxy] Renew Response Success:');
+      this.logger.log(`  Status: ${response.status}`);
+      this.logger.log(`  Data: ${JSON.stringify(response.data, null, 2)}`);
+      this.logger.log('========================================');
+      
       return response.data;
     } catch (error) {
-      this.logger.error(`[985Proxy] Failed to renew static proxies: ${error.message}`);
+      this.logger.error('========================================');
+      this.logger.error('[985Proxy] Renew Request Failed:');
+      this.logger.error(`  Error Message: ${error.message}`);
+      this.logger.error(`  Response Status: ${error.response?.status}`);
+      this.logger.error(`  Response Data: ${JSON.stringify(error.response?.data, null, 2)}`);
+      this.logger.error(`  Request Config: ${JSON.stringify(error.config?.data, null, 2)}`);
+      this.logger.error('========================================');
       throw error;
     }
   }

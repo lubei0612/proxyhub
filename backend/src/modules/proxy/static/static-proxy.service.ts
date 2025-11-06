@@ -592,16 +592,59 @@ export class StaticProxyService {
         throw new BadRequestException(`余额不足，需要 $${renewalCost}，当前余额 $${user.balance}`);
       }
 
-      // 5. 调用985Proxy续费API
-      const renewResponse = await this.proxy985Service.renewIP({
-        zone,
-        time_period: duration,
-        renew_ip_list: [ip],
-        pay_type: 'balance',
-      });
-
-      if (renewResponse.code !== 0) {
-        throw new BadRequestException(`续费失败: ${renewResponse.msg}`);
+      // 5. 准备IP格式（尝试多种格式）
+      this.logger.log(`[Renew IP] Preparing IP formats for: ${ip}`);
+      this.logger.log(`[Renew IP] Proxy details - IP: ${proxy.ip}, Port: ${proxy.port}, Username: ${proxy.username}`);
+      
+      // 尝试不同的IP格式
+      const ipFormats = [
+        ip,                                  // 格式1: 纯IP
+        `${ip}:${proxy.port}`,              // 格式2: IP:端口
+        `${proxy.username}:${proxy.password}@${ip}:${proxy.port}`,  // 格式3: user:pass@ip:port
+      ];
+      
+      this.logger.log(`[Renew IP] Will try these formats: ${JSON.stringify(ipFormats)}`);
+      
+      // 尝试第一种格式（纯IP - 最常见）
+      this.logger.log(`[Renew IP] Attempting renewal with format: "${ipFormats[0]}"`);
+      
+      let renewResponse;
+      let lastError;
+      
+      for (let i = 0; i < ipFormats.length; i++) {
+        try {
+          const ipFormat = ipFormats[i];
+          this.logger.log(`[Renew IP] Attempt ${i + 1}/${ipFormats.length} using format: "${ipFormat}"`);
+          
+          renewResponse = await this.proxy985Service.renewIP({
+            zone,
+            time_period: duration,
+            renew_ip_list: [ipFormat],
+            pay_type: 'balance',
+          });
+          
+          if (renewResponse.code === 0) {
+            this.logger.log(`[Renew IP] ✅ Success with format: "${ipFormat}"`);
+            break;
+          } else {
+            this.logger.warn(`[Renew IP] ⚠️ Format "${ipFormat}" returned code ${renewResponse.code}: ${renewResponse.msg}`);
+            lastError = renewResponse.msg;
+          }
+        } catch (error) {
+          this.logger.error(`[Renew IP] ❌ Format "${ipFormats[i]}" failed: ${error.message}`);
+          lastError = error.message;
+          
+          // 如果不是最后一次尝试，继续下一种格式
+          if (i < ipFormats.length - 1) {
+            this.logger.log(`[Renew IP] Trying next format...`);
+            continue;
+          }
+        }
+      }
+      
+      // 检查最终结果
+      if (!renewResponse || renewResponse.code !== 0) {
+        throw new BadRequestException(`续费失败（尝试了${ipFormats.length}种格式）: ${lastError || '未知错误'}`);
       }
 
       const orderNo = renewResponse.data?.order_no;
