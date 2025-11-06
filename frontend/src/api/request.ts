@@ -64,6 +64,21 @@ request.interceptors.response.use(
       
       // 401错误 - 尝试刷新token
       if (status === 401 && !originalRequest._retry) {
+        // 跳过refresh接口本身的401错误
+        if (originalRequest.url?.includes('/auth/refresh')) {
+          console.warn('[Request] Refresh token expired, redirecting to login');
+          if (window.location.pathname !== '/login') {
+            ElMessage.error('登录已过期，请重新登录');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('refresh_token');
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 500);
+          }
+          return Promise.reject(error);
+        }
+
         if (isRefreshing) {
           // 如果正在刷新，将请求加入队列
           return new Promise((resolve, reject) => {
@@ -92,13 +107,16 @@ request.interceptors.response.use(
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('refresh_token');
-            window.location.href = '/login';
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 500);
           }
           return Promise.reject(error);
         }
 
         try {
           // 尝试刷新token
+          console.log('[Request] Attempting to refresh token...');
           const response = await axios.post('/api/v1/auth/refresh', {
             refresh_token: refreshToken
           });
@@ -106,6 +124,8 @@ request.interceptors.response.use(
           if (response.data && response.data.access_token) {
             const newToken = response.data.access_token;
             const newRefreshToken = response.data.refresh_token;
+            
+            console.log('[Request] Token refreshed successfully');
             
             // 更新token
             localStorage.setItem('token', newToken);
@@ -123,18 +143,21 @@ request.interceptors.response.use(
             // 重试原请求
             return request(originalRequest);
           }
-        } catch (refreshError) {
+        } catch (refreshError: any) {
           // 刷新失败，清除所有数据并跳转登录
           console.error('[Request] Token refresh failed:', refreshError);
           processQueue(refreshError, null);
           isRefreshing = false;
           
           if (window.location.pathname !== '/login') {
+            // 延迟跳转，避免在消息框显示时跳转
             ElMessage.error('登录已过期，请重新登录');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             localStorage.removeItem('refresh_token');
-            window.location.href = '/login';
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 500);
           }
           return Promise.reject(refreshError);
         }

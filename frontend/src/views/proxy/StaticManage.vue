@@ -316,9 +316,13 @@ import {
 } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { exportStaticProxies } from '@/utils/export';
-import { getStaticProxyList, renewStaticProxy, releaseStaticProxy } from '@/api/modules/proxy';
+import { 
+  getMyIPs, 
+  renewIPVia985, 
+  releaseStaticProxy,
+  getStaticProxyList // 保留旧API作为fallback
+} from '@/api/modules/proxy';
 import { useUserStore } from '@/stores/user';
-import { calculatePrice } from '@/api/modules/pricing';
 
 // 用户状态
 const userStore = useUserStore();
@@ -453,51 +457,76 @@ const getReleaseTime = (expireTime: string) => {
 };
 
 // 加载数据
+// 加载数据（使用985Proxy my-ips API）
 const loadData = async () => {
   loading.value = true;
   try {
-    // 构建查询参数
-    const params: any = {
-      page: pagination.value.page,
-      limit: pagination.value.pageSize,
-    };
-
-    // 添加筛选参数（只添加有值的）
-    if (filters.value.ip && filters.value.ip.trim()) {
-      params.ip = filters.value.ip.trim();
+    console.log('[My IPs] Loading page', pagination.value.page);
+    
+    // 调用985Proxy集成的my-ips API
+    const response = await getMyIPs(pagination.value.page, pagination.value.pageSize);
+    
+    if (response && response.data) {
+      // 后端已经包含了过期状态和剩余天数的计算
+      proxyList.value = response.data.map((ip: any) => ({
+        ...ip,
+        // 确保状态字段存在
+        statusType: ip.status || 'active',
+        // 添加过期状态显示
+        expiresDisplay: ip.expiresAt ? dayjs(ip.expiresAt).format('YYYY-MM-DD HH:mm') : 'N/A',
+        // 添加剩余天数显示
+        daysRemainingDisplay: ip.daysRemaining !== undefined ? `${ip.daysRemaining} 天` : 'N/A',
+      }));
+      
+      pagination.value.total = response.total || 0;
+      console.log('[My IPs] Loaded', proxyList.value.length, 'IPs');
+    } else {
+      proxyList.value = [];
+      pagination.value.total = 0;
     }
-    if (filters.value.channel) {
-      params.channel = filters.value.channel;
+    
+    // 如果有筛选条件，在客户端进行筛选
+    if (hasActiveFilters()) {
+      proxyList.value = applyClientSideFilters(proxyList.value);
     }
-    if (filters.value.country) {
-      params.country = filters.value.country;
-    }
-    if (filters.value.city) {
-      params.city = filters.value.city;
-    }
-    if (filters.value.nodeId && filters.value.nodeId.trim()) {
-      params.nodeId = filters.value.nodeId.trim();
-    }
-    if (filters.value.ipType) {
-      params.ipType = filters.value.ipType;
-    }
-    if (filters.value.status) {
-      params.status = filters.value.status;
-    }
-
-    // 调用真实API
-    const response = await getStaticProxyList(params);
-    proxyList.value = response.data || [];
-    pagination.value.total = response.total || 0;
+    
   } catch (error: any) {
-    console.error('加载静态代理列表失败:', error);
-    ElMessage.error('加载失败：' + (error.message || '请稍后重试'));
-    // 失败时显示空列表
+    console.error('[My IPs] Failed to load:', error);
+    ElMessage.error(`加载失败: ${error.response?.data?.message || error.message || '请稍后重试'}`);
     proxyList.value = [];
     pagination.value.total = 0;
   } finally {
     loading.value = false;
   }
+};
+
+// 检查是否有活动的筛选条件
+const hasActiveFilters = () => {
+  return filters.value.ip || filters.value.channel || filters.value.country || 
+         filters.value.city || filters.value.nodeId || filters.value.ipType || 
+         filters.value.status;
+};
+
+// 客户端筛选（由于后端my-ips API暂不支持筛选参数）
+const applyClientSideFilters = (list: any[]) => {
+  return list.filter(item => {
+    if (filters.value.ip && !item.ip.includes(filters.value.ip.trim())) {
+      return false;
+    }
+    if (filters.value.country && item.country !== filters.value.country) {
+      return false;
+    }
+    if (filters.value.city && item.city !== filters.value.city) {
+      return false;
+    }
+    if (filters.value.ipType && item.ipType !== filters.value.ipType) {
+      return false;
+    }
+    if (filters.value.status && item.statusType !== filters.value.status) {
+      return false;
+    }
+    return true;
+  });
 };
 
 // 重置筛选
@@ -567,72 +596,76 @@ const handleBatchRenew = async () => {
 };
 
 // 单个续费
+// 打开续费对话框
 const handleRenew = async (proxy: any) => {
   renewingProxies.value = [proxy];
   renewDialogVisible.value = true;
-  // 计算准确的续费价格
-  await calculateRenewPrice();
+  // 使用985Proxy价格（估算，实际价格在后端计算）
+  calculateRenewPrice();
 };
 
-// 计算续费价格
-const calculateRenewPrice = async () => {
+// 估算续费价格（基于985Proxy单价）
+const calculateRenewPrice = () => {
   if (renewingProxies.value.length === 0) {
     renewPrice.value = 0;
     return;
   }
 
-  try {
-    // 为每个IP调用pricing API获取准确价格
-    let total = 0;
-    for (const proxy of renewingProxies.value) {
-      const productType = proxy.ipType === 'native' || proxy.ipType === 'premium' 
-        ? 'static-residential-native' 
-        : 'static-residential';
-      
-      const response = await calculatePrice({
-        productType,
-        buyData: [{
-          country_code: proxy.country,
-          city_name: proxy.cityName || proxy.city || '',
-          count: 1,
-        }],
-        timePeriod: renewDuration.value,
-      });
-
-      if (response.breakdown && response.breakdown.length > 0) {
-        total += response.breakdown[0].totalPrice;
-      }
-    }
-    renewPrice.value = total;
-  } catch (error: any) {
-    console.error('[StaticManage] 计算续费价格失败:', error);
-    // 降级到默认价格
-    let fallbackTotal = 0;
-    renewingProxies.value.forEach((proxy) => {
-      const unitPrice = proxy.ipType === 'native' || proxy.ipType === 'premium' ? 10 : 5;
-      const months = renewDuration.value / 30;
-      fallbackTotal += unitPrice * months;
-    });
-    renewPrice.value = fallbackTotal;
-  }
+  // 985Proxy基础价格: shared=$5/30天, premium=$10/30天
+  let total = 0;
+  renewingProxies.value.forEach((proxy) => {
+    const unitPrice = proxy.ipType === 'native' || proxy.ipType === 'premium' ? 10 : 5;
+    const months = renewDuration.value / 30;
+    total += unitPrice * months;
+  });
+  renewPrice.value = total;
 };
 
-// 确认续费
+// 确认续费（通过985Proxy API）
 const confirmRenew = async () => {
+  if (renewingProxies.value.length === 0) {
+    return;
+  }
+
   try {
-    // 调用API续费（支持批量）
+    console.log('[Renew] Renewing', renewingProxies.value.length, 'IP(s) for', renewDuration.value, 'days');
+    
+    // 显示确认对话框
+    await ElMessageBox.confirm(
+      `确认续费 ${renewingProxies.value.length} 个IP，续费${renewDuration.value}天？\n预估费用：$${renewPrice.value.toFixed(2)}`,
+      '确认续费',
+      {
+        confirmButtonText: '确认支付',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    // 调用985Proxy续费API
     for (const proxy of renewingProxies.value) {
-      await renewStaticProxy(proxy.id, renewDuration.value);
+      console.log('[Renew] Renewing IP', proxy.ip);
+      await renewIPVia985(proxy.ip, renewDuration.value);
     }
 
-    ElMessage.success('续费成功！');
+    ElMessage.success({
+      message: `✅ 续费成功！已续费 ${renewingProxies.value.length} 个IP`,
+      duration: 3000
+    });
+    
     renewDialogVisible.value = false;
     
     // 刷新用户余额和列表
     await userStore.fetchUserInfo();
     await loadData();
+    
   } catch (error: any) {
-    ElMessage.error('续费失败：' + (error.message || '未知错误'));
+    if (error !== 'cancel' && error !== 'close') {
+      console.error('[Renew] Failed:', error);
+      ElMessage.error({
+        message: `续费失败: ${error.response?.data?.message || error.message || '未知错误'}`,
+        duration: 5000
+      });
+    }
   }
 };
 

@@ -259,8 +259,11 @@ import {
   Loading,
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
-import { purchaseStaticProxy } from '@/api/modules/proxy';
-import { calculatePrice } from '@/api/modules/pricing';
+import { 
+  purchaseStaticProxy, 
+  getInventory as get985Inventory,
+  calculateStaticProxyPrice 
+} from '@/api/modules/proxy';
 
 const router = useRouter();
 
@@ -351,57 +354,100 @@ const totalSelectedCount = computed(() => {
 });
 
 // 批量加载所有地区的价格
+// 加载实时库存和价格（985Proxy API）
 const loadAllPrices = async () => {
   priceLoading.value = true;
   priceError.value = null;
   
   try {
-    // 获取所有国家列表
-    const allCountries = Object.values(countryData).flat();
+    console.log('[985Proxy] Loading inventory for', ipType.value, 'IPs with duration:', duration.value, 'days');
     
-    // 确定产品类型
-    const productType = ipType.value === 'premium' ? 'static-residential-native' : 'static-residential';
+    // 调用985Proxy实时库存API
+    const response = await get985Inventory(ipType.value, duration.value);
     
-    // 构造价格计算请求（使用后端期望的格式）
-    const buyData = allCountries.map(country => ({
-      country_code: country.code,
-      city_name: country.city,
-      count: 1
-    }));
-    
-    console.log('[Price] Loading prices for', buyData.length, 'regions with productType:', productType, 'timePeriod:', duration.value);
-    
-    // 调用后端API
-    const response = await calculatePrice({
-      productType,
-      buyData,
-      timePeriod: duration.value
-    });
-    
-    // 更新价格缓存
-    // 后端返回的字段是breakdown而不是items，格式为 {location: "JP/Tokyo", unitPrice: 10}
-    if (response.breakdown && response.breakdown.length > 0) {
-      response.breakdown.forEach((item: any) => {
-        // location格式: "JP/Tokyo"
-        const [countryCode, cityName] = item.location.split('/');
-        const key = getPriceCacheKey(countryCode, cityName, ipType.value);
-        priceCache.value.set(key, item.unitPrice);
+    if (response && response.countries && response.countries.length > 0) {
+      console.log('[985Proxy] Received', response.countries.length, 'countries from inventory API');
+      
+      // 清空现有数据
+      Object.keys(countryData).forEach(continent => {
+        countryData[continent] = [];
       });
-      console.log('[Price] Successfully loaded', response.breakdown.length, 'prices');
+      
+      // 更新库存和价格数据
+      response.countries.forEach((countryItem: any) => {
+        const countryCode = countryItem.countryCode;
+        const price = countryItem.price || 5; // 985Proxy返回的单价
+        const stock = countryItem.stock || 0;
+        
+        // 如果有城市数据
+        if (countryItem.cities && countryItem.cities.length > 0) {
+          countryItem.cities.forEach((cityItem: any) => {
+            const cityName = cityItem.cityName;
+            const cityStock = cityItem.stock || stock;
+            
+            // 缓存价格
+            const key = getPriceCacheKey(countryCode, cityName, ipType.value);
+            priceCache.value.set(key, price);
+            
+            // 添加到对应大洲
+            const continent = getContinent(countryCode);
+            if (continent && countryData[continent]) {
+              countryData[continent].push({
+                code: countryCode,
+                name: countryItem.countryName || countryCode,
+                city: cityName,
+                available: cityStock,
+                quantity: 0,
+              });
+            }
+          });
+        } else {
+          // 没有城市数据，只添加国家级数据
+          const key = getPriceCacheKey(countryCode, '', ipType.value);
+          priceCache.value.set(key, price);
+          
+          const continent = getContinent(countryCode);
+          if (continent && countryData[continent]) {
+            countryData[continent].push({
+              code: countryCode,
+              name: countryItem.countryName || countryCode,
+              city: 'All Cities',
+              available: stock,
+              quantity: 0,
+            });
+          }
+        }
+      });
+      
+      console.log('[985Proxy] Successfully loaded real-time inventory and prices');
     } else {
-      console.warn('[Price] No price data returned from API');
+      console.warn('[985Proxy] No inventory data returned from API');
+      ElMessage.warning('未获取到库存数据，请稍后重试');
     }
     
   } catch (error: any) {
-    console.error('[Price] Failed to load prices:', error);
-    priceError.value = '价格加载失败，显示默认价格';
-    ElMessage.warning({
-      message: '价格加载失败，显示默认价格',
-      duration: 3000
+    console.error('[985Proxy] Failed to load inventory:', error);
+    priceError.value = '库存加载失败，显示默认数据';
+    ElMessage.error({
+      message: `库存加载失败: ${error.response?.data?.message || error.message || '未知错误'}`,
+      duration: 5000
     });
   } finally {
     priceLoading.value = false;
   }
+};
+
+// 根据国家代码获取所属大洲
+const getContinent = (countryCode: string): string | null => {
+  const continentMap: Record<string, string> = {
+    'US': 'north-america', 'CA': 'north-america', 'MX': 'north-america',
+    'BR': 'south-america', 'AR': 'south-america', 'CL': 'south-america', 'CO': 'south-america',
+    'GB': 'europe', 'DE': 'europe', 'FR': 'europe', 'ES': 'europe', 'IT': 'europe', 'NL': 'europe', 'SE': 'europe', 'PL': 'europe',
+    'JP': 'asia', 'KR': 'asia', 'SG': 'asia', 'IN': 'asia', 'TH': 'asia', 'VN': 'asia', 'CN': 'asia', 'HK': 'asia',
+    'AU': 'oceania', 'NZ': 'oceania',
+    'ZA': 'africa', 'EG': 'africa', 'NG': 'africa',
+  };
+  return continentMap[countryCode] || 'europe'; // 默认归类到欧洲
 };
 
 // 获取单价（从缓存或使用基础价格）
