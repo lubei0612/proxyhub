@@ -144,3 +144,7 @@ Get-Process | Where-Object {$_.ProcessName -eq "node"}
 
 有任何问题，在Cursor中问我即可。
 
+
+
+
+

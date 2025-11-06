@@ -45,38 +45,13 @@ services:
       retries: 5
 
   # Backend API (NestJS) - 使用国内加速版Dockerfile
+  # 环境变量已通过 env.production.template 在构建时复制到容器内的 .env 文件
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.cn  # 国内加速版
     container_name: proxyhub-backend
     restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: ${DATABASE_USER:-postgres}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres123}
-      DATABASE_NAME: ${DATABASE_NAME:-proxyhub}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
-      JWT_ACCESS_TOKEN_EXPIRATION: ${JWT_ACCESS_EXPIRY:-2h}
-      JWT_REFRESH_TOKEN_EXPIRATION: ${JWT_REFRESH_EXPIRY:-7d}
-      PORT: 3000
-      API_PREFIX: /api/v1
-      PROXY_985_API_KEY: ${PROXY_985_API_KEY}
-      PROXY_985_BASE_URL: ${PROXY_985_BASE_URL:-https://open-api.985proxy.com}
-      PROXY_985_ZONE: ${PROXY_985_ZONE}
-      # 邮件服务配置
-      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-      MAIL_PORT: ${MAIL_PORT:-587}
-      MAIL_USER: ${MAIL_USER}
-      MAIL_PASSWORD: ${MAIL_PASSWORD}
-      MAIL_FROM: ${MAIL_FROM:-ProxyHub <noreply@proxyhub.com>}
-      # Telegram Bot配置
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-ProxyHubBot}
     ports:
       - "3000:3000"
     depends_on:
@@ -99,7 +74,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.cn  # 国内加速版
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000/api/v1}
+        VITE_API_BASE_URL: /api/v1  # 使用相对路径，通过nginx代理
     container_name: proxyhub-frontend
     restart: unless-stopped
     ports:

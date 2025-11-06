@@ -7,12 +7,13 @@ WORKDIR /app
 # 使用阿里云镜像源
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
-# 接收构建参数
-ARG VITE_API_URL=http://localhost:3000
-ARG VITE_API_BASE_URL=http://localhost:3000/api/v1
+# 复制环境变量模板
+COPY env.production.template .env.production
 
-# 设置环境变量
-ENV VITE_API_URL=$VITE_API_URL
+# 接收构建参数（如果docker-compose传入则使用，否则使用.env.production）
+ARG VITE_API_BASE_URL=/api/v1
+
+# 设置环境变量（使用相对路径，通过nginx代理）
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # 复制 package 文件
