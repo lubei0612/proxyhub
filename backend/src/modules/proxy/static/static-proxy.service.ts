@@ -320,7 +320,7 @@ export class StaticProxyService {
         }
 
         // 汇总购买详情
-        for (const item of dto.items) {
+      for (const item of dto.items) {
           purchaseDetails.push({
             country: item.country,
             city: item.city,
@@ -334,34 +334,34 @@ export class StaticProxyService {
         for (const item of dto.items) {
           this.logger.log(`[Purchase] Generating ${item.quantity} mock IPs for ${item.country}/${item.city}`);
 
-          for (let i = 0; i < item.quantity; i++) {
-            const mockIP = this.staticProxyRepo.create({
-              userId: parseInt(userId),
-              channelName: dto.channelName,
-              ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-              port: 10000 + Math.floor(Math.random() * 50000),
-              username: `user_${Date.now()}_${i}`,
-              password: Math.random().toString(36).substring(2, 15),
-              country: item.country,
-              countryCode: item.country,
-              countryName: item.country,
-              cityName: item.city,
-              ipType: dto.ipType,
-              expireTimeUtc: new Date(Date.now() + dto.duration * 24 * 60 * 60 * 1000),
-              status: ProxyStatus.ACTIVE,
-              auto_renew: false,
-              remark: `Channel: ${dto.channelName}, Scenario: ${dto.scenario || 'N/A'} [MOCK]`,
-            });
-
-            const savedIP = await queryRunner.manager.save(StaticProxy, mockIP);
-            allocatedIPs.push(savedIP);
-          }
-
-          purchaseDetails.push({
+        for (let i = 0; i < item.quantity; i++) {
+          const mockIP = this.staticProxyRepo.create({
+            userId: parseInt(userId),
+            channelName: dto.channelName,
+            ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+            port: 10000 + Math.floor(Math.random() * 50000),
+            username: `user_${Date.now()}_${i}`,
+            password: Math.random().toString(36).substring(2, 15),
             country: item.country,
-            city: item.city,
-            quantity: item.quantity,
+            countryCode: item.country,
+            countryName: item.country,
+            cityName: item.city,
+            ipType: dto.ipType,
+            expireTimeUtc: new Date(Date.now() + dto.duration * 24 * 60 * 60 * 1000),
+            status: ProxyStatus.ACTIVE,
+            auto_renew: false,
+              remark: `Channel: ${dto.channelName}, Scenario: ${dto.scenario || 'N/A'} [MOCK]`,
           });
+
+          const savedIP = await queryRunner.manager.save(StaticProxy, mockIP);
+          allocatedIPs.push(savedIP);
+        }
+
+        purchaseDetails.push({
+          country: item.country,
+          city: item.city,
+          quantity: item.quantity,
+        });
         }
       }
 
@@ -456,7 +456,7 @@ export class StaticProxyService {
 
       // 转换为前端格式，计算过期状态
       const data = proxies.map(proxy => {
-        const expiresAt = proxy.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const expiresAt = proxy.expireTimeUtc || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         const daysRemaining = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
         
         let status: 'active' | 'expiring_soon' | 'expired' = 'active';
@@ -509,7 +509,7 @@ export class StaticProxyService {
       }
 
       // 返回详细信息
-      const expiresAt = proxy.expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const expiresAt = proxy.expireTimeUtc || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       const daysRemaining = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
       return {
@@ -556,7 +556,7 @@ export class StaticProxyService {
       }
 
       // 2. 验证IP未过期（可选，985Proxy可能允许续费已过期的IP）
-      const expiresAt = proxy.expiresAt || new Date();
+      const expiresAt = proxy.expireTimeUtc || new Date();
       if (expiresAt < new Date()) {
         this.logger.warn(`[Renew IP] IP已过期: ${ip}`);
         // 不阻止续费，只是警告
@@ -613,17 +613,18 @@ export class StaticProxyService {
       // 7. 创建交易记录
       const transaction = queryRunner.manager.create(Transaction, {
         userId: parseInt(userId),
-        type: TransactionType.PURCHASE,
+        type: TransactionType.RENEWAL,
         amount: renewalCost,
-        balance_after: user.balance,
-        description: `续费静态代理IP: ${ip} (${duration}天)`,
-        order_no: orderNo,
+        balanceBefore: user.balance + renewalCost,
+        balanceAfter: user.balance,
+        transactionNo: orderNo || `RNW-${Date.now()}-${userId}`,
+        remark: `续费静态代理IP: ${ip} (${duration}天)`,
       });
       await queryRunner.manager.save(transaction);
 
       // 8. 更新IP过期时间（新过期时间 = 当前过期时间 + duration）
       const newExpiresAt = new Date(expiresAt.getTime() + duration * 24 * 60 * 60 * 1000);
-      proxy.expiresAt = newExpiresAt;
+      proxy.expireTimeUtc = newExpiresAt;
       await queryRunner.manager.save(proxy);
 
       await queryRunner.commitTransaction();
@@ -658,7 +659,7 @@ export class StaticProxyService {
       const transaction = await this.transactionRepo.findOne({
         where: { 
           userId: parseInt(userId),
-          order_no: orderNo,
+          transactionNo: orderNo,
         },
       });
 
@@ -836,8 +837,8 @@ export class StaticProxyService {
 
       this.logger.log(`[Release] Success! Proxy: ${proxyInfo}`);
 
-      return {
-        success: true,
+    return {
+      success: true,
         message: '释放成功',
       };
     } catch (error) {
