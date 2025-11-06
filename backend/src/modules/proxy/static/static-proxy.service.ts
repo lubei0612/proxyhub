@@ -464,15 +464,25 @@ export class StaticProxyService {
         else if (daysRemaining <= 7) status = 'expiring_soon';
 
         return {
+          id: proxy.id,
           ip: proxy.ip,
           port: proxy.port,
           username: proxy.username,
           password: proxy.password,
           country: proxy.country,
-          city: proxy.cityName,
-          expiresAt: expiresAt.toISOString(),
-          daysRemaining,
+          city: proxy.cityName || '',
+          countryCode: proxy.country || 'US', // 添加countryCode
+          ipType: proxy.ipType || 'shared', // 添加ipType
           status,
+          statusType: status, // 添加statusType别名
+          expiresAt: expiresAt.toISOString(),
+          expireTimeUtc: expiresAt.toISOString(), // 添加expireTimeUtc别名
+          daysRemaining,
+          channel: proxy.channelName || '985Proxy', // 添加channel
+          channelName: proxy.channelName || '985Proxy',
+          nodeId: proxy.id?.toString() || '', // 添加nodeId
+          remark: proxy.remark || '', // 添加remark
+          autoRenew: proxy.autoRenew || false,
         };
       });
 
