@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsEnum } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsDate, IsOptional } from 'class-validator';
 
 /**
  * 订单状态枚举

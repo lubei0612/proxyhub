@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsBoolean, IsDate } from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsDate, IsOptional } from 'class-validator';
 
 /**
  * IP续费请求DTO
