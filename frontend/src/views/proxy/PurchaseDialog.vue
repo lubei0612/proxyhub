@@ -254,7 +254,19 @@ const loadInventory = async () => {
   inventoryLoading.value = true;
   try {
     const response = await getInventory(form.value.ipType, form.value.duration);
-    inventory.value = response.data || [];
+    
+    // 转换API返回的数据格式
+    const countries = response.countries || [];
+    inventory.value = countries.flatMap((country: any) => 
+      country.cities.map((city: any) => ({
+        country: country.countryName,
+        countryCode: country.countryCode,
+        city: city.cityName,
+        stock: city.stock,
+        price: country.price,
+      }))
+    );
+    
     console.log('[Inventory]', inventory.value.length, 'items loaded');
   } catch (error: any) {
     console.error('[Inventory] Load failed:', error);
