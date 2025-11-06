@@ -7,6 +7,10 @@
         <div class="card-header">
           <span>我的静态IP列表</span>
           <div class="header-actions">
+            <el-button type="primary" @click="showPurchaseDialog = true">
+              <el-icon><Plus /></el-icon>
+              购买新IP
+            </el-button>
             <el-dropdown @command="handleBatchExport">
               <el-button type="success">
                 <el-icon><Download /></el-icon>
@@ -298,6 +302,12 @@
         <el-button type="primary" @click="confirmRenew">确认续费</el-button>
       </template>
     </el-dialog>
+
+    <!-- 购买对话框 -->
+    <PurchaseDialog
+      v-model="showPurchaseDialog"
+      @success="handlePurchaseSuccess"
+    />
   </div>
 </template>
 
@@ -311,6 +321,7 @@ import {
   Search,
   Refresh,
   ArrowDown,
+  Plus,
   Tickets,
   DocumentCopy,
 } from '@element-plus/icons-vue';
@@ -323,9 +334,19 @@ import {
   getStaticProxyList // 保留旧API作为fallback
 } from '@/api/modules/proxy';
 import { useUserStore } from '@/stores/user';
+import PurchaseDialog from './PurchaseDialog.vue';
 
 // 用户状态
 const userStore = useUserStore();
+
+// 购买对话框状态
+const showPurchaseDialog = ref(false);
+
+// 购买成功处理
+const handlePurchaseSuccess = () => {
+  ElMessage.success('购买成功！正在刷新列表...');
+  loadData();
+};
 
 // 筛选条件
 const filters = ref({
