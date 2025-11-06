@@ -118,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
@@ -144,6 +144,11 @@ const isAdmin = computed(() => userStore.isAdmin);
 const userEmail = computed(() => userStore.user?.email || '');
 const userName = computed(() => userStore.user?.nickname || userStore.user?.email?.split('@')[0] || '用户');
 const userBalance = computed(() => userStore.user?.balance || 0);
+
+// 组件挂载时刷新用户信息（包括余额）
+onMounted(() => {
+  userStore.fetchUserInfo();
+});
 
 const handleCommand = async (command: string) => {
   if (command === 'logout') {

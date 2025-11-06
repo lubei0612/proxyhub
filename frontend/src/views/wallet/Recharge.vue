@@ -174,6 +174,7 @@ import {
   InfoFilled,
   Service,
 } from '@element-plus/icons-vue';
+import { createRecharge } from '@/api/modules/billing';
 
 const formRef = ref<FormInstance>();
 
@@ -218,8 +219,12 @@ const handleSubmit = async () => {
 
     submitting.value = true;
 
-    // TODO: 调用API提交充值申请
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // 调用API提交充值申请
+    await createRecharge({
+      amount: form.value.amount,
+      method: form.value.paymentMethod,
+      remark: form.value.remark,
+    });
 
     ElMessage.success('充值申请已提交，请等待管理员审核！');
 
@@ -232,7 +237,7 @@ const handleSubmit = async () => {
     formRef.value.resetFields();
   } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error('提交失败：' + error.message);
+      ElMessage.error('提交失败：' + (error.response?.data?.message || error.message));
     }
   } finally {
     submitting.value = false;

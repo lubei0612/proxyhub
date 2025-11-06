@@ -25,9 +25,9 @@ export class BillingController {
   @Post('recharge')
   async createRecharge(
     @CurrentUser() user: any,
-    @Body() data: { amount: number; method: string },
+    @Body() data: { amount: number; method: string; remark?: string },
   ) {
-    return this.billingService.createRecharge(user.id, data.amount, data.method);
+    return this.billingService.createRecharge(user.id, data.amount, data.method, data.remark);
   }
 
   /**

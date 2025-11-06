@@ -22,12 +22,13 @@ export class BillingService {
   /**
    * 创建充值订单
    */
-  async createRecharge(userId: string, amount: number, method: string) {
+  async createRecharge(userId: string, amount: number, method: string, remark?: string) {
     const recharge = this.rechargeRepo.create({
       userId: parseInt(userId),
       amount,
       paymentMethod: method,
       method,
+      remark: remark || null,
       status: RechargeStatus.PENDING,
       orderNo: `RCH-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
     });
@@ -38,7 +39,7 @@ export class BillingService {
     await this.eventLogService.createLog(
       parseInt(userId),
       '充值申请',
-      `提交充值申请：金额 $${amount.toFixed(2)}，支付方式：${method}，订单号：${savedRecharge.orderNo}`
+      `提交充值申请：金额 $${amount.toFixed(2)}，支付方式：${method}，订单号：${savedRecharge.orderNo}${remark ? `，备注：${remark}` : ''}`
     );
 
     return savedRecharge;

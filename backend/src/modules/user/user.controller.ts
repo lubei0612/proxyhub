@@ -18,19 +18,19 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   /**
-   * 获取当前用户个人信息
+   * 获取当前用户个人信息（从数据库实时查询）
    */
   @Get('profile')
   async getProfile(@CurrentUser() user: any) {
-    return user;
+    return this.userService.getProfile(user.id);
   }
 
   /**
-   * 获取当前用户信息 (/me路由)
+   * 获取当前用户信息 (/me路由)（从数据库实时查询）
    */
   @Get('me')
   async getCurrentUser(@CurrentUser() user: any) {
-    return user;
+    return this.userService.getProfile(user.id);
   }
 
   /**
