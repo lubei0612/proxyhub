@@ -121,7 +121,8 @@ export class StaticProxyService {
     this.logger.log(`[Get Inventory] IP Type: ${ipType}, Duration: ${duration}`);
 
     try {
-      const static_proxy_type = ipType === 'native' ? 'premium' : 'shared';
+      // 支持前端传递 'native' 或 'premium' 两种格式
+      const static_proxy_type = (ipType === 'native' || ipType === 'premium') ? 'premium' : 'shared';
       const response = await this.proxy985Service.getInventory({ static_proxy_type });
 
       if (response.code !== 0) {
