@@ -128,7 +128,7 @@ export class PricingService implements OnModuleInit {
     try {
       const defaultConfigs = [
         { productType: 'static-residential', basePrice: 5.00 },
-        { productType: 'static-residential-native', basePrice: 10.00 },
+        { productType: 'static-residential-native', basePrice: 8.00 }, // 修改为与inventory API一致
       ];
 
       for (const config of defaultConfigs) {
@@ -463,95 +463,147 @@ export class PricingService implements OnModuleInit {
   /**
    * 获取IP池列表（用于价格覆盖管理）
    * 返回所有可用的国家/城市/IP类型组合
+   * 从985Proxy API动态获取
    */
   async getIpPool() {
-    this.logger.log('[Get IP Pool] Loading IP pool data for price override management');
+    this.logger.log('[Get IP Pool] Loading IP pool data from 985Proxy API');
 
-    // Mock IP池数据 - 26个地区，包含普通IP和原生IP
-    const ipPool = [
-      // 北美洲
-      { country: 'US', countryName: '美国', city: 'Los Angeles', ipType: 'shared', ipTypeName: '普通IP', stock: 150, continent: 'north-america' },
-      { country: 'US', countryName: '美国', city: 'New York', ipType: 'shared', ipTypeName: '普通IP', stock: 200, continent: 'north-america' },
-      { country: 'US', countryName: '美国', city: 'Chicago', ipType: 'shared', ipTypeName: '普通IP', stock: 120, continent: 'north-america' },
-      { country: 'CA', countryName: '加拿大', city: 'Toronto', ipType: 'shared', ipTypeName: '普通IP', stock: 80, continent: 'north-america' },
-      
-      // 亚洲
-      { country: 'JP', countryName: '日本', city: 'Tokyo', ipType: 'shared', ipTypeName: '普通IP', stock: 120, continent: 'asia' },
-      { country: 'JP', countryName: '日本', city: 'Tokyo', ipType: 'premium', ipTypeName: '原生IP', stock: 45, continent: 'asia' },
-      { country: 'KR', countryName: '韩国', city: 'Seoul', ipType: 'shared', ipTypeName: '普通IP', stock: 150, continent: 'asia' },
-      { country: 'KR', countryName: '韩国', city: 'Seoul', ipType: 'premium', ipTypeName: '原生IP', stock: 50, continent: 'asia' },
-      { country: 'SG', countryName: '新加坡', city: 'Singapore', ipType: 'shared', ipTypeName: '普通IP', stock: 100, continent: 'asia' },
-      { country: 'SG', countryName: '新加坡', city: 'Singapore', ipType: 'premium', ipTypeName: '原生IP', stock: 40, continent: 'asia' },
-      { country: 'TH', countryName: '泰国', city: 'Bangkok', ipType: 'shared', ipTypeName: '普通IP', stock: 90, continent: 'asia' },
-      { country: 'VN', countryName: '越南', city: 'Ho Chi Minh City', ipType: 'shared', ipTypeName: '普通IP', stock: 70, continent: 'asia' },
-      
-      // 欧洲
-      { country: 'GB', countryName: '英国', city: 'London', ipType: 'shared', ipTypeName: '普通IP', stock: 180, continent: 'europe' },
-      { country: 'GB', countryName: '英国', city: 'London', ipType: 'premium', ipTypeName: '原生IP', stock: 60, continent: 'europe' },
-      { country: 'DE', countryName: '德国', city: 'Frankfurt', ipType: 'shared', ipTypeName: '普通IP', stock: 160, continent: 'europe' },
-      { country: 'FR', countryName: '法国', city: 'Paris', ipType: 'shared', ipTypeName: '普通IP', stock: 140, continent: 'europe' },
-      { country: 'NL', countryName: '荷兰', city: 'Amsterdam', ipType: 'shared', ipTypeName: '普通IP', stock: 130, continent: 'europe' },
-      { country: 'IT', countryName: '意大利', city: 'Milan', ipType: 'shared', ipTypeName: '普通IP', stock: 85, continent: 'europe' },
-      
-      // 南美洲
-      { country: 'BR', countryName: '巴西', city: 'Sao Paulo', ipType: 'shared', ipTypeName: '普通IP', stock: 110, continent: 'south-america' },
-      { country: 'BR', countryName: '巴西', city: 'Sao Paulo', ipType: 'premium', ipTypeName: '原生IP', stock: 35, continent: 'south-america' },
-      { country: 'AR', countryName: '阿根廷', city: 'Buenos Aires', ipType: 'shared', ipTypeName: '普通IP', stock: 75, continent: 'south-america' },
-      { country: 'CL', countryName: '智利', city: 'Santiago', ipType: 'shared', ipTypeName: '普通IP', stock: 65, continent: 'south-america' },
-      
-      // 大洋洲
-      { country: 'AU', countryName: '澳大利亚', city: 'Sydney', ipType: 'shared', ipTypeName: '普通IP', stock: 95, continent: 'oceania' },
-      { country: 'AU', countryName: '澳大利亚', city: 'Melbourne', ipType: 'shared', ipTypeName: '普通IP', stock: 80, continent: 'oceania' },
-      { country: 'NZ', countryName: '新西兰', city: 'Auckland', ipType: 'shared', ipTypeName: '普通IP', stock: 55, continent: 'oceania' },
-      
-      // 中东
-      { country: 'AE', countryName: '阿联酋', city: 'Dubai', ipType: 'shared', ipTypeName: '普通IP', stock: 70, continent: 'middle-east' },
-    ];
+    try {
+      // 从985Proxy API获取shared和premium库存
+      const [sharedInventory, premiumInventory] = await Promise.all([
+        this.proxy985Service.getInventory({ static_proxy_type: 'shared' }),
+        this.proxy985Service.getInventory({ static_proxy_type: 'premium' }),
+      ]);
 
-    // 获取所有价格配置（用于显示默认价格）
-    const priceConfigs = await this.priceConfigRepo.find({
-      where: { isActive: true },
-    });
+      const ipPool = [];
 
-    // 获取所有价格覆盖（用于显示已覆盖价格）
-    const overrides = await this.priceOverrideRepo.find({
-      where: { isActive: true },
-    });
+      // 处理普通IP (shared)
+      if (sharedInventory.code === 0 && sharedInventory.data) {
+        for (const item of sharedInventory.data) {
+          if (item.city_name) {
+            ipPool.push({
+              country: item.country_code,
+              countryName: item.country_code, // 985Proxy只返回国家代码
+              city: item.city_name,
+              ipType: 'shared',
+              ipTypeName: '普通IP',
+              stock: item.number || 0,
+              continent: this.getContinent(item.country_code),
+            });
+          }
+        }
+      }
 
-    // 为每个IP池项目匹配默认价格和覆盖价格
-    const ipPoolWithPrices = ipPool.map((item) => {
-      // Mock环境下所有IP类型使用同一个价格配置
-      const productType = 'static-residential';
-      const priceConfig = priceConfigs.find(c => c.productType === productType);
-      const defaultPrice = priceConfig ? parseFloat(priceConfig.basePrice as any) : 5;
+      // 处理原生IP (premium)
+      if (premiumInventory.code === 0 && premiumInventory.data) {
+        for (const item of premiumInventory.data) {
+          if (item.city_name) {
+            ipPool.push({
+              country: item.country_code,
+              countryName: item.country_code,
+              city: item.city_name,
+              ipType: 'premium',
+              ipTypeName: '原生IP',
+              stock: item.number || 0,
+              continent: this.getContinent(item.country_code),
+            });
+          }
+        }
+      }
 
-      // 查找是否有价格覆盖
-      const override = overrides.find(o => 
-        o.priceConfigId === priceConfig?.id &&
-        o.countryCode === item.country &&
-        (o.cityName === item.city || o.cityName === null)
-      );
+      this.logger.log(`[Get IP Pool] Fetched ${ipPool.length} locations from 985Proxy API`);
+
+      // 获取所有价格配置（用于显示默认价格）
+      const priceConfigs = await this.priceConfigRepo.find({
+        where: { isActive: true },
+      });
+
+      // 获取所有价格覆盖（用于显示已覆盖价格）
+      const overrides = await this.priceOverrideRepo.find({
+        where: { isActive: true },
+      });
+
+      // 为每个IP池项目匹配默认价格和覆盖价格
+      const ipPoolWithPrices = ipPool.map((item) => {
+        // 根据IP类型选择正确的价格配置
+        const productType = (item.ipType === 'premium' || item.ipType === 'native')
+          ? 'static-residential-native'
+          : 'static-residential';
+        
+        const priceConfig = priceConfigs.find(c => c.productType === productType);
+        const defaultPrice = priceConfig 
+          ? parseFloat(priceConfig.basePrice as any) 
+          : (item.ipType === 'premium' ? 8 : 5); // fallback价格
+
+        // 查找是否有价格覆盖
+        const override = overrides.find(o => 
+          o.priceConfigId === priceConfig?.id &&
+          o.countryCode === item.country &&
+          (o.cityName === item.city || o.cityName === null)
+        );
+
+        return {
+          ...item,
+          defaultPrice,
+          overridePrice: override ? parseFloat(override.overridePrice as any) : null,
+          overrideId: override?.id || null,
+          priceConfigId: priceConfig?.id || null,
+        };
+      });
+
+      this.logger.log(`[Get IP Pool] Loaded ${ipPoolWithPrices.length} IP pool items`);
 
       return {
-        ...item,
-        defaultPrice,
-        overridePrice: override ? parseFloat(override.overridePrice as any) : null,
-        overrideId: override?.id || null,
-        priceConfigId: priceConfig?.id || null,
+        data: ipPoolWithPrices,
+        total: ipPoolWithPrices.length,
+        statistics: {
+          totalRegions: ipPoolWithPrices.length,
+          overridedCount: ipPoolWithPrices.filter(item => item.overridePrice !== null).length,
+          notOverridedCount: ipPoolWithPrices.filter(item => item.overridePrice === null).length,
+        },
       };
-    });
+    } catch (error) {
+      this.logger.error(`[Get IP Pool] Failed to fetch from 985Proxy: ${error.message}`);
+      // 返回空数据
+      return {
+        data: [],
+        total: 0,
+        statistics: {
+          totalRegions: 0,
+          overridedCount: 0,
+          notOverridedCount: 0,
+        },
+      };
+    }
+  }
 
-    this.logger.log(`[Get IP Pool] Loaded ${ipPoolWithPrices.length} IP pool items`);
-
-    return {
-      data: ipPoolWithPrices,
-      total: ipPoolWithPrices.length,
-      statistics: {
-        totalRegions: ipPoolWithPrices.length,
-        overridedCount: ipPoolWithPrices.filter(item => item.overridePrice !== null).length,
-        notOverridedCount: ipPoolWithPrices.filter(item => item.overridePrice === null).length,
-      },
+  /**
+   * 根据国家代码判断所属大洲
+   */
+  private getContinent(countryCode: string): string {
+    const continentMap = {
+      // 北美洲
+      'US': 'north-america', 'CA': 'north-america', 'MX': 'north-america',
+      // 南美洲
+      'BR': 'south-america', 'AR': 'south-america', 'CL': 'south-america', 
+      'CO': 'south-america', 'PE': 'south-america',
+      // 欧洲
+      'GB': 'europe', 'DE': 'europe', 'FR': 'europe', 'IT': 'europe', 
+      'ES': 'europe', 'NL': 'europe', 'SE': 'europe', 'NO': 'europe',
+      'PL': 'europe', 'RO': 'europe', 'BE': 'europe', 'AT': 'europe',
+      // 亚洲
+      'JP': 'asia', 'KR': 'asia', 'CN': 'asia', 'SG': 'asia', 
+      'TH': 'asia', 'VN': 'asia', 'MY': 'asia', 'PH': 'asia',
+      'IN': 'asia', 'ID': 'asia', 'TW': 'asia', 'HK': 'asia',
+      // 大洋洲
+      'AU': 'oceania', 'NZ': 'oceania',
+      // 中东
+      'AE': 'middle-east', 'SA': 'middle-east', 'IL': 'middle-east',
+      // 非洲
+      'ZA': 'africa', 'EG': 'africa', 'NG': 'africa',
     };
+
+    return continentMap[countryCode] || 'other';
   }
 
   /**
