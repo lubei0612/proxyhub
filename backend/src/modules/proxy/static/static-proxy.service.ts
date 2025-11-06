@@ -128,17 +128,21 @@ export class StaticProxyService {
         throw new BadRequestException(`获取库存失败: ${response.msg}`);
       }
 
+      // 价格映射：985Proxy的inventory API返回的价格不区分shared/premium
+      // 需要根据ipType设置正确的价格
+      const pricePerMonth = static_proxy_type === 'premium' ? 8 : 5;
+
       const inventory = {
         countries: (response.data || []).map((item: any) => ({
           countryCode: item.country_code,
           countryName: item.country_code,
           stock: item.number || 0,
-          price: item.price || 0,
+          price: pricePerMonth, // 使用映射后的价格
           cities: item.city_name ? [{ cityName: item.city_name, stock: item.number || 0 }] : [],
         })),
       };
 
-      this.logger.log(`[Get Inventory] Found ${inventory.countries.length} locations`);
+      this.logger.log(`[Get Inventory] Found ${inventory.countries.length} locations (${static_proxy_type} @ $${pricePerMonth}/month)`);
       return inventory;
     } catch (error) {
       this.logger.error(`[Get Inventory] Failed: ${error.message}`);
