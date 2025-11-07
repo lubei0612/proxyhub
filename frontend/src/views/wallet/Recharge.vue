@@ -66,12 +66,12 @@
             <!-- 支付方式（优化样式） -->
             <el-form-item label="支付方式" prop="paymentMethod">
               <el-radio-group v-model="form.paymentMethod" class="payment-methods">
-                <el-radio label="wechat" border class="payment-option-fixed">
+                    <el-radio label="wechat" border class="payment-option-fixed">
                   <div class="payment-content">
                     <el-icon :size="20" color="#07c160"><ChatDotRound /></el-icon>
                     <div class="payment-text">
                       <div class="payment-name">微信支付</div>
-                      <div class="payment-desc">扫码支付，即时到账</div>
+                      <div class="payment-desc">扫码支付 • 预计5分钟到账 • 需人工审核</div>
                     </div>
                   </div>
                 </el-radio>
@@ -81,7 +81,7 @@
                     <el-icon :size="20" color="#1677ff"><Money /></el-icon>
                     <div class="payment-text">
                       <div class="payment-name">支付宝</div>
-                      <div class="payment-desc">扫码支付，即时到账</div>
+                      <div class="payment-desc">扫码支付 • 预计5分钟到账 • 需人工审核</div>
                     </div>
                   </div>
                 </el-radio>
@@ -91,7 +91,7 @@
                     <el-icon :size="20" color="#26a17b"><CreditCard /></el-icon>
                     <div class="payment-text">
                       <div class="payment-name">USDT（TRC20）</div>
-                      <div class="payment-desc">区块链转账，30分钟内到账</div>
+                      <div class="payment-desc">区块链转账 • 预计30分钟到账 • 需人工审核</div>
                     </div>
                   </div>
                 </el-radio>

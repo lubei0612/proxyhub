@@ -6,7 +6,13 @@
       <template #header>
         <div class="card-header">
           <span>用户列表</span>
-          <el-tag type="info">总用户数：{{ pagination.total }}</el-tag>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <el-tag type="info">总用户数：{{ pagination.total }}</el-tag>
+            <el-button type="primary" size="small" @click="showCreateUserDialog">
+              <el-icon><Plus /></el-icon>
+              添加用户
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -120,6 +126,13 @@
               @click="handleGiftBalance(row)"
             >
               赠送余额
+            </el-button>
+            <el-button
+              type="warning"
+              size="small"
+              @click="handleDeductBalance(row)"
+            >
+              扣除余额
             </el-button>
             <el-button
               :type="row.status === 'active' ? 'warning' : 'success'"

@@ -151,7 +151,7 @@
       <el-result
         icon="success"
         title="购买成功！"
-        sub-title="您的静态IP正在分配中，请稍候..."
+        sub-title="您的静态IP已成功购买并分配"
       >
         <template #extra>
           <el-button type="primary" @click="handleViewIPs">查看我的IP</el-button>
@@ -159,25 +159,33 @@
         </template>
       </el-result>
 
-      <el-timeline v-if="orderStatus" class="order-timeline">
-        <el-timeline-item timestamp="订单创建" type="success">
-          订单号: {{ orderStatus.orderNo }}
-        </el-timeline-item>
-        <el-timeline-item
-          v-if="orderStatus.status === 'processing'"
-          timestamp="IP分配中"
-          type="warning"
-        >
-          正在为您分配IP，预计需要1-2分钟...
-        </el-timeline-item>
-        <el-timeline-item
-          v-if="orderStatus.status === 'completed'"
-          timestamp="分配完成"
-          type="success"
-        >
-          已成功分配 {{ orderStatus.ipCount }} 个IP
-        </el-timeline-item>
-      </el-timeline>
+      <!-- 显示购买的IP详情 -->
+      <el-card v-if="purchaseResult" class="purchase-result-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <el-icon color="#67C23A" :size="20"><SuccessFilled /></el-icon>
+            <span style="margin-left: 10px;">购买详情</span>
+          </div>
+        </template>
+        
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="订单号">{{ purchaseResult.orderNo }}</el-descriptions-item>
+          <el-descriptions-item label="支付金额">${{ purchaseResult.totalPrice }}</el-descriptions-item>
+          <el-descriptions-item label="购买数量">{{ purchaseResult.totalQuantity }} 个IP</el-descriptions-item>
+          <el-descriptions-item label="购买时长">{{ purchaseResult.duration }} 天</el-descriptions-item>
+        </el-descriptions>
+
+        <el-divider content-position="left">已分配的IP</el-divider>
+        
+        <el-table :data="purchaseResult.allocatedIPs" border size="small" style="margin-top: 15px;">
+          <el-table-column prop="ip" label="IP地址" width="140" />
+          <el-table-column prop="port" label="端口" width="80" align="center" />
+          <el-table-column prop="username" label="用户名" width="150" />
+          <el-table-column prop="password" label="密码" width="130" />
+          <el-table-column prop="country" label="国家" width="80" align="center" />
+          <el-table-column prop="cityName" label="城市" />
+        </el-table>
+      </el-card>
     </div>
 
     <template #footer>
@@ -203,7 +211,7 @@
           :loading="purchasing"
           @click="handlePurchase"
         >
-          确认购买
+          {{ purchasing ? '正在连接985Proxy...' : '确认购买' }}
         </el-button>
       </div>
     </template>
@@ -242,6 +250,7 @@ const priceData = ref<any>(null);
 const priceLoading = ref(false);
 const purchasing = ref(false);
 const orderStatus = ref<any>(null);
+const purchaseResult = ref<any>(null);
 
 const totalQuantity = computed(() => {
   return form.value.locations.reduce((sum, loc) => sum + loc.quantity, 0);
@@ -370,20 +379,56 @@ const handlePurchase = async () => {
     const response = await purchaseStaticProxy({
       ipType: form.value.ipType as 'shared' | 'premium',
       duration: form.value.duration,
-      locations: form.value.locations,
+      items: form.value.locations.map(loc => ({
+        country: loc.country,
+        city: loc.city,
+        quantity: loc.quantity,
+      })),
+      channelName: '默认通道',
     });
     
-    const orderNo = response.data.orderNo;
-    orderStatus.value = { orderNo, status: 'processing', ipCount: totalQuantity.value };
+    // 保存购买结果（包含IP详情）
+    purchaseResult.value = response.data.order;
     
     currentStep.value = 2;
-    ElMessage.success('购买成功！订单号: ' + orderNo);
+    ElMessage.success({
+      message: `购买成功！已分配 ${response.data.order.totalQuantity} 个IP`,
+      duration: 5000,
+    });
     
-    // 轮询订单状态
-    pollOrderStatus(orderNo);
+    emit('success');
     
   } catch (error: any) {
-    ElMessage.error('购买失败: ' + (error.message || '请稍后重试'));
+    // 显示详细错误信息
+    let errorMessage = '购买失败';
+    if (error.response?.data?.message) {
+      errorMessage += ': ' + error.response.data.message;
+    } else if (error.message) {
+      errorMessage += ': ' + error.message;
+    }
+    
+    // 根据错误类型提供解决方案
+    if (errorMessage.includes('余额不足')) {
+      ElMessage.error({
+        message: errorMessage + ' - 请先充值',
+        duration: 5000,
+      });
+    } else if (errorMessage.includes('库存不足')) {
+      ElMessage.error({
+        message: errorMessage + ' - 请减少购买数量或选择其他地区',
+        duration: 5000,
+      });
+    } else if (errorMessage.includes('985Proxy')) {
+      ElMessage.error({
+        message: errorMessage + ' - 请联系客服或稍后重试',
+        duration: 5000,
+      });
+    } else {
+      ElMessage.error({
+        message: errorMessage + ' - 请检查网络连接或联系客服',
+        duration: 5000,
+      });
+    }
   } finally {
     purchasing.value = false;
   }
