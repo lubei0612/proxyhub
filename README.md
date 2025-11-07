@@ -5,36 +5,7 @@
 ProxyHub是一个全功能的代理IP管理平台，集成985Proxy服务，提供静态住宅代理、动态住宅代理管理等功能。
 
 **当前版本**: v1.0.0  
-**最后更新**: 2025-11-07  
-**项目状态**: 🔧 准备生产环境 - 清除模拟数据中
-
-### 🎯 核心理解
-
-**ProxyHub = 985Proxy的前端门户 + 订单管理系统**
-
-- ✅ **数据真实性第一** - 所有数据必须来自985Proxy API或数据库
-- ✅ **零模拟数据** - 生产环境绝不允许硬编码、假数据
-- ✅ **数据一致性** - ProxyHub显示与985Proxy平台100%一致
-- ✅ **性能优先** - API < 200ms, 页面 < 2s, 支持100+并发
-
-### 🚨 当前重点任务
-
-**P0 最高优先级 - 清除所有模拟数据**
-
-正在执行：[docs/TASK-REMOVE-MOCK-DATA.md](docs/TASK-REMOVE-MOCK-DATA.md)
-
-**问题**：用户购买IP后，ProxyHub显示的IP与985Proxy平台不一致  
-**原因**：系统中存在硬编码和模拟数据  
-**目标**：删除所有模拟数据，确保100%真实数据，可以给用户正常使用
-
-**检查清单**：
-- [ ] 后端Service层无mock数据
-- [ ] 前端组件无硬编码IP
-- [ ] 数据库无假记录
-- [ ] 所有API从985Proxy获取数据
-- [ ] 购买流程完整测试通过
-
-详见：[docs/TASK-REMOVE-MOCK-DATA.md](docs/TASK-REMOVE-MOCK-DATA.md)
+**最后更新**: 2025-11-06
 
 ---
 
@@ -264,175 +235,32 @@ npm run migration:revert
 
 ---
 
-## 💻 开发习惯与规范
-
-> **📌 重要**: 所有AI助手和开发者必须遵守以下规范
-
-### 核心原则
-
-1. **全局视角开发** ⭐
-   - 开发前考虑：数据规模、并发场景、响应时间、资源消耗
-   - 避免：N+1查询、嵌套循环、未分页的大数据查询
-
-2. **性能指标** 🎯
-   - API响应时间 < 200ms (P95)
-   - 页面加载时间 < 2s
-   - 数据库查询 < 100ms
-   - 并发支持 ≥ 100 用户
-
-3. **代码审查清单** ✅
-   - [ ] 是否有N+1查询问题？
-   - [ ] 是否有嵌套循环（O(n²)）？
-   - [ ] 大数据量是否分页？
-   - [ ] 是否添加了必要的索引？
-   - [ ] 是否使用了缓存？
-   - [ ] API调用是否并行？
-
-### 最优算法示例
-
-```typescript
-// ❌ 差：N+1查询
-async getUsersWithIPs() {
-  const users = await this.userRepo.find();
-  for (const user of users) {
-    user.ips = await this.ipRepo.find({ userId: user.id }); // N次查询！
-  }
-}
-
-// ✅ 优：JOIN查询
-async getUsersWithIPs() {
-  return this.userRepo.find({
-    relations: ['staticProxies'], // 1次查询
-    take: 20 // 分页
-  });
-}
-```
-
-### 禁止事项
-
-- ❌ 硬编码数据
-- ❌ 模拟/假数据在生产环境
-- ❌ 未分页的大数据查询
-- ❌ 未索引的数据库查询
-- ❌ 循环中的API/数据库调用
-
-**完整规范**: [docs/PROJECT-GUIDE.md](docs/PROJECT-GUIDE.md)
-
----
-
 ## 📖 文档索引
 
-**📌 所有项目文档已整理到 `docs/` 目录**
-
-### 核心文档
-- 📖 [docs/README.md](docs/README.md) - 文档中心导航
-- 🎯 [docs/PROJECT-GUIDE.md](docs/PROJECT-GUIDE.md) - **项目开发指南（必读）** ⭐
-- 📋 [docs/TASK-REMOVE-MOCK-DATA.md](docs/TASK-REMOVE-MOCK-DATA.md) - 清除模拟数据任务
-- 📊 [docs/reports/](docs/reports/) - 项目报告
-
-### 技术文档
 - [API文档](http://localhost:3000/api) - Swagger UI
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - 部署指南
-- [docs/985Proxy 开放 API 文档.md](docs/985Proxy%20开放%20API%20文档.md) - 985Proxy API
-- [docs/腾讯云部署指南.md](docs/腾讯云部署指南.md) - 腾讯云部署
-
----
-
-## 🚀 下一步计划
-
-### P0 - 最高优先级（进行中）
-
-**清除所有硬编码和模拟数据** 🔥
-
-**执行步骤**：
-```bash
-# 1. 备份数据库
-cd /opt/proxyhub
-docker exec proxyhub-postgres pg_dump -U postgres proxyhub > backup.sql
-
-# 2. 搜索模拟数据
-cd backend/src
-grep -rn "mock\|fake\|dummy" --include="*.ts" | grep -v "node_modules"
-
-# 3. 逐一清理代码
-
-# 4. 清理数据库假数据
-docker exec -it proxyhub-postgres psql -U postgres -d proxyhub
-# DELETE FROM static_proxies WHERE ip LIKE '123.%' OR ip LIKE '192.168.%';
-
-# 5. 重新部署测试
-docker compose -f docker-compose.cn.yml down
-docker compose -f docker-compose.cn.yml build --no-cache
-docker compose -f docker-compose.cn.yml up -d
-
-# 6. 验证数据一致性
-# 购买测试 → 对比985Proxy → 确认100%一致
-```
-
-**完成标准**：
-- ✅ ProxyHub显示的IP与985Proxy平台完全一致
-- ✅ 购买流程正常，985Proxy账户正确扣费
-- ✅ 所有价格、国家、到期时间准确无误
-- ✅ 可以给用户正常使用
-
-**详细任务**: [docs/TASK-REMOVE-MOCK-DATA.md](docs/TASK-REMOVE-MOCK-DATA.md)
-
----
-
-### P1 - 本周完成
-
-1. **性能优化审查**
-   - 添加数据库索引
-   - 优化N+1查询
-   - 实现API缓存
-
-2. **登录问题排查**
-   - 用户存在但显示"账号不存在"
-   - 检查前端API路径
-   - 验证密码哈希
-
-3. **流量统计对接**
-   - 集成985Proxy API
-   - 实现实时数据
+- [数据库设计](docs/database-schema.md)
+- [985Proxy API集成说明](docs/985proxy-integration.md)
+- [Docker部署指南](docs-archive/2025-11-06/DOCKER_DEPLOYMENT_GUIDE.md)
+- [测试指南](docs-archive/2025-11-06/README-测试指南.md)
+- [历史交付报告](docs-archive/2025-11-06/)
 
 ---
 
 ## 🐛 已知问题
 
-### ✅ 已修复
+### 高优先级
 1. ~~管理后台API返回500错误~~ - ✅ 已修复 (2025-11-06)
 2. ~~静态IP列表字段缺失~~ - ✅ 已修复 (2025-11-06)
-3. ~~前端白屏问题~~ - ✅ 已修复 (2025-11-07)
-4. ~~Docker环境变量加载问题~~ - ✅ 已修复 (2025-11-07)
-5. ~~邮件发送失败~~ - ✅ 已修复，切换到Gmail (2025-11-07)
+3. **流量统计需要集成985Proxy API** - 🚧 待实现
+4. **事件日志筛选功能** - 🔍 需要调试
 
-### 🔥 进行中
-6. **IP数据不一致** - 🚧 清除模拟数据中 (P0)
-7. **登录显示账号不存在** - 🔍 排查中 (P1)
-
-### 📋 待处理
-8. 流量统计需要集成985Proxy API
-9. 订单状态轮询机制优化
-10. 事件日志筛选功能
+### 中等优先级
+5. 订单状态轮询机制 - 📋 已规划
+6. 价格显示一致性 - 📋 已规划
 
 ---
 
 ## 📝 更新日志
-
-### [v1.0.1] - 2025-11-07 🔥
-
-#### 重构
-- **项目文件结构整理** - 删除所有.bat文件，文档集中到docs/
-- **开发规范完善** - 添加性能优化和算法选择指南
-
-#### 修复
-- 修复前端白屏问题（Vite打包配置）
-- 修复Docker环境变量加载问题
-- 修复邮件发送失败（切换到Gmail）
-
-#### 进行中
-- 🚧 清除所有硬编码和模拟数据（P0任务）
-- 🔍 排查登录显示"账号不存在"问题
 
 ### [v1.0.0] - 2025-11-06
 
@@ -448,6 +276,11 @@ docker compose -f docker-compose.cn.yml up -d
 - 修复静态IP列表数据字段缺失
 - 修复前端ECharts PieChart导入错误
 - 修复auto_renew字段名错误
+
+#### 优化
+- 整理项目文件结构
+- 创建文档归档目录
+- 优化Git提交历史
 
 ---
 
@@ -483,16 +316,6 @@ docker compose -f docker-compose.cn.yml up -d
 
 ---
 
-## 🎉 里程碑
-
-- ✅ 2025-11-06: 核心功能开发完成
-- ✅ 2025-11-07: 项目结构整理，开发规范完善
-- 🔥 2025-11-07: **清除模拟数据（进行中）** - 准备生产环境
-- 📅 目标: 生产环境上线，可供用户正常使用
-
----
-
-**最后更新**: 2025-11-07  
-**项目状态**: 🔧 准备生产环境 - 清除模拟数据中  
-**下一步**: 完成模拟数据清理 → 生产环境测试 → 正式上线
+**最后更新**: 2025-11-06  
+**项目状态**: 🚧 积极开发中
 
