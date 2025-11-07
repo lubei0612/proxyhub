@@ -305,6 +305,30 @@ export class Proxy985Service {
   }
 
   /**
+   * 查询订单结果（获取购买的IP详情）
+   * POST /res_static/order_result
+   * @param orderNo - 订单号
+   * @returns IP详情列表
+   */
+  async getOrderResult(orderNo: string) {
+    this.logger.log(`[985Proxy] Getting order result: ${orderNo}`);
+
+    try {
+      const response = await this.client.post('/res_static/order_result', {
+        order_no: orderNo,
+      });
+      
+      this.logger.log(`[985Proxy] Order result fetched successfully`);
+      this.logger.log(`[985Proxy] Response: ${JSON.stringify(response.data)}`);
+      
+      return response.data;
+    } catch (error) {
+      this.logger.error(`[985Proxy] Failed to get order result: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * 续费静态代理IP
    * POST /res_static/renew
    * @param data 续费数据
