@@ -45,6 +45,10 @@ COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 # 复制生产环境配置文件作为.env
 COPY env.production.template /app/.env
 
+# 转换Windows CRLF为Unix LF（解决格式问题）
+RUN sed -i 's/\r$//' /app/.env && \
+    sed -i 's/\r$//' /app/docker-entrypoint.sh
+
 # 设置脚本执行权限
 RUN chmod +x /app/docker-entrypoint.sh /app/init-db.js
 
