@@ -392,25 +392,6 @@ export class Proxy985Service {
     return this.renewStaticProxy(data);
   }
 
-  /**
-   * 获取订单结果
-   * POST /res_static/order_result
-   * @param data 查询数据
-   * @param data.order_no 订单号
-   * @returns 返回订单状态（status）和详细信息（info），包括IP列表
-   */
-  async getOrderResult(data: { order_no: string }) {
-    this.logger.log(`[985Proxy] Getting order result: ${data.order_no}`);
-
-    try {
-      const response = await this.client.post('/res_static/order_result', data);
-      this.logger.log(`[985Proxy] Order status: ${response.data.data?.status || 'N/A'}`);
-      return response.data;
-    } catch (error) {
-      this.logger.error(`[985Proxy] Failed to get order result: ${error.message}`);
-      throw error;
-    }
-  }
 
   /**
    * 获取业务通道列表
