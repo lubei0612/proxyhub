@@ -770,7 +770,7 @@ export class StaticProxyService {
       this.logger.log(`[Check Order Status] Order found, querying 985Proxy API...`);
 
       // 调用985Proxy API查询订单状态
-      const response = await this.proxy985Service.getOrderResult({ order_no: orderNo });
+      const response = await this.proxy985Service.getOrderResult(orderNo);
 
       if (response.code !== 0) {
         this.logger.error(`[Check Order Status] 985Proxy API error: ${response.msg}`);
