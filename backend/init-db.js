@@ -65,34 +65,8 @@ async function initDatabase() {
       console.log('ℹ️  管理员账号已存在');
     }
 
-    // 2. 创建测试用户
-    const testUsers = [
-      { email: 'user@example.com', password: 'password123', nickname: '测试用户', balance: '1000.00' },
-      { email: 'alice@test.com', password: 'password123', nickname: 'Alice', balance: '500.00' },
-      { email: 'bob@test.com', password: 'password123', nickname: 'Bob', balance: '500.00' },
-    ];
-
-    let usersCreated = 0;
-    for (const userData of testUsers) {
-      const exists = await userRepo.findOne({ where: { email: userData.email } });
-      if (!exists) {
-        const hashedPassword = await bcrypt.hash(userData.password, 10);
-        await userRepo.save({
-          email: userData.email,
-          password: hashedPassword,
-          nickname: userData.nickname,
-          role: 'user',
-          balance: userData.balance,
-          gift_balance: '0.00',
-          status: 'active',
-        });
-        console.log(`✅ 测试用户: ${userData.email} / password123 (余额: $${userData.balance})`);
-        usersCreated++;
-      }
-    }
-    if (usersCreated === 0 && !adminCreated) {
-      console.log('ℹ️  测试用户已存在');
-    }
+    // 🚫 已移除测试用户自动创建
+    // 生产环境仅保留管理员账号，其他用户通过注册或管理后台创建
 
     // 3. 创建价格配置
     const priceConfigRepo = AppDataSource.getRepository('PriceConfig');

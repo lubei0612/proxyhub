@@ -293,41 +293,29 @@ export class StaticProxyService {
         count: item.quantity,
       }));
 
-      // 检查测试模式
-      const isTestMode = process.env.PROXY_985_TEST_MODE === 'true';
+      // 🚀 生产模式：调用真实985Proxy API
       const zone = process.env.PROXY_985_ZONE || 'your_zone_id_here';
       const proxyType = dto.ipType === 'native' ? 'premium' : 'shared';
       
-      if (isTestMode) {
-        this.logger.warn(`⚠️ [Purchase] 测试模式开启 - 不调用985Proxy API，使用mock数据`);
-      } else {
-        this.logger.log(`💰 [Purchase] 生产模式 - 调用真实985Proxy API购买 ${totalQuantity} 个IP（会扣费）`);
-        this.logger.log(`[Purchase] Zone: ${zone}, Type: ${proxyType}, Amount: $${totalPrice}`);
-      }
+      this.logger.log(`💰 [Purchase] 调用985Proxy API购买 ${totalQuantity} 个IP（会扣费）`);
+      this.logger.log(`[Purchase] Zone: ${zone}, Type: ${proxyType}, Amount: $${totalPrice}`);
       
+      // 调用真实API
       let proxy985Response;
-      
-      if (isTestMode) {
-        // 测试模式：跳过API调用
-        this.logger.log('[Purchase] 跳过985Proxy API调用，将使用fallback mock数据');
-        proxy985Response = null;
-      } else {
-        // 生产模式：调用真实API
-        try {
-          proxy985Response = await this.proxy985Service.buyStaticProxy({
-            zone,
-            time_period: dto.duration,
-            static_proxy_type: proxyType,
-            buy_data: buyData,
-            pay_type: 'balance', // 使用钱包余额支付
-            purpose_web: dto.scenario || undefined, // 业务场景（可选）
-          });
-          this.logger.log(`✅ [Purchase] 985Proxy API 购买成功！`);
-          this.logger.log(`[Purchase] 985Proxy API response: ${JSON.stringify(proxy985Response)}`);
-        } catch (error) {
-          this.logger.error(`❌ [Purchase] 985Proxy API 调用失败: ${error.message}`);
-          throw new BadRequestException(`985Proxy API购买失败: ${error.message}`);
-        }
+      try {
+        proxy985Response = await this.proxy985Service.buyStaticProxy({
+          zone,
+          time_period: dto.duration,
+          static_proxy_type: proxyType,
+          buy_data: buyData,
+          pay_type: 'balance', // 使用钱包余额支付
+          purpose_web: dto.scenario || undefined, // 业务场景（可选）
+        });
+        this.logger.log(`✅ [Purchase] 985Proxy API 购买成功！`);
+        this.logger.log(`[Purchase] 985Proxy API response: ${JSON.stringify(proxy985Response)}`);
+      } catch (error) {
+        this.logger.error(`❌ [Purchase] 985Proxy API 调用失败: ${error.message}`);
+        throw new BadRequestException(`985Proxy API购买失败: ${error.message}`);
       }
 
       // 解析985Proxy返回的IP数据并保存到数据库
@@ -408,44 +396,8 @@ export class StaticProxyService {
             quantity: item.quantity,
           });
         }
-      } else if (isTestMode) {
-        // 测试模式：使用Mock数据（仅限测试）
-        this.logger.warn('⚠️  [Purchase] 测试模式：生成Mock数据');
-        
-        for (const item of dto.items) {
-          this.logger.log(`[Purchase] Generating ${item.quantity} mock IPs for ${item.country}/${item.city}`);
-
-          for (let i = 0; i < item.quantity; i++) {
-            const mockIP = this.staticProxyRepo.create({
-              userId: parseInt(userId),
-              channelName: dto.channelName,
-              ip: `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-              port: 10000 + Math.floor(Math.random() * 50000),
-              username: `user_${Date.now()}_${i}`,
-              password: Math.random().toString(36).substring(2, 15),
-              country: item.country,
-              countryCode: item.country,
-              countryName: item.country,
-              cityName: item.city,
-              ipType: dto.ipType,
-              expireTimeUtc: new Date(Date.now() + dto.duration * 24 * 60 * 60 * 1000),
-              status: ProxyStatus.ACTIVE,
-              auto_renew: false,
-              remark: `Channel: ${dto.channelName}, Scenario: ${dto.scenario || 'N/A'} [MOCK - TEST MODE]`,
-            });
-
-            const savedIP = await queryRunner.manager.save(StaticProxy, mockIP);
-            allocatedIPs.push(savedIP);
-          }
-
-          purchaseDetails.push({
-            country: item.country,
-            city: item.city,
-            quantity: item.quantity,
-          });
-        }
       } else {
-        // 生产模式且API调用失败
+        // API调用失败或未返回数据
         throw new BadRequestException('购买失败：未收到985Proxy响应');
       }
 
