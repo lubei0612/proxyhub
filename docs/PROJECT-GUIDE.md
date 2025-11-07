@@ -174,6 +174,199 @@ backend/src/modules/
    }
    ```
 
+### 性能与算法优化 ⭐
+
+#### 1. 全局视角开发
+
+**在开始任何功能开发前，必须考虑**：
+- 📊 **数据规模**: 预估数据量（100条？10000条？100万条？）
+- 🔄 **并发场景**: 多少用户同时使用？
+- ⚡ **响应时间**: 用户能接受的最长等待时间
+- 💾 **资源消耗**: CPU、内存、数据库连接
+
+**示例思考流程**：
+```
+功能: 用户IP列表查询
+↓
+数据规模: 每个用户最多500个IP
+↓
+并发: 100个用户同时查询
+↓
+优化: 
+  - 添加数据库索引 (user_id)
+  - 分页查询 (limit 20, offset 0)
+  - 缓存热点数据 (Redis, TTL 5分钟)
+```
+
+#### 2. 最优算法选择
+
+**查询优化**：
+```typescript
+// ❌ 差：N+1查询问题
+async getUsersWithIPs() {
+  const users = await this.userRepo.find();
+  for (const user of users) {
+    user.ips = await this.ipRepo.find({ userId: user.id }); // N次查询！
+  }
+  return users;
+}
+
+// ✅ 优：使用JOIN或预加载
+async getUsersWithIPs() {
+  return this.userRepo.find({
+    relations: ['staticProxies'], // 1次查询
+    take: 20 // 分页
+  });
+}
+```
+
+**循环优化**：
+```typescript
+// ❌ 差：嵌套循环 O(n²)
+for (const ip of ips) {
+  for (const config of priceConfigs) {
+    if (ip.country === config.country) { /* 处理 */ }
+  }
+}
+
+// ✅ 优：使用Map O(n)
+const configMap = new Map(priceConfigs.map(c => [c.country, c]));
+for (const ip of ips) {
+  const config = configMap.get(ip.country); // O(1)查找
+  if (config) { /* 处理 */ }
+}
+```
+
+**数据处理优化**：
+```typescript
+// ❌ 差：多次遍历
+const activeIPs = ips.filter(ip => ip.status === 'active');
+const sortedIPs = activeIPs.sort((a, b) => a.expiresAt - b.expiresAt);
+const ipAddresses = sortedIPs.map(ip => ip.ipAddress);
+
+// ✅ 优：一次遍历
+const ipAddresses = ips
+  .filter(ip => ip.status === 'active')
+  .sort((a, b) => a.expiresAt - b.expiresAt)
+  .map(ip => ip.ipAddress);
+```
+
+#### 3. 数据库优化原则
+
+**必须添加索引的字段**：
+- WHERE条件字段: `user_id`, `status`, `email`
+- JOIN关联字段: `order_id`, `proxy_id`
+- 排序字段: `created_at`, `expires_at`
+
+**查询优化检查清单**：
+- [ ] 使用`EXPLAIN`分析查询计划
+- [ ] 避免`SELECT *`，只查询需要的字段
+- [ ] 使用分页（LIMIT + OFFSET）
+- [ ] 批量操作代替循环插入/更新
+- [ ] 使用缓存减少数据库压力
+
+**示例**：
+```typescript
+// ❌ 差：循环插入
+for (const ip of newIPs) {
+  await this.ipRepo.save(ip); // N次数据库调用
+}
+
+// ✅ 优：批量插入
+await this.ipRepo.save(newIPs); // 1次数据库调用
+```
+
+#### 4. 前端性能优化
+
+**列表渲染优化**：
+```vue
+<!-- ❌ 差：未使用虚拟滚动 -->
+<div v-for="ip in allIPs" :key="ip.id">
+  {{ ip.address }}
+</div>
+
+<!-- ✅ 优：使用虚拟滚动（Element Plus） -->
+<el-table-v2
+  :data="allIPs"
+  :columns="columns"
+  height="500"
+  virtual
+/>
+```
+
+**数据加载优化**：
+```typescript
+// ❌ 差：一次加载所有数据
+const allOrders = await getOrders(); // 可能上千条
+
+// ✅ 优：分页加载
+const orders = await getOrders({ page: 1, pageSize: 20 });
+
+// ✅ 更优：无限滚动+虚拟列表
+const loadMore = async () => {
+  const newData = await getOrders({ page: currentPage++, pageSize: 20 });
+  orders.value.push(...newData);
+};
+```
+
+#### 5. API调用优化
+
+**并发请求优化**：
+```typescript
+// ❌ 差：串行请求
+const user = await getUserInfo();
+const orders = await getOrders();
+const ips = await getIPs();
+// 总时间 = 300ms + 200ms + 150ms = 650ms
+
+// ✅ 优：并行请求
+const [user, orders, ips] = await Promise.all([
+  getUserInfo(),
+  getOrders(),
+  getIPs()
+]);
+// 总时间 = max(300ms, 200ms, 150ms) = 300ms
+```
+
+**缓存策略**：
+```typescript
+// ✅ 实现简单缓存
+class CachedAPI {
+  private cache = new Map<string, { data: any; expireAt: number }>();
+
+  async get(url: string, ttl = 5 * 60 * 1000) {
+    const cached = this.cache.get(url);
+    if (cached && cached.expireAt > Date.now()) {
+      return cached.data; // 返回缓存
+    }
+
+    const data = await fetch(url).then(r => r.json());
+    this.cache.set(url, {
+      data,
+      expireAt: Date.now() + ttl
+    });
+    return data;
+  }
+}
+```
+
+#### 6. 代码审查清单
+
+**每次提交前检查**：
+- [ ] 是否有N+1查询问题？
+- [ ] 是否有嵌套循环？
+- [ ] 大数据量是否分页？
+- [ ] 是否添加了必要的索引？
+- [ ] 是否使用了缓存？
+- [ ] API调用是否可以并行？
+- [ ] 是否避免了重复计算？
+
+**性能目标**：
+- 🎯 API响应时间 < 200ms (P95)
+- 🎯 页面加载时间 < 2s
+- 🎯 数据库查询 < 100ms
+- 🎯 并发支持 ≥ 100 用户
+
 ### Git提交规范
 
 使用Conventional Commits：
