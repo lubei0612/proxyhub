@@ -1,8 +1,8 @@
 <template>
-  <div class="admin-users-container">
-    <h1>用户管理</h1>
+  <div class="admin-users-container responsive-container">
+    <h1 class="text-responsive">用户管理</h1>
 
-    <el-card shadow="hover" class="users-card">
+    <el-card shadow="hover" class="users-card card-responsive">
       <template #header>
         <div class="card-header">
           <span>用户列表</span>
@@ -17,7 +17,7 @@
       </template>
 
       <!-- 筛选 -->
-      <div class="filter-section">
+      <div class="filter-section filter-section-responsive">
         <el-row :gutter="15">
           <el-col :span="6">
             <el-input v-model="filters.email" placeholder="用户邮箱" clearable>
@@ -57,7 +57,7 @@
       </div>
 
       <!-- 用户列表 -->
-      <el-table :data="userList" v-loading="loading" style="width: 100%">
+      <el-table :data="userList" v-loading="loading" style="width: 100%" class="table-responsive">
         <el-table-column label="用户ID" width="80" prop="id" />
 
         <el-table-column label="邮箱" width="200">
@@ -148,7 +148,7 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-container">
+      <div class="pagination-container pagination-responsive">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"

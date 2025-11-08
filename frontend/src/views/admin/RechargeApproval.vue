@@ -1,8 +1,8 @@
 <template>
-  <div class="recharge-approval-container">
-    <h1>充值审核</h1>
+  <div class="recharge-approval-container responsive-container">
+    <h1 class="text-responsive">充值审核</h1>
 
-    <el-card shadow="hover" class="approval-card">
+    <el-card shadow="hover" class="approval-card card-responsive">
       <template #header>
         <div class="card-header">
           <span>待审核充值列表</span>
@@ -11,7 +11,7 @@
       </template>
 
       <!-- 筛选 -->
-      <div class="filter-section">
+      <div class="filter-section filter-section-responsive">
         <el-row :gutter="15">
           <el-col :span="6">
             <el-select v-model="filters.status" placeholder="审核状态" @change="loadData">
@@ -49,7 +49,7 @@
       </div>
 
       <!-- 审核列表 -->
-      <el-table :data="rechargeList" v-loading="loading" style="width: 100%">
+      <el-table :data="rechargeList" v-loading="loading" style="width: 100%" class="table-responsive">
         <el-table-column label="订单号" width="150">
           <template #default="{ row }">
             <el-text copyable>{{ row.orderNo }}</el-text>
@@ -130,7 +130,7 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-container">
+      <div class="pagination-container pagination-responsive">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"

@@ -1,8 +1,8 @@
 <template>
-  <div class="admin-orders-container">
-    <h1>订单管理</h1>
+  <div class="admin-orders-container responsive-container">
+    <h1 class="text-responsive">订单管理</h1>
 
-    <el-card shadow="hover" class="orders-card">
+    <el-card shadow="hover" class="orders-card card-responsive">
       <template #header>
         <div class="card-header">
           <span>订单列表</span>
@@ -11,7 +11,7 @@
       </template>
 
       <!-- 筛选 -->
-      <div class="filter-section">
+      <div class="filter-section filter-section-responsive">
         <el-row :gutter="15">
           <el-col :span="5">
             <el-input v-model="filters.orderNo" placeholder="订单号" clearable>
@@ -62,7 +62,7 @@
       </div>
 
       <!-- 订单列表 -->
-      <el-table :data="orderList" v-loading="loading" style="width: 100%" @selection-change="handleSelectionChange">
+      <el-table :data="orderList" v-loading="loading" style="width: 100%" @selection-change="handleSelectionChange" class="table-responsive">
         <el-table-column type="selection" width="55" />
         <el-table-column label="订单号" width="150">
           <template #default="{ row }">
@@ -131,7 +131,7 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-container">
+      <div class="pagination-container pagination-responsive">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
