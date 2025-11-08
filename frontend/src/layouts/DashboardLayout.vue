@@ -57,7 +57,7 @@
             <el-icon><List /></el-icon>
             <span>账单明细</span>
           </template>
-          <el-menu-item index="/orders">订单管理</el-menu-item>
+          <el-menu-item index="/billing/orders">订单管理</el-menu-item>
           <el-menu-item index="/billing/transactions">交易明细</el-menu-item>
           <el-menu-item index="/billing/settlement">结算记录</el-menu-item>
           <el-menu-item index="/billing/recharge-orders">充值订单</el-menu-item>
