@@ -197,6 +197,13 @@
       </template>
     </el-dialog>
 
+    <!-- ✅ 用户IP和交易记录查看对话框 -->
+    <UserIPModal
+      v-model:visible="userIPModalVisible"
+      :user-id="selectedUserId"
+      :user-name="selectedUserName"
+    />
+
     <!-- 赠送余额对话框 -->
     <el-dialog v-model="giftDialogVisible" title="赠送余额" width="500px">
       <el-form :model="giftForm" label-width="100px">
@@ -246,6 +253,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search, Refresh, Plus } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { getAllUsers, updateUserRole, updateUserStatus, createUser } from '@/api/modules/admin';
+import UserIPModal from '@/components/UserIPModal.vue'; // ✅ 导入UserIPModal组件
 
 const filters = ref({
   email: '',
@@ -270,6 +278,11 @@ const createUserForm = ref({
   role: 'user',
   initialBalance: 0,
 });
+
+// ✅ 用户IP和交易记录查看对话框
+const userIPModalVisible = ref(false);
+const selectedUserId = ref('');
+const selectedUserName = ref('');
 
 // 赠送余额对话框
 const giftDialogVisible = ref(false);
@@ -490,24 +503,11 @@ const confirmGift = async () => {
   }
 };
 
+// ✅ 查看用户详情（打开UserIPModal）
 const viewUserDetail = (user: any) => {
-  ElMessageBox.alert(
-    `
-    用户ID：${user.id}
-    邮箱：${user.email}
-    昵称：${user.nickname}
-    角色：${user.role === 'admin' ? '管理员' : '普通用户'}
-    账户余额：$${parseFloat(user.balance || 0).toFixed(2)}
-    赠送余额：$${parseFloat(user.gift_balance || 0).toFixed(2)}
-    状态：${user.status === 'active' ? '正常' : '禁用'}
-    注册时间：${user.createdAt}
-    `,
-    '用户详情',
-    {
-      confirmButtonText: '关闭',
-      customStyle: { whiteSpace: 'pre-line' },
-    }
-  );
+  selectedUserId.value = user.id.toString();
+  selectedUserName.value = user.email;
+  userIPModalVisible.value = true;
 };
 
 onMounted(() => {
