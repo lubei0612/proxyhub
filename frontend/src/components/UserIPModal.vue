@@ -97,11 +97,11 @@
         </el-tab-pane>
 
         <!-- 交易记录标签 -->
-        <el-tab-pane label="近期交易" name="transactions">
+        <el-tab-pane label="全部交易" name="transactions">
           <template #label>
             <span>
               <el-icon><Money /></el-icon>
-              近期交易 (最近5笔)
+              全部交易记录
             </span>
           </template>
           <el-table :data="userData?.recentTransactions || []" style="width: 100%" max-height="400">

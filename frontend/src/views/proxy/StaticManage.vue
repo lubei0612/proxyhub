@@ -72,10 +72,12 @@
             <el-select
               v-model="filters.country"
               placeholder="选择国家"
-              clearable
               filterable
               @change="handleCountryChange"
+              :loading="loadingCountries"
             >
+              <!-- ✅ 添加"所有国家"选项 -->
+              <el-option label="所有国家" value="all" />
               <el-option
                 v-for="country in countryList"
                 :key="country.code"
@@ -92,10 +94,12 @@
             <el-select
               v-model="filters.city"
               placeholder="选择城市"
-              clearable
               @change="loadData"
-              :disabled="!filters.country"
+              :disabled="!filters.country || filters.country === 'all'"
+              :loading="loadingCities"
             >
+              <!-- ✅ 添加"所有城市"选项 -->
+              <el-option label="所有城市" value="all" />
               <el-option
                 v-for="city in cityList"
                 :key="city"
@@ -331,6 +335,8 @@ import {
   getMyIPs, 
   renewIPVia985, 
   releaseStaticProxy,
+  getCountryList,
+  getCityList,
 } from '@/api/modules/proxy';
 import { useUserStore } from '@/stores/user';
 import PurchaseDialog from './PurchaseDialog.vue';
@@ -351,27 +357,18 @@ const handlePurchaseSuccess = () => {
 const filters = ref({
   ip: '',
   channel: '',
-  country: '',
-  city: '',
+  country: 'all', // ✅ 默认"所有国家"
+  city: 'all',
   nodeId: '',
   ipType: '',
   status: '',
 });
 
-// 国家和城市列表
-const countryList = ref([
-  { code: 'US', name: '美国' },
-  { code: 'GB', name: '英国' },
-  { code: 'JP', name: '日本' },
-  { code: 'DE', name: '德国' },
-  { code: 'FR', name: '法国' },
-  { code: 'CA', name: '加拿大' },
-  { code: 'BR', name: '巴西' },
-  { code: 'KR', name: '韩国' },
-  { code: 'SG', name: '新加坡' },
-]);
-
+// 国家和城市列表 - ✅ 从985Proxy API获取
+const countryList = ref<Array<{ code: string; name: string; cityCount: number }>>([]);
 const cityList = ref<string[]>([]);
+const loadingCountries = ref(false);
+const loadingCities = ref(false);
 
 // 代理列表
 const proxyList = ref<any[]>([]);
@@ -418,25 +415,43 @@ const handleCopyCredentials = async (proxy: any) => {
   }
 };
 
-// 处理国家变化
-const handleCountryChange = (countryCode: string) => {
-  if (!countryCode) {
+// ✅ 加载国家列表（从985Proxy API）
+const loadCountries = async () => {
+  loadingCountries.value = true;
+  try {
+    const response = await getCountryList();
+    countryList.value = response.countries || [];
+  } catch (error: any) {
+    console.error('[Load Countries] Failed:', error);
+    ElMessage.error('加载国家列表失败：' + (error.message || '未知错误'));
+  } finally {
+    loadingCountries.value = false;
+  }
+};
+
+// ✅ 处理国家变化（从985Proxy API加载城市）
+const handleCountryChange = async (countryCode: string) => {
+  filters.value.city = 'all'; // 重置城市选择
+  
+  if (!countryCode || countryCode === 'all') {
     cityList.value = [];
-    filters.value.city = '';
+    loadData();
     return;
   }
 
-  // Mock城市数据
-  const cityMap: Record<string, string[]> = {
-    US: ['Los Angeles', 'New York', 'Chicago', 'Houston'],
-    GB: ['London', 'Manchester', 'Birmingham'],
-    JP: ['Tokyo', 'Osaka', 'Kyoto'],
-    DE: ['Berlin', 'Munich', 'Hamburg'],
-    FR: ['Paris', 'Lyon', 'Marseille'],
-  };
-
-  cityList.value = cityMap[countryCode] || [];
-  filters.value.city = '';
+  // ✅ 从985Proxy API加载城市列表
+  loadingCities.value = true;
+  try {
+    const response = await getCityList(countryCode);
+    cityList.value = response.cities || [];
+  } catch (error: any) {
+    console.error('[Load Cities] Failed:', error);
+    ElMessage.error('加载城市列表失败：' + (error.message || '未知错误'));
+    cityList.value = [];
+  } finally {
+    loadingCities.value = false;
+  }
+  
   loadData();
 };
 
@@ -728,6 +743,7 @@ watch(renewDuration, () => {
 });
 
 onMounted(() => {
+  loadCountries(); // ✅ 加载国家列表
   loadData();
 });
 </script>

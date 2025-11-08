@@ -1027,5 +1027,93 @@ export class StaticProxyService {
       throw new BadRequestException(`获取业务场景失败: ${error.message}`);
     }
   }
+
+  /**
+   * 获取国家列表（从985Proxy API）
+   * Get country list from 985Proxy dynamic proxy city_list API
+   */
+  async getCountryList() {
+    this.logger.log('[Get Country List] Loading from 985Proxy API');
+
+    try {
+      const response = await this.proxy985Service.getDynamicCityList();
+      
+      if (response.code !== 0) {
+        throw new BadRequestException(`获取国家列表失败: ${response.msg}`);
+      }
+
+      // 提取国家列表（去重）
+      const countries = response.data.map(item => ({
+        code: item.code,
+        name: item.name || item.code, // 如果没有name，使用code
+        cityCount: item.state_list?.length || 0
+      }));
+
+      this.logger.log(`[Get Country List] Loaded ${countries.length} countries`);
+      
+      return {
+        countries
+      };
+    } catch (error) {
+      this.logger.error(`[Get Country List] Failed: ${error.message}`);
+      throw new BadRequestException(`获取国家列表失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 获取城市列表（从985Proxy API）
+   * Get city list for a specific country from 985Proxy
+   * @param countryCode 国家代码
+   */
+  async getCityList(countryCode: string) {
+    this.logger.log(`[Get City List] Loading cities for country: ${countryCode}`);
+
+    if (!countryCode) {
+      throw new BadRequestException('国家代码不能为空');
+    }
+
+    try {
+      const response = await this.proxy985Service.getDynamicCityList();
+      
+      if (response.code !== 0) {
+        throw new BadRequestException(`获取城市列表失败: ${response.msg}`);
+      }
+
+      // 查找指定国家
+      const country = response.data.find(c => c.code === countryCode);
+      
+      if (!country) {
+        return {
+          cities: []
+        };
+      }
+
+      // 提取该国家的所有州/省和城市
+      const cities: string[] = [];
+      
+      if (country.state_list && country.state_list.length > 0) {
+        for (const state of country.state_list) {
+          if (state.city_list && state.city_list.length > 0) {
+            for (const city of state.city_list) {
+              // 城市可能只有code，也可能有name
+              cities.push(city.name || city.code || city);
+            }
+          }
+        }
+      }
+
+      // 去重
+      const uniqueCities = [...new Set(cities)];
+
+      this.logger.log(`[Get City List] Loaded ${uniqueCities.length} cities for ${countryCode}`);
+      
+      return {
+        cities: uniqueCities
+      };
+    } catch (error) {
+      this.logger.error(`[Get City List] Failed: ${error.message}`);
+      throw new BadRequestException(`获取城市列表失败: ${error.message}`);
+    }
+  }
 }
 

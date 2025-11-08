@@ -102,6 +102,23 @@ export class StaticProxyController {
   }
 
   /**
+   * 获取国家列表（985Proxy）
+   */
+  @Get('country-list')
+  async getCountryList() {
+    return this.staticProxyService.getCountryList();
+  }
+
+  /**
+   * 获取城市列表（985Proxy）
+   * @param country 国家代码
+   */
+  @Get('city-list')
+  async getCityList(@Query('country') country: string) {
+    return this.staticProxyService.getCityList(country);
+  }
+
+  /**
    * 计算购买价格（调用985Proxy API）
    */
   @Post('calculate-price')

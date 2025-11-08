@@ -68,6 +68,28 @@ export function getBusinessScenarios() {
 }
 
 /**
+ * 获取国家列表（985Proxy API）
+ */
+export function getCountryList() {
+  return request({
+    url: '/proxy/static/country-list',
+    method: 'get',
+  });
+}
+
+/**
+ * 获取城市列表（985Proxy API）
+ * @param country 国家代码
+ */
+export function getCityList(country: string) {
+  return request({
+    url: '/proxy/static/city-list',
+    method: 'get',
+    params: { country },
+  });
+}
+
+/**
  * 计算购买价格（985Proxy API）
  */
 export function calculateStaticProxyPrice(data: {
