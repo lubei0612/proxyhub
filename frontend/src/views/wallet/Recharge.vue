@@ -120,23 +120,19 @@
               />
             </el-form-item>
 
-            <!-- 联系客服（卡片样式，双客服） -->
+            <!-- ✅ 联系客服（保留样式，隐藏具体联系方式） -->
             <el-form-item label="联系客服">
               <el-alert type="info" :closable="false" class="customer-service-alert">
                 <template #default>
                   <div class="service-content">
                     <div class="service-header">
                       <el-icon :size="20"><Service /></el-icon>
-                      <span>需要帮助？联系我们的客服团队</span>
+                      <span>需要帮助？请联系您的客服</span>
                     </div>
                     <div class="service-buttons">
-                      <el-button type="primary" @click="openTelegram('leyiproxy')">
+                      <el-button type="primary" disabled>
                         <el-icon><ChatDotRound /></el-icon>
-                        客服1: @leyiproxy
-                      </el-button>
-                      <el-button type="success" @click="openTelegram('proxyhub_support')">
-                        <el-icon><ChatDotRound /></el-icon>
-                        客服2: @proxyhub_support
+                        请联系您的客服
                       </el-button>
                     </div>
                   </div>
@@ -185,7 +181,7 @@ const form = ref({
 });
 
 // 快捷金额
-const quickAmounts = [10, 50, 100, 200, 500, 1000];
+const quickAmounts = [2000, 5000, 10000, 50000, 100000]; // ✅ 针对代理客户的大额充值
 
 // 汇率
 const exchangeRate = ref(7.25);

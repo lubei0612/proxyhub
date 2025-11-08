@@ -4,9 +4,9 @@
       <template #header>
         <div class="card-header">
           <h3>动态住宅IP管理</h3>
-          <el-button type="primary" @click="contactService">
+          <el-button type="primary" disabled>
             <el-icon><ChatDotRound /></el-icon>
-            联系客服购买套餐
+            请联系您的客服购买套餐
           </el-button>
         </div>
       </template>
@@ -57,9 +57,9 @@
           <el-button 
             type="primary" 
             class="buy-button"
-            @click="contactService"
+            disabled
           >
-            联系客服
+            请联系您的客服
           </el-button>
         </el-card>
       </div>
@@ -118,18 +118,14 @@ const packages = ref([
     name: '企业定制',
     price: '大客户',
     period: '',
-    unitPrice: '联系客服',
+    unitPrice: '请联系您的客服',
     sessions: '无限制',
     isHot: false,
     isEnterprise: true,
   },
 ]);
 
-// 联系客服
-const contactService = () => {
-  window.open('https://t.me/leyiproxy', '_blank');
-  ElMessage.info('正在跳转至Telegram客服...');
-};
+// ✅ 客服链接已隐藏（防止撬客户）
 </script>
 
 <style scoped lang="scss">

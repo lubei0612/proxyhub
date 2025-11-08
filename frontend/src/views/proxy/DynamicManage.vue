@@ -69,10 +69,10 @@
             type="primary"
             size="large"
             class="action-btn"
-            @click="handleContactService"
+            disabled
           >
             <el-icon><ChatDotRound /></el-icon>
-            联系客服购买套餐
+            请联系您的客服购买套餐
           </el-button>
         </el-col>
         <el-col :span="6">
@@ -120,9 +120,9 @@
       </template>
 
       <div class="usage-info">
-        <p>• 动态住宅代理按流量计费，流量用完后需要联系客服续费</p>
+        <p>• 动态住宅代理按流量计费，流量用完后需要联系您的客服续费</p>
         <p>• 支持HTTP/HTTPS/SOCKS5协议</p>
-        <p>• 联系客服: <el-link type="primary" :href="telegramLink" target="_blank">@{{ telegramUsername }}</el-link></p>
+        <p>• 如需购买，请联系您的客服</p>
       </div>
     </el-card>
 
@@ -217,29 +217,11 @@ const pagination = ref({
   total: 0,
 });
 
-// Telegram客服链接
-const telegramLink = ref('https://t.me/leyiproxy');
-const telegramUsername = ref('leyiproxy');
-
-// 联系客服（跳转Telegram）- ✅ 改为从API获取
-const handleContactService = async () => {
-  try {
-    const response = await fetch('/api/v1/settings/telegram');
-    const links = await response.json();
-    if (links && links.length > 0) {
-      window.open(`https://t.me/${links[0].username}`, '_blank');
-      ElMessage.info('正在跳转到Telegram客服...');
-    } else {
-      ElMessage.warning('客服链接未配置，请联系管理员');
-    }
-  } catch (error) {
-    ElMessage.error('获取客服信息失败');
-  }
-};
+// ✅ 客服链接已隐藏（防止撬客户）
 
 // 切换状态 - ✅ 禁用（需要真实API）
 const handleToggleStatus = async () => {
-  ElMessage.warning('此功能需要联系客服开通动态住宅套餐后才能使用');
+  ElMessage.warning('此功能需要联系您的客服开通动态住宅套餐后才能使用');
 };
 
 // 加载使用数据 - ✅ 移除Mock数据，显示空状态
@@ -257,7 +239,7 @@ const loadUsageData = async () => {
     
     // 如果没有数据，提示用户
     if (usageData.value.length === 0) {
-      ElMessage.info('暂无动态住宅套餐，请联系客服开通');
+      ElMessage.info('暂无动态住宅套餐，请联系您的客服开通');
     }
   } catch (error: any) {
     ElMessage.error('加载失败：' + error.message);
@@ -266,23 +248,8 @@ const loadUsageData = async () => {
   }
 };
 
-// 加载Telegram客服链接
-const loadTelegramLinks = async () => {
-  try {
-    const response = await fetch('/api/v1/settings/telegram');
-    const links = await response.json();
-    if (links && links.length > 0) {
-      telegramLink.value = `https://t.me/${links[0].username}`;
-      telegramUsername.value = links[0].username;
-    }
-  } catch (error) {
-    console.error('加载Telegram客服链接失败:', error);
-  }
-};
-
 onMounted(() => {
   loadUsageData();
-  loadTelegramLinks();
 });
 </script>
 
