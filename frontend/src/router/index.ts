@@ -93,6 +93,17 @@ const routes: RouteRecordRaw[] = [
           group: 'static-proxy',
         },
       },
+      // ✅ 专线代理（短视频/直播）
+      {
+        path: 'proxy/dedicated',
+        name: 'DedicatedProxy',
+        component: () => import('@/views/proxy/DedicatedProxy.vue'),
+        meta: {
+          title: '专线代理',
+          icon: 'Connection',
+          group: 'static-proxy',
+        },
+      },
       // 移动代理（占位）
       {
         path: 'proxy/mobile',

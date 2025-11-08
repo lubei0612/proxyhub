@@ -36,6 +36,7 @@
           </template>
           <el-menu-item index="/proxy/static/manage">静态住宅管理</el-menu-item>
           <el-menu-item index="/proxy/static/buy">静态住宅选购</el-menu-item>
+          <el-menu-item index="/proxy/dedicated">专线代理</el-menu-item>
         </el-sub-menu>
 
         <!-- 移动代理（未开发） -->
