@@ -122,7 +122,7 @@
       <div class="usage-info">
         <p>• 动态住宅代理按流量计费，流量用完后需要联系客服续费</p>
         <p>• 支持HTTP/HTTPS/SOCKS5协议</p>
-        <p>• 联系客服: <el-link type="primary" href="https://t.me/lubei12" target="_blank">@lubei12</el-link></p>
+        <p>• 联系客服: <el-link type="primary" :href="telegramLink" target="_blank">@{{ telegramUsername }}</el-link></p>
       </div>
     </el-card>
 
@@ -217,6 +217,10 @@ const pagination = ref({
   total: 0,
 });
 
+// Telegram客服链接
+const telegramLink = ref('https://t.me/leyiproxy');
+const telegramUsername = ref('leyiproxy');
+
 // 联系客服（跳转Telegram）- ✅ 改为从API获取
 const handleContactService = async () => {
   try {
@@ -262,8 +266,23 @@ const loadUsageData = async () => {
   }
 };
 
+// 加载Telegram客服链接
+const loadTelegramLinks = async () => {
+  try {
+    const response = await fetch('/api/v1/settings/telegram');
+    const links = await response.json();
+    if (links && links.length > 0) {
+      telegramLink.value = `https://t.me/${links[0].username}`;
+      telegramUsername.value = links[0].username;
+    }
+  } catch (error) {
+    console.error('加载Telegram客服链接失败:', error);
+  }
+};
+
 onMounted(() => {
   loadUsageData();
+  loadTelegramLinks();
 });
 </script>
 
