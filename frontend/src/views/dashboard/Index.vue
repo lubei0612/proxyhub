@@ -1,9 +1,9 @@
 <template>
-  <div class="dashboard-container">
-    <h1>仪表盘</h1>
+  <div class="dashboard-container responsive-container">
+    <h1 class="text-responsive">仪表盘</h1>
 
     <!-- 概览卡片 -->
-    <el-row :gutter="20" class="stats-row">
+    <el-row :gutter="20" class="stats-row grid-responsive">
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">

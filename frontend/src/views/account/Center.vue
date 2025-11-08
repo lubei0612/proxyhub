@@ -1,8 +1,8 @@
 <template>
-  <div class="account-center-container">
-    <h1>账户中心</h1>
+  <div class="account-center-container responsive-container">
+    <h1 class="text-responsive">账户中心</h1>
 
-    <el-row :gutter="20">
+    <el-row :gutter="20" class="flex-responsive">
       <!-- 左侧：账户信息 -->
       <el-col :span="16">
         <!-- 基本信息 -->

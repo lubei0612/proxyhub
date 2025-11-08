@@ -1,6 +1,6 @@
 <template>
-  <div class="static-manage-container">
-    <h1>静态住宅IP管理</h1>
+  <div class="static-manage-container responsive-container">
+    <h1 class="text-responsive">静态住宅IP管理</h1>
 
     <el-card shadow="hover" class="manage-card">
       <template #header>
@@ -261,8 +261,8 @@
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <div class="pagination-container">
+    <!-- 分页 -->
+    <div class="pagination-container pagination-responsive">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
