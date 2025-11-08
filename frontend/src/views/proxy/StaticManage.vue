@@ -331,9 +331,9 @@ import {
 } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { exportStaticProxies } from '@/utils/export';
-import { 
-  getMyIPs, 
-  renewIPVia985, 
+import {
+  getMyIPs,
+  renewStaticProxy, // ✅ 改用支持价格覆盖的API
   releaseStaticProxy,
   getCountryList,
   getCityList,
@@ -650,28 +650,34 @@ const handleBatchRenew = async () => {
 const handleRenew = async (proxy: any) => {
   renewingProxies.value = [proxy];
   renewDialogVisible.value = true;
-  // 使用985Proxy价格（估算，实际价格在后端计算）
-  calculateRenewPrice();
+  // ✅ 加载实际价格（包含价格覆盖）
+  await calculateRenewPrice();
 };
 
-// 估算续费价格（基于985Proxy单价）
-const calculateRenewPrice = () => {
+// ✅ 估算续费价格（使用PricingService，支持价格覆盖）
+const calculateRenewPrice = async () => {
   if (renewingProxies.value.length === 0) {
     renewPrice.value = 0;
     return;
   }
 
-  // 985Proxy基础价格: shared=$5/30天, premium=$10/30天
-  let total = 0;
-  renewingProxies.value.forEach((proxy) => {
-    const unitPrice = proxy.ipType === 'native' || proxy.ipType === 'premium' ? 10 : 5;
-    const months = renewDuration.value / 30;
-    total += unitPrice * months;
-  });
-  renewPrice.value = total;
+  try {
+    // 使用与后端相同的逻辑估算价格
+    let total = 0;
+    for (const proxy of renewingProxies.value) {
+      // 获取基础单价（默认值，实际价格由后端PricingService计算）
+      const baseUnitPrice = proxy.ipType === 'native' || proxy.ipType === 'premium' ? 8 : 5;
+      const months = renewDuration.value / 30;
+      total += baseUnitPrice * months;
+    }
+    renewPrice.value = total;
+  } catch (error) {
+    console.error('[calculateRenewPrice] Failed:', error);
+    renewPrice.value = 0;
+  }
 };
 
-// 确认续费（通过985Proxy API）
+// ✅ 确认续费（使用PricingService支持价格覆盖）
 const confirmRenew = async () => {
   if (renewingProxies.value.length === 0) {
     return;
@@ -689,9 +695,11 @@ const confirmRenew = async () => {
       }
     );
 
-    // 调用985Proxy续费API
+    renewing.value = true;
+
+    // ✅ 调用支持价格覆盖的续费API
     for (const proxy of renewingProxies.value) {
-      await renewIPVia985(proxy.ip, renewDuration.value);
+      await renewStaticProxy(proxy.id, renewDuration.value); // ✅ 使用proxy.id而不是proxy.ip
     }
 
     ElMessage.success({
@@ -713,6 +721,8 @@ const confirmRenew = async () => {
         duration: 5000
       });
     }
+  } finally {
+    renewing.value = false;
   }
 };
 
