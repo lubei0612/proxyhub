@@ -39,4 +39,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # 启动应用
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]
