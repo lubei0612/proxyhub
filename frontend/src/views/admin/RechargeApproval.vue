@@ -35,10 +35,14 @@
             <el-input v-model="filters.email" placeholder="用户邮箱" clearable />
           </el-col>
 
-          <el-col :span="4">
+          <el-col :span="6">
             <el-button type="primary" @click="loadData">
               <el-icon><Search /></el-icon>
               搜索
+            </el-button>
+            <el-button @click="resetFilters">
+              <el-icon><Refresh /></el-icon>
+              重置
             </el-button>
           </el-col>
         </el-row>
@@ -196,7 +200,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Search, Check, Close } from '@element-plus/icons-vue';
+import { Search, Check, Close, Refresh } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { approveRecharge, getAllRecharges } from '@/api/modules/billing';
 
@@ -290,6 +294,17 @@ const loadData = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// ✅ 重置筛选条件
+const resetFilters = () => {
+  filters.value = {
+    status: 'pending',
+    paymentMethod: '',
+    email: '',
+  };
+  pagination.value.page = 1;
+  loadData();
 };
 
 const handleApprove = (recharge: any) => {

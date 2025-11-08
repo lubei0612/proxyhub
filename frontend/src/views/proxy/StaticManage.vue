@@ -532,47 +532,65 @@ const loadData = async () => {
   }
 };
 
-// 检查是否有活动的筛选条件
+// ✅ 检查是否有活动的筛选条件
 const hasActiveFilters = () => {
-  return filters.value.ip || filters.value.channel || filters.value.country || 
-         filters.value.city || filters.value.nodeId || filters.value.ipType || 
+  return (filters.value.ip && filters.value.ip.trim()) || 
+         filters.value.channel || 
+         (filters.value.country && filters.value.country !== 'all') || 
+         (filters.value.city && filters.value.city !== 'all') || 
+         filters.value.nodeId || 
+         filters.value.ipType || 
          filters.value.status;
 };
 
-// 客户端筛选（由于后端my-ips API暂不支持筛选参数）
+// ✅ 客户端筛选（由于后端my-ips API暂不支持筛选参数）
 const applyClientSideFilters = (list: any[]) => {
   return list.filter(item => {
-    if (filters.value.ip && !item.ip.includes(filters.value.ip.trim())) {
+    // IP搜索
+    if (filters.value.ip && filters.value.ip.trim() && !item.ip.includes(filters.value.ip.trim())) {
       return false;
     }
-    if (filters.value.country && item.country !== filters.value.country) {
+    // 国家筛选（排除'all'）
+    if (filters.value.country && filters.value.country !== 'all' && item.country !== filters.value.country) {
       return false;
     }
-    if (filters.value.city && item.city !== filters.value.city) {
+    // 城市筛选（排除'all'）
+    if (filters.value.city && filters.value.city !== 'all' && item.cityName !== filters.value.city) {
       return false;
     }
+    // IP类型筛选
     if (filters.value.ipType && item.ipType !== filters.value.ipType) {
       return false;
     }
+    // 状态筛选
     if (filters.value.status && item.statusType !== filters.value.status) {
+      return false;
+    }
+    // 通道筛选
+    if (filters.value.channel && item.channelName !== filters.value.channel) {
+      return false;
+    }
+    // 节点ID搜索
+    if (filters.value.nodeId && filters.value.nodeId.trim() && !item.remark?.includes(filters.value.nodeId.trim())) {
       return false;
     }
     return true;
   });
 };
 
-// 重置筛选
+// ✅ 重置筛选
 const resetFilters = () => {
   filters.value = {
     ip: '',
     channel: '',
-    country: '',
-    city: '',
+    country: 'all', // ✅ 重置为"所有国家"
+    city: 'all', // ✅ 重置为"所有城市"
     nodeId: '',
     ipType: '',
     status: '',
   };
   cityList.value = [];
+  pagination.value.page = 1; // ✅ 重置到第一页
   loadData();
 };
 
