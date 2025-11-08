@@ -23,15 +23,24 @@ export class TelegramService implements OnModuleInit {
   async onModuleInit() {
     const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
 
-    if (!token) {
-      this.logger.warn('Telegram Bot未配置，将跳过Bot初始化');
+    if (!token || token === 'your_telegram_bot_token_here') {
+      this.logger.warn('Telegram Bot未配置或使用默认值，将跳过Bot初始化');
       return;
     }
 
     try {
-      this.bot = new TelegramBot(token, { polling: true });
-      this.setupCommands();
-      this.logger.log('Telegram Bot初始化成功');
+      // 使用polling: false避免多实例冲突，改为webhook模式需要额外配置
+      // 如果需要使用polling，请确保只有一个实例运行
+      const enablePolling = this.configService.get<string>('TELEGRAM_ENABLE_POLLING') === 'true';
+      
+      if (enablePolling) {
+        this.bot = new TelegramBot(token, { polling: true });
+        this.setupCommands();
+        this.logger.log('Telegram Bot初始化成功（Polling模式）');
+      } else {
+        this.bot = new TelegramBot(token, { polling: false });
+        this.logger.log('Telegram Bot初始化成功（Webhook模式，需配置webhook）');
+      }
     } catch (error) {
       this.logger.error(`Telegram Bot初始化失败: ${error.message}`, error.stack);
     }

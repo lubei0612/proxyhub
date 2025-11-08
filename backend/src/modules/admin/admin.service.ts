@@ -1,13 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { Order } from '../order/entities/order.entity';
 import { Recharge } from '../billing/entities/recharge.entity';
-import { Transaction } from '../billing/entities/transaction.entity';
+import { Transaction, TransactionType } from '../billing/entities/transaction.entity';
 import { StaticProxy } from '../proxy/static/entities/static-proxy.entity';
+import { DynamicChannel } from '../proxy/dynamic/entities/dynamic-channel.entity';
 import { SystemSettings } from './entities/system-settings.entity';
 import { EventLogService } from '../event-log/event-log.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminService {
@@ -22,8 +24,11 @@ export class AdminService {
     private transactionRepo: Repository<Transaction>,
     @InjectRepository(StaticProxy)
     private staticProxyRepo: Repository<StaticProxy>,
+    @InjectRepository(DynamicChannel)
+    private dynamicChannelRepo: Repository<DynamicChannel>,
     @InjectRepository(SystemSettings)
     private systemSettingsRepo: Repository<SystemSettings>,
+    private readonly dataSource: DataSource,
     private readonly eventLogService: EventLogService,
   ) {}
 
@@ -102,6 +107,35 @@ export class AdminService {
       return sum + (parseFloat(order.amount as any) || 0);
     }, 0);
 
+    // 计算最近7天的收入趋势
+    const revenueTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setUTCHours(0, 0, 0, 0);
+      
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      
+      const dayOrders = await this.orderRepo.createQueryBuilder('order')
+        .where('order.createdAt >= :startDate', { startDate: date })
+        .andWhere('order.createdAt < :endDate', { endDate: nextDate })
+        .andWhere('order.status = :status', { status: 'completed' })
+        .getMany();
+      
+      const dayIncome = dayOrders.reduce((sum, order) => {
+        return sum + (parseFloat(order.amount as any) || 0);
+      }, 0);
+      
+      // 格式化日期为 "MM-DD"
+      const formattedDate = `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+      
+      revenueTrend.push({
+        date: formattedDate,
+        revenue: parseFloat(dayIncome.toFixed(2)),
+      });
+    }
+
     return {
       users: {
         total: totalUsers,
@@ -122,6 +156,7 @@ export class AdminService {
       revenue: {
         total: totalIncome.toFixed(2),
         today: todayIncome.toFixed(2),
+        trend: revenueTrend, // 最近7天收入趋势
       },
     };
   }
@@ -276,31 +311,240 @@ export class AdminService {
   }
 
   /**
-   * 赠送余额给用户
+   * 添加余额给用户（管理员功能）
+   * 之前的"赠送余额"功能，现在直接添加到balance字段
    */
-  async giftBalance(userId: string, amount: number, remark?: string) {
+  async addBalance(userId: string, amount: number, remark?: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const user = await queryRunner.manager.findOne(User, { where: { id: parseInt(userId) } });
+      if (!user) {
+        throw new Error('用户不存在');
+      }
+
+      // 记录余额变化
+      const balanceBefore = parseFloat(user.balance as any) || 0;
+      const balanceAfter = balanceBefore + amount;
+
+      // 增加用户余额
+      user.balance = balanceAfter.toFixed(2) as any;
+      await queryRunner.manager.save(User, user);
+
+      // 创建交易记录
+      const transaction = queryRunner.manager.create(Transaction, {
+        userId: parseInt(userId),
+        transactionNo: `ADD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        type: TransactionType.RECHARGE,
+        amount: amount,
+        balanceBefore: balanceBefore,
+        balanceAfter: balanceAfter,
+        remark: `管理员添加余额${remark ? `: ${remark}` : ''}`,
+      });
+      await queryRunner.manager.save(Transaction, transaction);
+
+      await queryRunner.commitTransaction();
+
+      // 记录事件日志（在事务外）
+      await this.eventLogService.createLog(
+        user.id,
+        'add_balance',
+        `管理员添加余额 $${amount.toFixed(2)}${remark ? ` - ${remark}` : ''}`,
+      );
+
+      return {
+        message: '添加成功',
+        user: {
+          id: user.id,
+          email: user.email,
+          balance: user.balance,
+        },
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 扣除余额（管理员功能）
+   */
+  async deductBalance(userId: string, amount: number, remark?: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const user = await queryRunner.manager.findOne(User, { where: { id: parseInt(userId) } });
+      if (!user) {
+        throw new Error('用户不存在');
+      }
+
+      const currentBalance = parseFloat(user.balance as any) || 0;
+
+      if (currentBalance < amount) {
+        throw new Error(`余额不足，当前余额：$${currentBalance.toFixed(2)}，扣除金额：$${amount.toFixed(2)}`);
+      }
+
+      const balanceBefore = currentBalance;
+      const balanceAfter = currentBalance - amount;
+
+      user.balance = balanceAfter.toFixed(2) as any;
+      await queryRunner.manager.save(User, user);
+
+      // 创建交易记录
+      const transaction = queryRunner.manager.create(Transaction, {
+        userId: parseInt(userId),
+        transactionNo: `DEDUCT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        type: TransactionType.EXPENSE,
+        amount: -amount, // 负数表示扣除
+        balanceBefore: balanceBefore,
+        balanceAfter: balanceAfter,
+        remark: `管理员扣除余额${remark ? `: ${remark}` : ''}`,
+      });
+      await queryRunner.manager.save(Transaction, transaction);
+
+      await queryRunner.commitTransaction();
+
+      // 记录事件日志
+      await this.eventLogService.createLog(
+        user.id,
+        'deduct_balance',
+        `管理员扣除余额 $${amount.toFixed(2)}${remark ? ` - ${remark}` : ''}`,
+      );
+
+      return { 
+        message: '扣除成功', 
+        user: { 
+          id: user.id, 
+          email: user.email, 
+          balance: user.balance,
+        } 
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 获取用户购买的IP列表（管理员功能）
+   */
+  async getUserIPs(userId: string) {
     const user = await this.userRepo.findOne({ where: { id: parseInt(userId) } });
     if (!user) {
       throw new Error('用户不存在');
     }
 
-    // 增加用户的赠送余额
-    user.gift_balance = (parseFloat(user.gift_balance as any) || 0) + amount;
+    // 查询静态住宅IP
+    const staticProxies = await this.staticProxyRepo.find({
+      where: { userId: parseInt(userId) },
+      order: { createdAt: 'DESC' },
+    });
+
+    // 查询动态住宅通道
+    const dynamicChannels = await this.dynamicChannelRepo.find({
+      where: { userId: parseInt(userId) },
+      order: { createdAt: 'DESC' },
+    });
+
+    // 查询最近5笔交易记录
+    const recentTransactions = await this.transactionRepo.find({
+      where: { userId: parseInt(userId) },
+      order: { createdAt: 'DESC' },
+      take: 5,
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        nickname: user.nickname,
+        balance: user.balance,
+      },
+      staticProxies: staticProxies.map(proxy => ({
+        id: proxy.id,
+        ip: proxy.ip,
+        port: proxy.port,
+        username: proxy.username,
+        password: proxy.password,
+        country: proxy.countryName,
+        city: proxy.cityName,
+        expireTimeUtc: proxy.expireTimeUtc,
+        channelName: proxy.channelName,
+        createdAt: proxy.createdAt,
+      })),
+      dynamicChannels: dynamicChannels.map(channel => ({
+        id: channel.id,
+        name: channel.channelName,
+        totalTraffic: channel.totalTraffic,
+        totalCost: channel.totalCost,
+        status: channel.status,
+        createdAt: channel.createdAt,
+      })),
+      recentTransactions: recentTransactions.map(tx => ({
+        id: tx.id,
+        type: tx.type,
+        amount: tx.amount,
+        balanceBefore: tx.balanceBefore,
+        balanceAfter: tx.balanceAfter,
+        transactionNo: tx.transactionNo,
+        remark: tx.remark,
+        createdAt: tx.createdAt,
+      })),
+    };
+  }
+
+  /**
+   * 创建新用户（管理员功能）
+   */
+  async createUser(email: string, password: string, role: string, initialBalance: number) {
+    // 检查邮箱是否已存在
+    const existingUser = await this.userRepo.findOne({ where: { email } });
+    if (existingUser) {
+      throw new BadRequestException('该邮箱已被注册');
+    }
+
+    // 验证密码长度
+    if (password.length < 8) {
+      throw new BadRequestException('密码至少8位');
+    }
+
+    // 哈希密码
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 创建用户
+    const user = this.userRepo.create({
+      email,
+      password: hashedPassword,
+      role: role || 'user',
+      balance: initialBalance || 0,
+      status: 'active',
+    });
+
     await this.userRepo.save(user);
 
     // 记录事件日志
     await this.eventLogService.createLog(
       user.id,
-      'gift_balance',
-      `管理员赠送余额 $${amount.toFixed(2)}${remark ? ` - ${remark}` : ''}`,
+      'user_created',
+      `管理员创建用户 ${email}，初始余额: $${initialBalance || 0}`,
     );
 
     return {
-      message: '赠送成功',
+      message: '用户创建成功',
       user: {
         id: user.id,
         email: user.email,
-        gift_balance: user.gift_balance,
+        role: user.role,
+        balance: user.balance,
+        status: user.status,
       },
     };
   }

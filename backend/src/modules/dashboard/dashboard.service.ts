@@ -112,7 +112,6 @@ export class DashboardService {
     try {
       return await this.trafficService.getTrafficByType(parseInt(userId), 7);
     } catch (error) {
-      console.error('[Dashboard] getTrafficByType error:', error.message);
       // 返回空数据避免前端报错
       return [];
     }
@@ -126,7 +125,6 @@ export class DashboardService {
     try {
       return await this.trafficService.getRequestDistribution(parseInt(userId), 7);
     } catch (error) {
-      console.error('[Dashboard] getRequestDistribution error:', error.message);
       // 返回空数据避免前端报错
       return [];
     }
@@ -140,7 +138,6 @@ export class DashboardService {
     try {
       return await this.trafficService.getTrafficTrend(parseInt(userId), 7);
     } catch (error) {
-      console.error('[Dashboard] getTrafficTrend error:', error.message);
       // 返回空数据避免前端报错
       return [];
     }

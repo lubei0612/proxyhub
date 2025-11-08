@@ -85,3 +85,46 @@ export function getRecentOrders(limit = 5) {
   });
 }
 
+/**
+ * 赠送余额（管理员）
+ */
+export function giftBalance(userId: string, amount: number, remark?: string) {
+  return request({
+    url: `/admin/users/${userId}/gift-balance`,
+    method: 'post',
+    data: { amount, remark },
+  });
+}
+
+/**
+ * 扣除余额（管理员）
+ */
+export function deductBalance(userId: string, amount: number, remark?: string) {
+  return request({
+    url: `/admin/users/${userId}/deduct-balance`,
+    method: 'post',
+    data: { amount, remark },
+  });
+}
+
+/**
+ * 获取用户购买的IP列表（管理员）
+ */
+export function getUserIPs(userId: string) {
+  return request({
+    url: `/admin/users/${userId}/ips`,
+    method: 'get',
+  });
+}
+
+/**
+ * 创建新用户（管理员）
+ */
+export function createUser(data: { email: string; password: string; role: string; initialBalance: number }) {
+  return request({
+    url: '/admin/users',
+    method: 'post',
+    data,
+  });
+}
+

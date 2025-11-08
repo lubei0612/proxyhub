@@ -171,7 +171,6 @@ import {
   CreditCard,
   Coin,
   Check,
-  InfoFilled,
   Service,
 } from '@element-plus/icons-vue';
 import { createRecharge } from '@/api/modules/billing';
@@ -204,11 +203,11 @@ const rules: FormRules = {
 
 const submitting = ref(false);
 
-// 联系客服
-const handleContactService = () => {
-  window.open('https://t.me/lubei12', '_blank');
-  ElMessage.info('正在跳转到Telegram客服...');
-};
+// 联系客服 (保留供未来使用)
+// const handleContactService = () => {
+//   window.open('https://t.me/lubei12', '_blank');
+//   ElMessage.info('正在跳转到Telegram客服...');
+// };
 
 // 提交充值申请
 const handleSubmit = async () => {
@@ -223,7 +222,6 @@ const handleSubmit = async () => {
     await createRecharge({
       amount: form.value.amount,
       method: form.value.paymentMethod,
-      remark: form.value.remark,
     });
 
     ElMessage.success('充值申请已提交，请等待管理员审核！');

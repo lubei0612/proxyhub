@@ -79,5 +79,17 @@ export class DynamicProxyController {
   ) {
     return this.usageService.getUsageStatistics(req.user.id, startDate, endDate);
   }
+
+  // 动态住宅IP提取
+  @Post('extract')
+  async extractProxy(@Request() req, @Body() dto: any) {
+    return this.channelService.extractProxy(req.user.id, dto);
+  }
+
+  // 获取城市列表
+  @Get('city-list')
+  async getCityList() {
+    return this.channelService.getCityList();
+  }
 }
 

@@ -55,10 +55,12 @@ declare module 'vue' {
     ElText: typeof import('element-plus/es')['ElText']
     ElTimeline: typeof import('element-plus/es')['ElTimeline']
     ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     FlagIcon: typeof import('./components/common/FlagIcon.vue')['default']
     LanguageSwitcher: typeof import('./components/LanguageSwitcher.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    UserIPModal: typeof import('./components/UserIPModal.vue')['default']
   }
   export interface ComponentCustomProperties {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

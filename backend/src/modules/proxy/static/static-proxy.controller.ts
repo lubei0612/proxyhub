@@ -85,8 +85,20 @@ export class StaticProxyController {
    * 获取库存信息（985Proxy实时库存）
    */
   @Get('inventory')
-  async getInventory(@Query('ipType') ipType: string = 'shared', @Query('duration') duration: number = 30) {
-    return this.staticProxyService.getInventory(ipType, duration);
+  async getInventory(
+    @Query('ipType') ipType: string = 'shared', 
+    @Query('duration') duration: number = 30,
+    @Query('businessScenario') businessScenario?: string
+  ) {
+    return this.staticProxyService.getInventory(ipType, duration, businessScenario);
+  }
+
+  /**
+   * 获取业务场景列表（985Proxy）
+   */
+  @Get('business-scenarios')
+  async getBusinessScenarios() {
+    return this.staticProxyService.getBusinessScenarios();
   }
 
   /**

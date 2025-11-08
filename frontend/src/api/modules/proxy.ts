@@ -47,12 +47,23 @@ export function updateProxyRemark(id: string, remark: string) {
  * 获取实时库存信息（985Proxy API）
  * @param ipType - 'shared' | 'premium'
  * @param duration - 时长（天）
+ * @param businessScenario - 业务场景（可选）
  */
-export function getInventory(ipType: 'shared' | 'premium' = 'shared', duration: number = 30) {
+export function getInventory(ipType: 'shared' | 'premium' = 'shared', duration: number = 30, businessScenario?: string) {
   return request({
     url: '/proxy/static/inventory',
     method: 'get',
-    params: { ipType, duration },
+    params: { ipType, duration, businessScenario },
+  });
+}
+
+/**
+ * 获取业务场景列表（985Proxy API）
+ */
+export function getBusinessScenarios() {
+  return request({
+    url: '/proxy/static/business-scenarios',
+    method: 'get',
   });
 }
 
@@ -136,6 +147,89 @@ export function releaseStaticProxy(id: number) {
   return request({
     url: `/proxy/static/${id}`,
     method: 'delete',
+  });
+}
+
+// ============== 动态住宅代理 API ==============
+
+/**
+ * 获取动态通道列表
+ */
+export function getDynamicChannels(params?: any) {
+  return request({
+    url: '/proxy/dynamic/channels',
+    method: 'get',
+    params,
+  });
+}
+
+/**
+ * 创建动态通道
+ */
+export function createDynamicChannel(data: any) {
+  return request({
+    url: '/proxy/dynamic/channels',
+    method: 'post',
+    data,
+  });
+}
+
+/**
+ * 更新动态通道
+ */
+export function updateDynamicChannel(id: number, data: any) {
+  return request({
+    url: `/proxy/dynamic/channels/${id}`,
+    method: 'put',
+    data,
+  });
+}
+
+/**
+ * 删除动态通道
+ */
+export function deleteDynamicChannel(id: number) {
+  return request({
+    url: `/proxy/dynamic/channels/${id}`,
+    method: 'delete',
+  });
+}
+
+/**
+ * 提取动态住宅IP
+ */
+export function extractDynamicProxy(data: {
+  channelId: number;
+  area?: string;
+  state?: string;
+  city?: string;
+  life?: number;
+  num?: number;
+}) {
+  return request({
+    url: '/proxy/dynamic/extract',
+    method: 'post',
+    data,
+  });
+}
+
+/**
+ * 获取城市列表（985Proxy API）
+ */
+export function getDynamicCityList() {
+  return request({
+    url: '/proxy/dynamic/city-list',
+    method: 'get',
+  });
+}
+
+/**
+ * 获取动态通道统计信息
+ */
+export function getDynamicStatistics() {
+  return request({
+    url: '/proxy/dynamic/statistics',
+    method: 'get',
   });
 }
 

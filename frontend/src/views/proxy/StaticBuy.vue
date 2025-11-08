@@ -254,15 +254,11 @@ import {
   Wallet,
   ChatDotRound,
   Money,
-  CreditCard,
-  Check,
-  Loading,
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
 import { 
   purchaseStaticProxy, 
   getInventory as get985Inventory,
-  calculateStaticProxyPrice 
 } from '@/api/modules/proxy';
 
 const router = useRouter();
@@ -314,7 +310,6 @@ const selectedContinent = ref('all');
 const businessScenario = ref('');
 const paymentMethod = ref('balance');
 const submitting = ref(false);
-const exchangeRate = ref(7.25);
 
 // 用户余额（从userStore获取）
 const userBalance = computed(() => parseFloat(userStore.user?.balance || '0'));
@@ -360,21 +355,19 @@ const loadAllPrices = async () => {
   priceError.value = null;
   
   try {
-    console.log('[985Proxy] Loading inventory for', ipType.value, 'IPs with duration:', duration.value, 'days');
-    
     // 调用985Proxy实时库存API
     const response = await get985Inventory(ipType.value, duration.value);
     
+    // ✅ 修复：Axios拦截器已返回response.data，所以直接访问response.countries
     if (response && response.countries && response.countries.length > 0) {
-      console.log('[985Proxy] Received', response.countries.length, 'countries from inventory API');
       
       // 清空现有数据
       Object.keys(countryData).forEach(continent => {
-        countryData[continent] = [];
+        (countryData as any)[continent] = [];
       });
       
       // 更新库存和价格数据
-      response.countries.forEach((countryItem: any) => {
+      (response.countries || []).forEach((countryItem: any) => {
         const countryCode = countryItem.countryCode;
         const price = countryItem.price || 5; // 985Proxy返回的单价
         const stock = countryItem.stock || 0;
@@ -391,8 +384,8 @@ const loadAllPrices = async () => {
             
             // 添加到对应大洲
             const continent = getContinent(countryCode);
-            if (continent && countryData[continent]) {
-              countryData[continent].push({
+            if (continent && countryData[continent as keyof typeof countryData]) {
+              (countryData[continent as keyof typeof countryData] as any[]).push({
                 code: countryCode,
                 name: countryItem.countryName || countryCode,
                 city: cityName,
@@ -407,8 +400,8 @@ const loadAllPrices = async () => {
           priceCache.value.set(key, price);
           
           const continent = getContinent(countryCode);
-          if (continent && countryData[continent]) {
-            countryData[continent].push({
+          if (continent && countryData[continent as keyof typeof countryData]) {
+            (countryData[continent as keyof typeof countryData] as any[]).push({
               code: countryCode,
               name: countryItem.countryName || countryCode,
               city: 'All Cities',
@@ -418,10 +411,7 @@ const loadAllPrices = async () => {
           }
         }
       });
-      
-      console.log('[985Proxy] Successfully loaded real-time inventory and prices');
     } else {
-      console.warn('[985Proxy] No inventory data returned from API');
       ElMessage.warning('未获取到库存数据，请稍后重试');
     }
     
@@ -494,13 +484,6 @@ const getFlagUrl = (code: string) => {
 // 更新选择（quantity变化时触发）
 const updateSelection = (value: number, oldValue: number) => {
   // 由于使用了 reactive，Vue 会自动追踪变化
-  // 这里可以添加额外的逻辑，如日志记录
-  console.log('数量变化:', {
-    新值: value,
-    旧值: oldValue,
-    已选IP总数: totalSelectedCount.value,
-    总价: totalPrice.value.toFixed(2)
-  });
 };
 
 // 提交订单
@@ -538,7 +521,7 @@ const handleSubmit = async () => {
 
     // 购买成功
     ElMessage.success({
-      message: `🎉 购买成功！已分配 ${response.order.totalQuantity} 个IP，订单号：${response.order.orderNo}`,
+      message: `🎉 购买成功！已分配 ${response.data?.order?.totalQuantity || 0} 个IP，订单号：${response.data?.order?.orderNo || 'N/A'}`,
       duration: 5000,
       showClose: true,
     });

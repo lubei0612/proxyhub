@@ -99,14 +99,41 @@ export class AdminController {
   }
 
   /**
-   * 赠送余额给用户
+   * 添加余额给用户（管理员功能）
    */
-  @Post('users/:id/gift-balance')
-  async giftBalance(
+  @Post('users/:id/add-balance')
+  async addBalance(
     @Param('id') userId: string,
     @Body() data: { amount: number; remark?: string },
   ) {
-    return this.adminService.giftBalance(userId, data.amount, data.remark);
+    return this.adminService.addBalance(userId, data.amount, data.remark);
+  }
+
+  /**
+   * 扣除用户余额
+   */
+  @Post('users/:id/deduct-balance')
+  async deductBalance(
+    @Param('id') userId: string,
+    @Body() data: { amount: number; remark?: string },
+  ) {
+    return this.adminService.deductBalance(userId, data.amount, data.remark);
+  }
+
+  /**
+   * 获取用户购买的IP列表（用于管理员查看）
+   */
+  @Get('users/:id/ips')
+  async getUserIPs(@Param('id') userId: string) {
+    return this.adminService.getUserIPs(userId);
+  }
+
+  /**
+   * 创建新用户（管理员功能）
+   */
+  @Post('users')
+  async createUser(@Body() data: { email: string; password: string; role: string; initialBalance: number }) {
+    return this.adminService.createUser(data.email, data.password, data.role, data.initialBalance);
   }
 }
 

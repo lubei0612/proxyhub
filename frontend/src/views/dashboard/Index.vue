@@ -334,7 +334,6 @@ const loadOverview = async () => {
     const res = await getDashboardOverview();
     // Axios interceptor已经unwrap了data，直接使用res
     overview.value = res || {};
-    console.log('[Dashboard] 概览数据加载成功:', res);
   } catch (error) {
     console.error('[Dashboard] 加载概览数据失败:', error);
   }
@@ -345,17 +344,14 @@ const loadTrafficData = async () => {
     // 加载条形图数据
     const barData = await getTrafficByType();
     trafficByType.value = barData || { categories: [], data: [] };
-    console.log('[Dashboard] 流量统计数据加载成功:', barData);
 
     // 加载饼图数据
     const pieData = await getRequestDistribution();
     requestDistribution.value = pieData || [];
-    console.log('[Dashboard] 请求分布数据加载成功:', pieData);
 
     // 加载折线图数据
     const lineData = await getTrafficTrend();
     trafficTrend.value = lineData || { dates: [], series: [] };
-    console.log('[Dashboard] 流量趋势数据加载成功:', lineData);
   } catch (error) {
     console.error('[Dashboard] 加载流量数据失败:', error);
   }

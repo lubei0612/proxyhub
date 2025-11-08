@@ -109,7 +109,6 @@ export class OrderService {
 
       return savedOrder;
     } catch (error) {
-      console.error('[OrderService] 取消订单失败:', error);
       throw error;
     }
   }

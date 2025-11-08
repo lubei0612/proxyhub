@@ -55,33 +55,16 @@
             </div>
           </template>
 
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <div class="balance-item">
-                <div class="balance-icon" style="background-color: #409eff">
-                  <el-icon :size="40"><Money /></el-icon>
-                </div>
-                <div class="balance-info">
-                  <div class="balance-label">账户余额</div>
-                  <div class="balance-value">${{ Number(userInfo.balance || 0).toFixed(2) }}</div>
-                  <div class="balance-note">可用于购买代理IP</div>
-                </div>
-              </div>
-            </el-col>
-
-            <el-col :span="12">
-              <div class="balance-item">
-                <div class="balance-icon" style="background-color: #67c23a">
-                  <el-icon :size="40"><Present /></el-icon>
-                </div>
-                <div class="balance-info">
-                  <div class="balance-label">赠送余额</div>
-                  <div class="balance-value">${{ Number(userInfo.giftBalance || 0).toFixed(2) }}</div>
-                  <div class="balance-note">活动赠送，不可提现</div>
-                </div>
-              </div>
-            </el-col>
-          </el-row>
+          <div class="balance-item">
+            <div class="balance-icon" style="background-color: #409eff">
+              <el-icon :size="40"><Money /></el-icon>
+            </div>
+            <div class="balance-info">
+              <div class="balance-label">账户余额</div>
+              <div class="balance-value">${{ Number(userInfo.balance || 0).toFixed(2) }}</div>
+              <div class="balance-note">可用于购买代理IP</div>
+            </div>
+          </div>
         </el-card>
 
         <!-- 安全设置 -->
@@ -163,24 +146,19 @@
           <div class="service-content">
             <p class="service-title">需要帮助？联系我们的客服团队</p>
             
-            <div class="service-item">
-              <div class="service-info">
-                <el-icon :size="20" color="#0088cc"><ChatDotRound /></el-icon>
-                <span>Telegram 客服 1</span>
+            <div v-if="telegramLinks.length > 0">
+              <div class="service-item" v-for="(link, index) in telegramLinks" :key="index">
+                <div class="service-info">
+                  <el-icon :size="20" color="#0088cc"><ChatDotRound /></el-icon>
+                  <span>{{ link.label }}</span>
+                </div>
+                <el-button type="primary" size="small" @click="openTelegram(link.username)">
+                  联系
+                </el-button>
               </div>
-              <el-button type="primary" size="small" @click="openTelegram('lubei12')">
-                联系
-              </el-button>
             </div>
-
-            <div class="service-item">
-              <div class="service-info">
-                <el-icon :size="20" color="#0088cc"><ChatDotRound /></el-icon>
-                <span>Telegram 客服 2</span>
-              </div>
-              <el-button type="primary" size="small" @click="openTelegram('lubei12')">
-                联系
-              </el-button>
+            <div v-else>
+              <el-empty description="暂无客服信息" :image-size="100" />
             </div>
 
             <el-alert type="info" :closable="false" class="service-note">
@@ -245,6 +223,7 @@ import {
   ChatDotRound,
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
+import { getTelegramLinks } from '@/api/modules/settings';
 import dayjs from 'dayjs';
 
 const userStore = useUserStore();
@@ -259,6 +238,8 @@ const userInfo = ref<any>({
   giftBalance: 50,
   createdAt: '2025-01-01 10:00:00',
 });
+
+const telegramLinks = ref<any[]>([]);
 
 const editDialogVisible = ref(false);
 const editForm = ref({
@@ -337,10 +318,21 @@ const handleChangePassword = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   if (userStore.user) {
     userInfo.value = { ...userInfo.value, ...userStore.user };
     editForm.value.nickname = userInfo.value.nickname;
+  }
+
+  // 加载Telegram客服链接
+  try {
+    const response = await getTelegramLinks();
+    // API request拦截器已返回response.data，所以response本身就是数组
+    if (Array.isArray(response)) {
+      telegramLinks.value = response;
+    }
+  } catch (error) {
+    console.error('加载客服链接失败:', error);
   }
 });
 </script>

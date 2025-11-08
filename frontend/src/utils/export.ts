@@ -21,10 +21,13 @@ export interface StaticProxyExportData {
 
 /**
  * Format proxy data as TXT (one credential per line)
- * Format: IP:Port:Account:Password
+ * Format: First line is Chinese header, then IP:Port:Account:Password per line
  */
 function formatAsTXT(data: StaticProxyExportData[]): string {
-  return data
+  // Add Chinese header as first line
+  const header = 'IP:端口:账户:密码';
+  
+  const credentials = data
     .map((proxy) => {
       // Use credentials field if available (from backend), otherwise construct it
       if (proxy.credentials) {
@@ -33,6 +36,8 @@ function formatAsTXT(data: StaticProxyExportData[]): string {
       return `${proxy.ip}:${proxy.port}:${proxy.username}:${proxy.password}`;
     })
     .join('\n');
+  
+  return `${header}\n${credentials}`;
 }
 
 /**

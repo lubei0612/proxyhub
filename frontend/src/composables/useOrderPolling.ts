@@ -38,20 +38,15 @@ export function useOrderPolling() {
 
     // 防止重复轮询
     if (isPolling.value) {
-      console.warn('[OrderPolling] Already polling');
       return;
     }
 
     isPolling.value = true;
     retryCount.value = 0;
 
-    console.log(`[OrderPolling] Start polling order: ${orderNo}`);
-
     const checkStatus = async () => {
       try {
         retryCount.value++;
-
-        console.log(`[OrderPolling] Attempt ${retryCount.value}/${maxRetries}`);
 
         // 调用后端API查询订单状态
         const response = await request.get(
@@ -60,15 +55,12 @@ export function useOrderPolling() {
 
         const { status, data } = response;
 
-        console.log(`[OrderPolling] Order status: ${status}`, data);
-
         // 更新当前状态
         currentStatus.value = status;
         onStatusChange?.(status);
 
         // 处理不同状态
         if (status === 'completed') {
-          console.log('[OrderPolling] ✅ Order completed!');
           stopPolling();
           ElMessage.success('订单处理完成！');
           onCompleted?.(data);
@@ -76,7 +68,6 @@ export function useOrderPolling() {
         }
 
         if (status === 'failed') {
-          console.error('[OrderPolling] ❌ Order failed');
           stopPolling();
           ElMessage.error('订单处理失败');
           onError?.(new Error('Order failed'));
@@ -85,7 +76,6 @@ export function useOrderPolling() {
 
         // 检查是否达到最大重试次数
         if (retryCount.value >= maxRetries) {
-          console.warn('[OrderPolling] ⚠️ Max retries reached');
           stopPolling();
           ElMessage.warning(
             '订单处理超时，请稍后手动刷新或查看订单详情'

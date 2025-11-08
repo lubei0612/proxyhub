@@ -117,8 +117,8 @@ export class StaticProxyService {
    * 获取库存信息
    * Get real-time inventory from 985Proxy with price overrides
    */
-  async getInventory(ipType: string, duration: number) {
-    this.logger.log(`[Get Inventory] IP Type: ${ipType}, Duration: ${duration}`);
+  async getInventory(ipType: string, duration: number, businessScenario?: string) {
+    this.logger.log(`[Get Inventory] IP Type: ${ipType}, Duration: ${duration}, Business: ${businessScenario || 'all'}`);
 
     try {
       // 支持前端传递 'native' 或 'premium' 两种格式
@@ -126,7 +126,10 @@ export class StaticProxyService {
       
       // 并行获取库存和价格覆盖
       const [response, priceOverrides] = await Promise.all([
-        this.proxy985Service.getInventory({ static_proxy_type }),
+        this.proxy985Service.getInventory({ 
+          static_proxy_type,
+          purpose_web: businessScenario // 传递业务场景用于筛选
+        }),
         this.pricingService.getPriceOverridesForInventory(
           static_proxy_type === 'premium' ? 'static-residential-native' : 'static-residential'
         ),
@@ -277,8 +280,11 @@ export class StaticProxyService {
       }
 
       const userBalance = parseFloat(user.balance as any) || 0;
+
       if (userBalance < totalPrice) {
-        throw new BadRequestException(`余额不足。当前余额: $${userBalance.toFixed(2)}, 需要: $${totalPrice.toFixed(2)}`);
+        throw new BadRequestException(
+          `余额不足。当前余额: $${userBalance.toFixed(2)}, 需要: $${totalPrice.toFixed(2)}`
+        );
       }
 
       // Step 2: 调用985Proxy API购买真实IP
@@ -329,33 +335,66 @@ export class StaticProxyService {
         
         this.logger.log(`✅ [Purchase] 985Proxy订单创建成功，订单号: ${orderNo985}`);
         
-        // 步骤2.2: 查询订单结果获取IP详情
+        // 步骤2.2: 查询订单结果获取IP详情（支持异步订单，带重试机制）
         this.logger.log(`[Purchase] 正在查询订单结果以获取IP详情...`);
         
         let orderResult;
-        try {
-          orderResult = await this.proxy985Service.getOrderResult(orderNo985);
-        } catch (error) {
-          this.logger.error(`❌ [Purchase] 查询订单结果失败: ${error.message}`);
-          throw new BadRequestException(`购买成功但无法获取IP详情，请联系客服。订单号: ${orderNo985}`);
-        }
-        
-        // 步骤2.3: 解析IP列表
-        // 985Proxy API可能返回多种格式，需要兼容处理
         let ipList = [];
+        const maxRetries = 10; // 最多重试10次
+        const retryDelay = 2000; // 每次等待2秒
         
-        if (orderResult && orderResult.data) {
-          // 尝试多种可能的数据结构
-          ipList = orderResult.data.info?.result || 
-                   orderResult.data.result || 
-                   orderResult.data.list || 
-                   orderResult.data.ips || 
-                   [];
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            this.logger.log(`[Purchase] 尝试 ${attempt}/${maxRetries} 查询订单结果...`);
+            orderResult = await this.proxy985Service.getOrderResult(orderNo985);
+            
+            // 检查订单状态
+            if (orderResult && orderResult.data) {
+              const status = orderResult.data.status;
+              
+              if (status === 'success' || status === 'complete' || status === 'completed') {
+                // 订单成功，解析IP列表
+                ipList = orderResult.data.info?.result || 
+                         orderResult.data.result || 
+                         orderResult.data.list || 
+                         orderResult.data.ips || 
+                         [];
+                
+                if (Array.isArray(ipList) && ipList.length > 0) {
+                  this.logger.log(`✅ [Purchase] 订单处理完成，获取到 ${ipList.length} 个IP`);
+                  break; // 成功获取IP，退出循环
+                }
+              } else if (status === 'progress' || status === 'pending') {
+                // 订单还在处理中
+                this.logger.log(`⏳ [Purchase] 订单还在处理中 (${status})，等待${retryDelay/1000}秒后重试...`);
+                
+                if (attempt < maxRetries) {
+                  await new Promise(resolve => setTimeout(resolve, retryDelay));
+                  continue; // 继续下一次重试
+                } else {
+                  // 已达到最大重试次数
+                  this.logger.warn(`⚠️ [Purchase] 已达到最大重试次数，订单可能需要更长时间处理`);
+                }
+              } else if (status === 'failed') {
+                // 订单失败
+                this.logger.error(`❌ [Purchase] 订单处理失败: ${JSON.stringify(orderResult)}`);
+                throw new BadRequestException(`985Proxy订单处理失败。订单号: ${orderNo985}`);
+              }
+            }
+          } catch (error) {
+            this.logger.error(`❌ [Purchase] 查询订单结果异常 (尝试 ${attempt}/${maxRetries}): ${error.message}`);
+            if (attempt === maxRetries) {
+              throw new BadRequestException(`购买成功但无法获取IP详情，请联系客服。订单号: ${orderNo985}`);
+            }
+            // 等待后继续重试
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
         }
         
+        // 步骤2.3: 验证IP列表
         if (!Array.isArray(ipList) || ipList.length === 0) {
-          this.logger.error(`[Purchase] 订单结果未返回IP列表。响应: ${JSON.stringify(orderResult)}`);
-          throw new BadRequestException(`购买成功但未分配IP，请联系客服。订单号: ${orderNo985}`);
+          this.logger.error(`[Purchase] 订单结果未返回IP列表。最终响应: ${JSON.stringify(orderResult)}`);
+          throw new BadRequestException(`购买成功但未分配IP，订单可能需要更长时间处理。请稍后在"我的IP"中查看或联系客服。订单号: ${orderNo985}`);
         }
         
         this.logger.log(`✅ [Purchase] 成功获取 ${ipList.length} 个IP详情`);
@@ -371,7 +410,7 @@ export class StaticProxyService {
             password: apiIP.password || apiIP.pass || '',
             country: apiIP.country_code || apiIP.country,
             countryCode: apiIP.country_code || apiIP.country,
-            countryName: apiIP.country_name || apiIP.country,
+            countryName: apiIP.country_name || apiIP.country || apiIP.country_code || 'Unknown',
             cityName: apiIP.city_name || apiIP.city || '',
             ipType: dto.ipType,
             expireTimeUtc: apiIP.expire_time 
@@ -379,7 +418,7 @@ export class StaticProxyService {
               : new Date(Date.now() + dto.duration * 24 * 60 * 60 * 1000),
             status: ProxyStatus.ACTIVE,
             auto_renew: false,
-            remark: `985ProxyID: ${apiIP.id || 'N/A'}, OrderNo: ${orderNo985}`,
+            remark: '', // 备注为空，由客户自己填写
           });
 
           const savedIP = await queryRunner.manager.save(StaticProxy, proxyEntity);
@@ -413,7 +452,9 @@ export class StaticProxyService {
       const savedOrder = await queryRunner.manager.save(Order, order);
 
       // Step 4: Deduct user balance
-      user.balance = (userBalance - totalPrice).toFixed(2) as any;
+      const balanceBefore = userBalance;
+      const balanceAfter = userBalance - totalPrice;
+      user.balance = balanceAfter.toFixed(2) as any;
       await queryRunner.manager.save(User, user);
 
       // Step 5: Create billing transaction record
@@ -422,8 +463,8 @@ export class StaticProxyService {
         transactionNo: `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         type: TransactionType.PURCHASE,
         amount: totalPrice,
-        balanceBefore: userBalance,
-        balanceAfter: userBalance - totalPrice,
+        balanceBefore: balanceBefore,
+        balanceAfter: balanceAfter,
         remark: `购买静态住宅代理IP - ${dto.channelName} (${totalQuantity} 个IP, ${dto.duration} 天)`,
       });
       await queryRunner.manager.save(Transaction, transaction);
@@ -625,7 +666,7 @@ export class StaticProxyService {
 
       const renewalCost = parseFloat(priceResponse.data.pay_price || '0');
 
-      // 4. 验证用户余额
+      // 4. 验证用户余额（支持赠送余额）
       const user = await queryRunner.manager.findOne(User, { 
         where: { id: parseInt(userId) } 
       });
@@ -634,8 +675,12 @@ export class StaticProxyService {
         throw new NotFoundException('用户不存在');
       }
 
-      if (user.balance < renewalCost) {
-        throw new BadRequestException(`余额不足，需要 $${renewalCost}，当前余额 $${user.balance}`);
+      const renewBalance = parseFloat(user.balance as any) || 0;
+
+      if (renewBalance < renewalCost) {
+        throw new BadRequestException(
+          `余额不足。当前余额: $${renewBalance.toFixed(2)}, 需要: $${renewalCost.toFixed(2)}`
+        );
       }
 
       // 5. 准备IP格式（尝试多种格式）
@@ -696,7 +741,9 @@ export class StaticProxyService {
       const orderNo = renewResponse.data?.order_no;
 
       // 6. 扣除余额
-      user.balance -= renewalCost;
+      const balanceBefore = renewBalance;
+      const balanceAfter = renewBalance - renewalCost;
+      user.balance = balanceAfter.toFixed(2) as any;
       await queryRunner.manager.save(user);
 
       // 7. 创建交易记录
@@ -704,8 +751,8 @@ export class StaticProxyService {
         userId: parseInt(userId),
         type: TransactionType.RENEWAL,
         amount: renewalCost,
-        balanceBefore: user.balance + renewalCost,
-        balanceAfter: user.balance,
+        balanceBefore: balanceBefore,
+        balanceAfter: balanceAfter,
         transactionNo: orderNo || `RNW-${Date.now()}-${userId}`,
         remark: `续费静态代理IP: ${ip} (${duration}天)`,
       });
@@ -953,6 +1000,31 @@ export class StaticProxyService {
       throw error;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  /**
+   * 获取业务场景列表（从985Proxy API）
+   * Get business scenarios list from 985Proxy
+   */
+  async getBusinessScenarios() {
+    this.logger.log('[Get Business Scenarios] Loading from 985Proxy API');
+
+    try {
+      const response = await this.proxy985Service.getBusinessList();
+      
+      if (response.code !== 0) {
+        throw new BadRequestException(`获取业务场景失败: ${response.msg}`);
+      }
+
+      this.logger.log(`[Get Business Scenarios] Loaded ${response.data?.length || 0} scenarios`);
+      
+      return {
+        scenarios: response.data || []
+      };
+    } catch (error) {
+      this.logger.error(`[Get Business Scenarios] Failed: ${error.message}`);
+      throw new BadRequestException(`获取业务场景失败: ${error.message}`);
     }
   }
 }

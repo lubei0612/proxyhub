@@ -164,6 +164,11 @@ const routes: RouteRecordRaw[] = [
           group: 'billing',
         },
       },
+      // 路由别名：支持复数形式访问
+      {
+        path: 'billing/settlements',
+        redirect: '/billing/settlement',
+      },
       {
         path: 'billing/recharge-orders',
         name: 'RechargeOrders',
@@ -358,42 +363,26 @@ router.beforeEach(async (to, from, next) => {
     localStorage.removeItem('token');
   }
 
-  console.log('===================================');
-  console.log('[Router Guard] Navigation Check');
-  console.log('[Router Guard] From:', from.path || '(初始)');
-  console.log('[Router Guard] To:', to.path);
-  console.log('[Router Guard] Token exists:', !!token);
-  console.log('[Router Guard] User:', user ? `${user.email} (role: ${user.role})` : 'null');
-  console.log('[Router Guard] Route Meta:', {
-    public: to.meta.public,
-    requiresAuth: to.meta.requiresAuth,
-    requiresAdmin: to.meta.requiresAdmin
-  });
+  // Navigation guard check
 
   // 公开路由直接通过
   if (to.meta.public) {
-    console.log('[Router Guard] ✅ Public route');
     // 如果已登录访问登录页，跳转到首页
     if (token && user) {
-      console.log('[Router Guard] ℹ️ Already logged in, redirecting...');
       // 根据用户角色跳转
       if (user.role === 'admin') {
-        console.log('[Router Guard] → Admin Dashboard');
         next({ name: 'AdminDashboard' });
       } else {
-        console.log('[Router Guard] → User Dashboard');
         next({ name: 'Dashboard' });
       }
       return;
     }
-    console.log('[Router Guard] ✅ Allowing access');
     next();
     return;
   }
 
   // 检查是否登录
   if (!token || !user) {
-    console.warn('[Router Guard] ⚠️ Not authenticated, redirecting to login');
     next({ 
       name: 'Login', 
       query: { redirect: to.fullPath } 
@@ -403,14 +392,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 检查管理员权限
   if (to.meta.requiresAdmin) {
-    console.log('[Router Guard] 🔐 Checking admin access...');
-    console.log('[Router Guard] User role:', user.role);
-    console.log('[Router Guard] Required role: admin');
-    
     if (user.role !== 'admin') {
-      console.error('[Router Guard] ❌ ACCESS DENIED: User is not admin');
-      console.log('[Router Guard] → Redirecting to User Dashboard');
-      
       // 动态导入ElMessage以避免循环依赖
       import('element-plus').then(({ ElMessage }) => {
         ElMessage.error('需要管理员权限才能访问此页面');
@@ -419,12 +401,8 @@ router.beforeEach(async (to, from, next) => {
       next({ name: 'Dashboard' });
       return;
     }
-    
-    console.log('[Router Guard] ✅ Admin access granted');
   }
 
-  console.log('[Router Guard] ✅ Navigation allowed');
-  console.log('===================================');
   next();
 });
 

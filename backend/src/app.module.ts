@@ -17,6 +17,7 @@ import { EventLogModule } from './modules/event-log/event-log.module';
 import { DynamicProxyModule } from './modules/proxy/dynamic/dynamic-proxy.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { TrafficModule } from './modules/traffic/traffic.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { TrafficModule } from './modules/traffic/traffic.module';
     DynamicProxyModule,
     NotificationModule,
     TrafficModule,
+    SettingsModule,
   ],
   controllers: [],
   providers: [

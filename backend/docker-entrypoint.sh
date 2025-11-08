@@ -26,7 +26,7 @@ max_retries=30
 retry_count=0
 
 while [ $retry_count -lt $max_retries ]; do
-  if wget --spider -q "http://${DATABASE_HOST}:${DATABASE_PORT}" 2>/dev/null || nc -z "${DATABASE_HOST}" "${DATABASE_PORT}" 2>/dev/null; then
+  if nc -z "${DATABASE_HOST}" "${DATABASE_PORT}" 2>/dev/null; then
     echo "✅ 数据库已就绪"
     break
   fi

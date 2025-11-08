@@ -159,17 +159,9 @@ async function initDatabase() {
     console.log('🎉 数据库初始化完成！');
     console.log('==========================================\n');
     
-    if (adminCreated || usersCreated > 0) {
+    if (adminCreated) {
       console.log('📋 登录凭证：\n');
-      if (adminCreated) {
-        console.log('管理员: admin@example.com / admin123 ($10,000)');
-      }
-      if (usersCreated > 0) {
-        console.log('测试用户:');
-        console.log('  • user@example.com / password123 ($1,000)');
-        console.log('  • alice@test.com / password123 ($500)');
-        console.log('  • bob@test.com / password123 ($500)');
-      }
+      console.log('管理员: admin@example.com / admin123 ($10,000)');
       console.log('\n==========================================\n');
     }
 

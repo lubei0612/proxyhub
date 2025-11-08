@@ -200,12 +200,12 @@ import {
   Refresh,
 } from '@element-plus/icons-vue';
 
-// 套餐信息
+// 套餐信息 - ✅ 移除硬编码，改为空状态
 const packageInfo = ref({
-  name: '个人套餐',
-  remaining: 50.5,
-  status: '运行中',
-  pricePerGb: 4.5,
+  name: '',
+  remaining: 0,
+  status: '',
+  pricePerGb: 0,
 });
 
 // 使用统计
@@ -217,41 +217,44 @@ const pagination = ref({
   total: 0,
 });
 
-// 联系客服（跳转Telegram）
-const handleContactService = () => {
-  window.open('https://t.me/lubei12', '_blank');
-  ElMessage.info('正在跳转到Telegram客服...');
-};
-
-// 切换状态
-const handleToggleStatus = async () => {
+// 联系客服（跳转Telegram）- ✅ 改为从API获取
+const handleContactService = async () => {
   try {
-    const newStatus = packageInfo.value.status === '运行中' ? '已暂停' : '运行中';
-    packageInfo.value.status = newStatus;
-    ElMessage.success(`已${newStatus === '运行中' ? '恢复' : '暂停'}使用`);
-  } catch (error: any) {
-    ElMessage.error('操作失败：' + error.message);
+    const response = await fetch('/api/v1/settings/telegram');
+    const links = await response.json();
+    if (links && links.length > 0) {
+      window.open(`https://t.me/${links[0].username}`, '_blank');
+      ElMessage.info('正在跳转到Telegram客服...');
+    } else {
+      ElMessage.warning('客服链接未配置，请联系管理员');
+    }
+  } catch (error) {
+    ElMessage.error('获取客服信息失败');
   }
 };
 
-// 加载使用数据
+// 切换状态 - ✅ 禁用（需要真实API）
+const handleToggleStatus = async () => {
+  ElMessage.warning('此功能需要联系客服开通动态住宅套餐后才能使用');
+};
+
+// 加载使用数据 - ✅ 移除Mock数据，显示空状态
 const loadUsageData = async () => {
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Mock数据 - 模拟985Proxy的数据格式
-    const mockData = Array.from({ length: 10 }, (_, i) => ({
-      date: `2025-11-${String(i + 1).padStart(2, '0')}`,
-      requests: Math.floor(Math.random() * 6000) + 5000,
-      successRate: Math.floor(Math.random() * 5) + 95,
-      traffic: parseFloat((Math.random() * 4 + 1).toFixed(2)),
-      cost: parseFloat((Math.random() * 18 + 5).toFixed(2)),
-      note: i % 3 === 0 ? '高峰期' : '',
-    }));
-
-    usageData.value = mockData;
-    pagination.value.total = mockData.length;
+    // TODO: 集成真实的985Proxy使用统计API
+    // const response = await getDynamicUsageStats();
+    // usageData.value = response.data;
+    // pagination.value.total = response.total;
+    
+    // ✅ 暂时显示空数据（等待API集成）
+    usageData.value = [];
+    pagination.value.total = 0;
+    
+    // 如果没有数据，提示用户
+    if (usageData.value.length === 0) {
+      ElMessage.info('暂无动态住宅套餐，请联系客服开通');
+    }
   } catch (error: any) {
     ElMessage.error('加载失败：' + error.message);
   } finally {

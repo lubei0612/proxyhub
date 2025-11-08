@@ -298,8 +298,6 @@ const loadData = async () => {
     }));
     
     pagination.value.total = response.total || 0;
-    
-    console.log('[AdminOrders] 加载订单成功:', orderList.value);
   } catch (error: any) {
     console.error('[AdminOrders] 加载失败:', error);
     ElMessage.error('加载失败：' + error.message);
@@ -349,7 +347,6 @@ const cancelOrder = async (order: any) => {
 
 const handleSelectionChange = (selection: any[]) => {
   selectedOrders.value = selection;
-  console.log('[Orders] 选中订单:', selectedOrders.value.length);
 };
 
 const exportOrders = () => {

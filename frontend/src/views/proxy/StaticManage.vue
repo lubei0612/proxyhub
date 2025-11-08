@@ -312,7 +312,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
   Download,
@@ -331,7 +331,6 @@ import {
   getMyIPs, 
   renewIPVia985, 
   releaseStaticProxy,
-  getStaticProxyList // 保留旧API作为fallback
 } from '@/api/modules/proxy';
 import { useUserStore } from '@/stores/user';
 import PurchaseDialog from './PurchaseDialog.vue';
@@ -482,8 +481,6 @@ const getReleaseTime = (expireTime: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    console.log('[My IPs] Loading page', pagination.value.page);
-    
     // 调用985Proxy集成的my-ips API
     const response = await getMyIPs(pagination.value.page, pagination.value.pageSize);
     
@@ -499,8 +496,7 @@ const loadData = async () => {
         daysRemainingDisplay: ip.daysRemaining !== undefined ? `${ip.daysRemaining} 天` : 'N/A',
       }));
       
-      pagination.value.total = response.total || 0;
-      console.log('[My IPs] Loaded', proxyList.value.length, 'IPs');
+      pagination.value.total = response.data?.total || 0;
     } else {
       proxyList.value = [];
       pagination.value.total = 0;
@@ -649,8 +645,6 @@ const confirmRenew = async () => {
   }
 
   try {
-    console.log('[Renew] Renewing', renewingProxies.value.length, 'IP(s) for', renewDuration.value, 'days');
-    
     // 显示确认对话框
     await ElMessageBox.confirm(
       `确认续费 ${renewingProxies.value.length} 个IP，续费${renewDuration.value}天？\n预估费用：$${renewPrice.value.toFixed(2)}`,
@@ -664,7 +658,6 @@ const confirmRenew = async () => {
 
     // 调用985Proxy续费API
     for (const proxy of renewingProxies.value) {
-      console.log('[Renew] Renewing IP', proxy.ip);
       await renewIPVia985(proxy.ip, renewDuration.value);
     }
 
@@ -718,7 +711,7 @@ const handleRelease = async (proxy: any) => {
 };
 
 // 备注变更
-const handleRemarkChange = async (proxy: any) => {
+const handleRemarkChange = async (_proxy: any) => {
   try {
     // TODO: 调用API更新备注
     await new Promise((resolve) => setTimeout(resolve, 300));

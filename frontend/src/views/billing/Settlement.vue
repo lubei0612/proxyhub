@@ -241,60 +241,13 @@ const formatPeriod = (startDate: string, endDate: string) => {
 const loadData = async () => {
   loading.value = true;
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // 完整的Mock数据（包含所有数据用于筛选）
-    const allMockData = [
-      {
-        id: 1,
-        settlementId: 'STL202511',
-        startDate: '2025-11-01',
-        endDate: '2025-11-30',
-        amount: 1250.5,
-        orderCount: 15,
-        status: 'processing',
-        createdAt: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        completedAt: null,
-        orders: [
-          {
-            orderNo: 'ORD20251102001',
-            type: '静态IP购买',
-            amount: 25,
-            createdAt: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-          },
-          {
-            orderNo: 'ORD20251101001',
-            type: '续费',
-            amount: 15,
-            createdAt: dayjs().subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss'),
-          },
-        ],
-      },
-      {
-        id: 2,
-        settlementId: 'STL202510',
-        startDate: '2025-10-01',
-        endDate: '2025-10-31',
-        amount: 2580.0,
-        orderCount: 28,
-        status: 'completed',
-        createdAt: dayjs().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
-        completedAt: dayjs().subtract(25, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        orders: [],
-      },
-      {
-        id: 3,
-        settlementId: 'STL202509',
-        startDate: '2025-09-01',
-        endDate: '2025-09-30',
-        amount: 1890.75,
-        orderCount: 22,
-        status: 'completed',
-        createdAt: dayjs().subtract(2, 'month').format('YYYY-MM-DD HH:mm:ss'),
-        completedAt: dayjs().subtract(55, 'day').format('YYYY-MM-DD HH:mm:ss'),
-        orders: [],
-      },
-    ];
+    // TODO: 集成真实的结算记录API
+    // const response = await getSettlementRecords(pagination.value.page, pagination.value.pageSize, filters.value);
+    // settlementList.value = response.data;
+    // pagination.value.total = response.total;
+    
+    // ✅ 暂时显示空数据（等待API集成）
+    const allMockData = [];
 
     // 应用筛选条件（前端筛选Mock数据）
     let filteredData = [...allMockData];

@@ -5,6 +5,7 @@ import { Order } from '../order/entities/order.entity';
 import { Recharge } from '../billing/entities/recharge.entity';
 import { Transaction } from '../billing/entities/transaction.entity';
 import { StaticProxy } from '../proxy/static/entities/static-proxy.entity';
+import { DynamicChannel } from '../proxy/dynamic/entities/dynamic-channel.entity';
 import { SystemSettings } from './entities/system-settings.entity';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
@@ -19,6 +20,7 @@ import { EventLogModule } from '../event-log/event-log.module';
       Recharge,
       Transaction,
       StaticProxy,
+      DynamicChannel,
       SystemSettings,
     ]),
     forwardRef(() => EventLogModule),

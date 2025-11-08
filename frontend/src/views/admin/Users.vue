@@ -82,12 +82,6 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="赠送余额" width="120">
-          <template #default="{ row }">
-            <el-text type="info">${{ parseFloat(row.gift_balance || 0).toFixed(2) }}</el-text>
-          </template>
-        </el-table-column>
-
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
@@ -119,13 +113,6 @@
               @click="handleRemoveAdmin(row)"
             >
               取消管理员
-            </el-button>
-            <el-button
-              type="success"
-              size="small"
-              @click="handleGiftBalance(row)"
-            >
-              赠送余额
             </el-button>
             <el-button
               type="warning"
@@ -165,6 +152,50 @@
         />
       </div>
     </el-card>
+
+    <!-- 添加用户对话框 -->
+    <el-dialog v-model="createUserDialogVisible" title="添加用户" width="500px">
+      <el-form :model="createUserForm" label-width="100px" ref="createUserFormRef">
+        <el-form-item label="用户邮箱" required>
+          <el-input
+            v-model="createUserForm.email"
+            placeholder="请输入邮箱地址"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="登录密码" required>
+          <el-input
+            v-model="createUserForm.password"
+            type="password"
+            placeholder="请输入密码（至少6位）"
+            show-password
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="用户角色" required>
+          <el-select v-model="createUserForm.role" placeholder="选择角色">
+            <el-option label="普通用户" value="user" />
+            <el-option label="管理员" value="admin" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="初始余额">
+          <el-input-number
+            v-model="createUserForm.initialBalance"
+            :min="0"
+            :max="100000"
+            :precision="2"
+            :step="10"
+            placeholder="初始余额"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createUserDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="creatingUser" @click="confirmCreateUser">
+          确认添加
+        </el-button>
+      </template>
+    </el-dialog>
 
     <!-- 赠送余额对话框 -->
     <el-dialog v-model="giftDialogVisible" title="赠送余额" width="500px">
@@ -212,9 +243,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Search, Refresh } from '@element-plus/icons-vue';
+import { Search, Refresh, Plus } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
-import { getAllUsers, updateUserRole, updateUserStatus } from '@/api/modules/admin';
+import { getAllUsers, updateUserRole, updateUserStatus, createUser } from '@/api/modules/admin';
 
 const filters = ref({
   email: '',
@@ -228,6 +259,16 @@ const pagination = ref({
   page: 1,
   pageSize: 20,
   total: 0,
+});
+
+// 添加用户对话框
+const createUserDialogVisible = ref(false);
+const creatingUser = ref(false);
+const createUserForm = ref({
+  email: '',
+  password: '',
+  role: 'user',
+  initialBalance: 0,
 });
 
 // 赠送余额对话框
@@ -278,6 +319,50 @@ const resetFilters = () => {
     status: '',
   };
   loadData();
+};
+
+// 显示添加用户对话框
+const showCreateUserDialog = () => {
+  // 重置表单
+  createUserForm.value = {
+    email: '',
+    password: '',
+    role: 'user',
+    initialBalance: 0,
+  };
+  createUserDialogVisible.value = true;
+};
+
+// 确认添加用户
+const confirmCreateUser = async () => {
+  // 验证表单
+  if (!createUserForm.value.email) {
+    ElMessage.warning('请输入邮箱地址');
+    return;
+  }
+  if (!createUserForm.value.password || createUserForm.value.password.length < 6) {
+    ElMessage.warning('请输入至少6位的密码');
+    return;
+  }
+
+  creatingUser.value = true;
+  try {
+    await createUser({
+      email: createUserForm.value.email,
+      password: createUserForm.value.password,
+      role: createUserForm.value.role,
+      initialBalance: createUserForm.value.initialBalance,
+    });
+
+    ElMessage.success('用户添加成功');
+    createUserDialogVisible.value = false;
+    // 刷新用户列表
+    await loadData();
+  } catch (error: any) {
+    ElMessage.error('添加失败：' + (error.message || '未知错误'));
+  } finally {
+    creatingUser.value = false;
+  }
 };
 
 const handleSetAdmin = async (user: any) => {

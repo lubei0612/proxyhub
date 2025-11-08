@@ -275,8 +275,6 @@ const loadInventory = async () => {
         price: country.price,
       }))
     );
-    
-    console.log('[Inventory]', inventory.value.length, 'items loaded');
   } catch (error: any) {
     console.error('[Inventory] Load failed:', error);
     ElMessage.error('加载库存失败: ' + (error.message || '请稍后重试'));

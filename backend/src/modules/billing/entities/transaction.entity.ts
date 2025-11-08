@@ -48,6 +48,7 @@ export enum TransactionType {
   PURCHASE = 'purchase',
   RENEWAL = 'renewal',
   REFUND = 'refund',
+  GIFT = 'gift',
   COMMISSION = 'commission',
   EXPENSE = 'expense',
   INCOME = 'income',

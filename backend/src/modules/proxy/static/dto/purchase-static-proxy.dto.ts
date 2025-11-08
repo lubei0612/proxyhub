@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsNumber, IsOptional, ValidateNested } from 'class-validator';
+import { IsString, IsArray, IsNumber, IsOptional, ValidateNested, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 class PurchaseItem {
@@ -9,6 +9,8 @@ class PurchaseItem {
   city: string;
 
   @IsNumber()
+  @Min(1, { message: '购买数量至少为1' })
+  @Max(1000, { message: '单次购买数量不能超过1000' })
   quantity: number;
 }
 
@@ -24,6 +26,8 @@ export class PurchaseStaticProxyDto {
   ipType: string; // 'native' or 'shared'
 
   @IsNumber()
+  @Min(30, { message: '购买时长至少为30天' })
+  @Max(365, { message: '购买时长不能超过365天' })
   duration: number; // in days
 
   @IsArray()
