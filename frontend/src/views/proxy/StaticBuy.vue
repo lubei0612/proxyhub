@@ -503,6 +503,13 @@ const handleSubmit = async () => {
 
     submitting.value = true;
 
+    // ⚡ 优化：显示友好的进度提示
+    ElMessage.info({
+      message: '🚀 正在向985Proxy购买IP，请稍候（预计3-6秒）...',
+      duration: 0, // 不自动关闭
+      showClose: false,
+    });
+
     // 准备购买数据
     const purchaseData = {
       channelName: businessScenario.value || '默认通道',
@@ -518,6 +525,9 @@ const handleSubmit = async () => {
 
     // 调用后端API - 真实购买
     const response = await purchaseStaticProxy(purchaseData);
+    
+    // ⚡ 关闭进度提示
+    ElMessage.closeAll();
 
     // 购买成功
     ElMessage.success({
@@ -550,6 +560,9 @@ const handleSubmit = async () => {
     });
 
   } catch (error: any) {
+    // ⚡ 关闭进度提示
+    ElMessage.closeAll();
+    
     if (error !== 'cancel' && error !== 'close') {
       const errorMsg = error.response?.data?.message || error.message || '购买失败';
       

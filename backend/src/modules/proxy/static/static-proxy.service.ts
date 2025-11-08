@@ -340,11 +340,16 @@ export class StaticProxyService {
         
         let orderResult;
         let ipList = [];
-        const maxRetries = 10; // 最多重试10次
-        const retryDelay = 2000; // 每次等待2秒
+        const maxRetries = 6; // ⚡ 优化：减少重试次数（6次 × 1秒 = 6秒总等待时间）
+        const retryDelay = 1000; // ⚡ 优化：减少等待时间到1秒
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
+            // ⚡ 优化：第一次立即查询，后续查询前才等待
+            if (attempt > 1) {
+              await new Promise(resolve => setTimeout(resolve, retryDelay));
+            }
+            
             this.logger.log(`[Purchase] 尝试 ${attempt}/${maxRetries} 查询订单结果...`);
             orderResult = await this.proxy985Service.getOrderResult(orderNo985);
             
@@ -361,19 +366,16 @@ export class StaticProxyService {
                          [];
                 
                 if (Array.isArray(ipList) && ipList.length > 0) {
-                  this.logger.log(`✅ [Purchase] 订单处理完成，获取到 ${ipList.length} 个IP`);
-                  break; // 成功获取IP，退出循环
+                  this.logger.log(`✅ [Purchase] 订单处理完成，获取到 ${ipList.length} 个IP（耗时: ${attempt}次查询）`);
+                  break; // ⚡ 立即返回，无需等待
                 }
               } else if (status === 'progress' || status === 'pending') {
                 // 订单还在处理中
-                this.logger.log(`⏳ [Purchase] 订单还在处理中 (${status})，等待${retryDelay/1000}秒后重试...`);
+                this.logger.log(`⏳ [Purchase] 订单还在处理中 (${status})...`);
                 
-                if (attempt < maxRetries) {
-                  await new Promise(resolve => setTimeout(resolve, retryDelay));
-                  continue; // 继续下一次重试
-                } else {
+                if (attempt >= maxRetries) {
                   // 已达到最大重试次数
-                  this.logger.warn(`⚠️ [Purchase] 已达到最大重试次数，订单可能需要更长时间处理`);
+                  this.logger.warn(`⚠️ [Purchase] 已达到最大重试次数（${maxRetries}次），订单可能需要更长时间处理`);
                 }
               } else if (status === 'failed') {
                 // 订单失败
@@ -386,8 +388,6 @@ export class StaticProxyService {
             if (attempt === maxRetries) {
               throw new BadRequestException(`购买成功但无法获取IP详情，请联系客服。订单号: ${orderNo985}`);
             }
-            // 等待后继续重试
-            await new Promise(resolve => setTimeout(resolve, retryDelay));
           }
         }
         
