@@ -189,10 +189,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import VChart from 'vue-echarts';
-import { getAdminStatistics, getPendingItems, getRecentOrders } from '@/api/modules/admin';
+import { getAdminStatistics, getPendingItems, getRecentOrders, getRevenueTrend } from '@/api/modules/admin';
 import { formatRelativeTime } from '@/utils/datetime';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
@@ -251,7 +251,7 @@ const revenueChartOption = ref({
   },
   xAxis: {
     type: 'category',
-    data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+    data: [],
   },
   yAxis: {
     type: 'value',
@@ -261,7 +261,7 @@ const revenueChartOption = ref({
     {
       name: '收入',
       type: 'line',
-      data: [1200, 1500, 1800, 2200, 2000, 2400, 2580],
+      data: [],
       smooth: true,
       itemStyle: {
         color: '#409eff',
@@ -281,6 +281,31 @@ const revenueChartOption = ref({
       },
     },
   ],
+});
+
+// 加载收入趋势数据
+const loadRevenueTrend = async () => {
+  try {
+    const days = revenueChartPeriod.value === '7天' ? 7 : revenueChartPeriod.value === '30天' ? 30 : 90;
+    const data = await getRevenueTrend(days);
+    
+    // 格式化日期显示
+    const formattedDates = data.dates.map((date: string) => {
+      const d = new Date(date);
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    });
+    
+    // 更新图表数据
+    revenueChartOption.value.xAxis.data = formattedDates;
+    revenueChartOption.value.series[0].data = data.revenues;
+  } catch (error) {
+    console.error('加载收入趋势失败:', error);
+  }
+};
+
+// 监听周期变化
+watch(revenueChartPeriod, () => {
+  loadRevenueTrend();
 });
 
 // 用户增长图配置
@@ -373,6 +398,9 @@ onMounted(async () => {
   } catch (error: any) {
     console.error('[AdminDashboard] 加载最近订单失败:', error);
   }
+
+  // 加载收入趋势图表
+  await loadRevenueTrend();
 });
 </script>
 

@@ -138,6 +138,14 @@ export class AdminController {
   }
 
   /**
+   * 获取收入趋势（用于管理后台图表）
+   */
+  @Get('revenue-trend')
+  async getRevenueTrend(@Query('days') days: number = 7) {
+    return this.adminService.getRevenueTrend(days);
+  }
+
+  /**
    * 创建新用户（管理员功能）
    */
   @Post('users')

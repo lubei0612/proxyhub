@@ -532,6 +532,48 @@ export class AdminService {
   }
 
   /**
+   * 获取收入趋势（用于管理后台图表）
+   * @param days 统计天数（默认7天）
+   */
+  async getRevenueTrend(days: number = 7) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days + 1);
+    startDate.setHours(0, 0, 0, 0);
+
+    // 查询已批准的充值记录
+    const recharges = await this.rechargeRepo
+      .createQueryBuilder('recharge')
+      .where('recharge.status = :status', { status: 'approved' })
+      .andWhere('recharge.createdAt >= :startDate', { startDate })
+      .select('DATE(recharge.createdAt)', 'date')
+      .addSelect('SUM(recharge.amount)', 'revenue')
+      .groupBy('DATE(recharge.createdAt)')
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    // 生成完整的日期范围
+    const dates: string[] = [];
+    const revenues: number[] = [];
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      dates.push(dateStr);
+
+      // 查找该日期的收入
+      const record = recharges.find(r => r.date === dateStr);
+      revenues.push(record ? parseFloat(record.revenue) : 0);
+    }
+
+    return {
+      dates,
+      revenues,
+      total: revenues.reduce((sum, val) => sum + val, 0),
+    };
+  }
+
+  /**
    * 创建新用户（管理员功能）
    */
   async createUser(email: string, password: string, role: string, initialBalance: number) {

@@ -96,6 +96,17 @@ export function getRecentOrders(limit = 5) {
 }
 
 /**
+ * 获取收入趋势（管理员）
+ */
+export function getRevenueTrend(days = 7) {
+  return request({
+    url: '/admin/revenue-trend',
+    method: 'get',
+    params: { days },
+  });
+}
+
+/**
  * 赠送余额（管理员）
  */
 export function giftBalance(userId: string, amount: number, remark?: string) {
