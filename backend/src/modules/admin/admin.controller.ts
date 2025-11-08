@@ -3,6 +3,7 @@ import {
   Get,
   Put,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -61,6 +62,14 @@ export class AdminController {
     @Body() data: { role: string },
   ) {
     return this.adminService.updateUserRole(userId, data.role);
+  }
+
+  /**
+   * ✅ 删除用户
+   */
+  @Delete('users/:id')
+  async deleteUser(@Param('id') userId: string) {
+    return this.adminService.deleteUser(userId);
   }
 
   /**

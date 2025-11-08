@@ -135,6 +135,14 @@
             >
               详情
             </el-button>
+            <el-button
+              v-if="row.role !== 'admin'"
+              type="danger"
+              size="small"
+              @click="handleDeleteUser(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -252,7 +260,7 @@ import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Search, Refresh, Plus } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
-import { getAllUsers, updateUserRole, updateUserStatus, createUser } from '@/api/modules/admin';
+import { getAllUsers, updateUserRole, updateUserStatus, createUser, deleteUser } from '@/api/modules/admin';
 import UserIPModal from '@/components/UserIPModal.vue'; // ✅ 导入UserIPModal组件
 
 const filters = ref({
@@ -500,6 +508,32 @@ const confirmGift = async () => {
     ElMessage.error('赠送失败：' + (error.message || '未知错误'));
   } finally {
     gifting.value = false;
+  }
+};
+
+// ✅ 删除用户
+const handleDeleteUser = async (user: any) => {
+  try {
+    await ElMessageBox.confirm(
+      `确认删除用户 "${user.email}" 吗？此操作不可恢复！`,
+      '删除用户',
+      {
+        confirmButtonText: '确认删除',
+        cancelButtonText: '取消',
+        type: 'error',
+        confirmButtonClass: 'el-button--danger',
+      }
+    );
+
+    // 调用API删除用户
+    await deleteUser(user.id.toString());
+
+    ElMessage.success('用户已删除');
+    loadData();
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败：' + (error.response?.data?.message || error.message || '未知错误'));
+    }
   }
 };
 

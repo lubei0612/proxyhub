@@ -210,6 +210,34 @@ export class AdminService {
   }
 
   /**
+   * ✅ 删除用户
+   */
+  async deleteUser(userId: string) {
+    const user = await this.userRepo.findOne({ where: { id: parseInt(userId) } });
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    // 不允许删除管理员账户
+    if (user.role === 'admin') {
+      throw new Error('不能删除管理员账户');
+    }
+
+    // 删除用户（软删除或硬删除，这里使用硬删除）
+    await this.userRepo.remove(user);
+
+    this.logger.log(`[Delete User] User deleted: ${user.email} (ID: ${userId})`);
+
+    return { 
+      message: '用户已删除', 
+      deletedUser: {
+        id: userId,
+        email: user.email,
+      }
+    };
+  }
+
+  /**
    * 获取系统设置
    */
   async getSystemSettings() {

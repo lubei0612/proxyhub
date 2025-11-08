@@ -44,6 +44,16 @@ export function updateUserRole(userId: string, role: string) {
 }
 
 /**
+ * ✅ 删除用户
+ */
+export function deleteUser(userId: string) {
+  return request({
+    url: `/admin/users/${userId}`,
+    method: 'delete',
+  });
+}
+
+/**
  * 获取系统设置（管理员）
  */
 export function getSystemSettings() {
