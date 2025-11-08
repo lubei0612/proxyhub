@@ -6,8 +6,8 @@ WORKDIR /app
 # 复制 package 文件
 COPY package*.json ./
 
-# 安装依赖
-RUN npm ci --only=production && npm cache clean --force
+# ✅ 安装所有依赖（包括devDependencies，用于构建）
+RUN npm ci && npm cache clean --force
 
 # 复制源代码
 COPY . .
@@ -23,10 +23,14 @@ WORKDIR /app
 # 安装 wget 用于健康检查
 RUN apk add --no-cache wget
 
-# 复制依赖和构建产物
-COPY --from=builder /app/node_modules ./node_modules
+# 复制 package 文件
+COPY package*.json ./
+
+# ✅ 只安装生产依赖
+RUN npm ci --only=production && npm cache clean --force
+
+# 复制构建产物
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
 
 # 暴露端口
 EXPOSE 3000

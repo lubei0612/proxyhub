@@ -135,7 +135,7 @@
           </div>
         </el-card>
 
-        <!-- 客服联系 -->
+        <!-- 客服联系 - ✅ Task 13: 隐藏客服链接（防撬客户）-->
         <el-card shadow="hover" class="service-card">
           <template #header>
             <div class="card-header">
@@ -144,21 +144,17 @@
           </template>
 
           <div class="service-content">
-            <p class="service-title">需要帮助？联系我们的客服团队</p>
+            <p class="service-title">需要帮助？请联系您的专属客服</p>
             
-            <div v-if="telegramLinks.length > 0">
-              <div class="service-item" v-for="(link, index) in telegramLinks" :key="index">
-                <div class="service-info">
-                  <el-icon :size="20" color="#0088cc"><ChatDotRound /></el-icon>
-                  <span>{{ link.label }}</span>
-                </div>
-                <el-button type="primary" size="small" @click="openTelegram(link.username)">
-                  联系
-                </el-button>
+            <!-- ✅ 保留样式但隐藏具体客服信息 -->
+            <div class="service-item">
+              <div class="service-info">
+                <el-icon :size="20" color="#0088cc"><ChatDotRound /></el-icon>
+                <span>请联系您的客服</span>
               </div>
-            </div>
-            <div v-else>
-              <el-empty description="暂无客服信息" :image-size="100" />
+              <el-button type="primary" size="small" disabled>
+                请联系您的客服
+              </el-button>
             </div>
 
             <el-alert type="info" :closable="false" class="service-note">
@@ -223,7 +219,6 @@ import {
   ChatDotRound,
 } from '@element-plus/icons-vue';
 import { useUserStore } from '@/stores/user';
-import { getTelegramLinks } from '@/api/modules/settings';
 import dayjs from 'dayjs';
 
 const userStore = useUserStore();
@@ -238,8 +233,6 @@ const userInfo = ref<any>({
   giftBalance: 50,
   createdAt: '2025-01-01 10:00:00',
 });
-
-const telegramLinks = ref<any[]>([]);
 
 const editDialogVisible = ref(false);
 const editForm = ref({
@@ -277,11 +270,6 @@ const passwordRules: FormRules = {
 
 const formatDate = (date: string) => {
   return dayjs(date).format('YYYY-MM-DD HH:mm:ss');
-};
-
-const openTelegram = (username: string) => {
-  window.open(`https://t.me/${username}`, '_blank');
-  ElMessage.info('正在跳转到Telegram...');
 };
 
 const handleSaveProfile = async () => {
@@ -322,17 +310,6 @@ onMounted(async () => {
   if (userStore.user) {
     userInfo.value = { ...userInfo.value, ...userStore.user };
     editForm.value.nickname = userInfo.value.nickname;
-  }
-
-  // 加载Telegram客服链接
-  try {
-    const response = await getTelegramLinks();
-    // API request拦截器已返回response.data，所以response本身就是数组
-    if (Array.isArray(response)) {
-      telegramLinks.value = response;
-    }
-  } catch (error) {
-    console.error('加载客服链接失败:', error);
   }
 });
 </script>
