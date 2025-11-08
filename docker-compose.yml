@@ -55,6 +55,7 @@ services:
       DATABASE_USER: ${DATABASE_USER:-postgres}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres123}
       DATABASE_NAME: ${DATABASE_NAME:-proxyhub}
+      DATABASE_SYNC: ${DATABASE_SYNC:-false}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}

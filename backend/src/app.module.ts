@@ -36,8 +36,8 @@ import { SettingsModule } from './modules/settings/settings.module';
       password: process.env.DATABASE_PASSWORD || 'postgres123',
       database: process.env.DATABASE_NAME || 'proxyhub',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.NODE_ENV !== 'production', // 生产环境禁用
-      logging: process.env.NODE_ENV === 'development',
+      synchronize: process.env.DATABASE_SYNC === 'true', // 通过DATABASE_SYNC控制
+      logging: process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug',
     }),
 
     // API限流
