@@ -90,7 +90,7 @@ async function runSeed() {
       },
       {
         key: 'telegram_link',
-        value: 'https://t.me/lubei12',
+        value: 'https://t.me/leyiproxy',
         description: 'Telegram客服链接',
       },
       {

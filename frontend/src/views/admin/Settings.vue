@@ -260,10 +260,10 @@ const rechargeSettings = ref({
 
 // 客服配置
 const serviceSettings = ref({
-  telegram1: 'lubei12',
-  telegram1Link: 'https://t.me/lubei12',
-  telegram2: 'lubei12',
-  telegram2Link: 'https://t.me/lubei12',
+  telegram1: 'leyiproxy',
+  telegram1Link: 'https://t.me/leyiproxy',
+  telegram2: 'leyiproxy',
+  telegram2Link: 'https://t.me/leyiproxy',
 });
 
 // 系统统计

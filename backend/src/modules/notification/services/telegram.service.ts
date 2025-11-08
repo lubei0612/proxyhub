@@ -98,7 +98,7 @@ export class TelegramService implements OnModuleInit {
           `/orders - 查看最近订单\n` +
           `/unbind - 解绑账户\n` +
           `/help - 显示此帮助信息\n\n` +
-          `如有疑问，请联系客服：@lubei12`,
+          `如有疑问，请联系客服：@leyiproxy`,
         { parse_mode: 'Markdown' },
       );
     });

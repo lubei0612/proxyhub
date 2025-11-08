@@ -14,8 +14,8 @@ export class CreateSettingsTable1762506502684 implements MigrationInterface {
         // Insert default Telegram support links
         await queryRunner.query(`
             INSERT INTO settings (key, value) VALUES
-                ('telegram_support_1', 'lubei12'),
-                ('telegram_support_2', 'lubei12');
+                ('telegram_support_1', 'leyiproxy'),
+                ('telegram_support_2', 'leyiproxy');
         `);
     }
 

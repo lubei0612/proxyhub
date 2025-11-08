@@ -57,7 +57,7 @@ export class SettingsService {
     if (links.length === 0) {
       links.push({
         label: 'Telegram 客服',
-        username: 'lubei12',
+        username: 'leyiproxy',
       });
     }
     

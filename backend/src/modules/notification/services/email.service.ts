@@ -272,7 +272,7 @@ export class EmailService {
     </div>
     <div class="footer">
       <p>此邮件由ProxyHub系统自动发送，请勿回复。</p>
-      <p>如有疑问，请联系客服：<a href="https://t.me/lubei12" style="color: #667eea;">@lubei12</a></p>
+      <p>如有疑问，请联系客服：<a href="https://t.me/leyiproxy" style="color: #667eea;">@leyiproxy</a></p>
       <p>&copy; 2025 ProxyHub. All rights reserved.</p>
     </div>
   </div>

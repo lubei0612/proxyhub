@@ -127,7 +127,7 @@ const packages = ref([
 
 // 联系客服
 const contactService = () => {
-  window.open('https://t.me/lubei12', '_blank');
+  window.open('https://t.me/leyiproxy', '_blank');
   ElMessage.info('正在跳转至Telegram客服...');
 };
 </script>

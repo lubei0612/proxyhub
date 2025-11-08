@@ -130,9 +130,9 @@
                       <span>需要帮助？联系我们的客服团队</span>
                     </div>
                     <div class="service-buttons">
-                      <el-button type="primary" @click="openTelegram('lubei12')">
+                      <el-button type="primary" @click="openTelegram('leyiproxy')">
                         <el-icon><ChatDotRound /></el-icon>
-                        客服1: @lubei12
+                        客服1: @leyiproxy
                       </el-button>
                       <el-button type="success" @click="openTelegram('proxyhub_support')">
                         <el-icon><ChatDotRound /></el-icon>
@@ -205,7 +205,7 @@ const submitting = ref(false);
 
 // 联系客服 (保留供未来使用)
 // const handleContactService = () => {
-//   window.open('https://t.me/lubei12', '_blank');
+//   window.open('https://t.me/leyiproxy', '_blank');
 //   ElMessage.info('正在跳转到Telegram客服...');
 // };
 
@@ -243,7 +243,7 @@ const handleSubmit = async () => {
 };
 
 // 打开Telegram客服
-const openTelegram = (username: string = 'lubei12') => {
+const openTelegram = (username: string = 'leyiproxy') => {
   window.open(`https://t.me/${username}`, '_blank');
   ElMessage.info(`正在打开Telegram联系 @${username}...`);
 };
