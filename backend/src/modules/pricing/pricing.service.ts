@@ -749,5 +749,202 @@ export class PricingService implements OnModuleInit {
       },
     };
   }
+
+  /**
+   * 获取用户级IP池（用于价格覆盖管理）
+   * 返回IP池列表，包含基础价格、全局覆盖价格和用户特定覆盖价格
+   */
+  async getUserIpPoolForPriceOverride(userId: number) {
+    this.logger.log(`[Get User IP Pool] Loading IP pool for user ${userId}`);
+
+    // 1. 从985Proxy API获取库存列表
+    const sharedInventory = await this.proxy985Service.getInventory({
+      static_proxy_type: 'shared',
+    });
+
+    const premiumInventory = await this.proxy985Service.getInventory({
+      static_proxy_type: 'premium',
+    });
+
+    // 2. 获取所有价格覆盖（全局和用户特定）
+    const allOverrides = await this.priceOverrideRepo.find({
+      where: [
+        { userId: null }, // 全局覆盖
+        { userId }, // 用户特定覆盖
+      ],
+    });
+
+    // 3. 构建IP池数据
+    const ipPool = [];
+
+    // 处理共享IP
+    if (sharedInventory.data && Array.isArray(sharedInventory.data)) {
+      for (const item of sharedInventory.data) {
+        const globalOverride = allOverrides.find(
+          o => o.userId === null && 
+               o.countryCode === item.country_code && 
+               (o.cityName === item.city_name || (!o.cityName && !item.city_name))
+        );
+        const userOverride = allOverrides.find(
+          o => o.userId === userId && 
+               o.countryCode === item.country_code && 
+               (o.cityName === item.city_name || (!o.cityName && !item.city_name))
+        );
+
+        ipPool.push({
+          country: item.country_code,
+          countryName: item.country_name || item.country_code,
+          city: item.city_name || 'All Cities',
+          ipType: 'shared',
+          ipTypeName: '普通IP',
+          defaultPrice: parseFloat(item.unit_price || '0'),
+          globalOverridePrice: globalOverride ? parseFloat(globalOverride.overridePrice.toString()) : null,
+          userOverridePrice: userOverride ? parseFloat(userOverride.overridePrice.toString()) : null,
+          stock: parseInt(item.inventory_num || '0'),
+        });
+      }
+    }
+
+    // 处理原生IP
+    if (premiumInventory.data && Array.isArray(premiumInventory.data)) {
+      for (const item of premiumInventory.data) {
+        const globalOverride = allOverrides.find(
+          o => o.userId === null && 
+               o.countryCode === item.country_code && 
+               (o.cityName === item.city_name || (!o.cityName && !item.city_name))
+        );
+        const userOverride = allOverrides.find(
+          o => o.userId === userId && 
+               o.countryCode === item.country_code && 
+               (o.cityName === item.city_name || (!o.cityName && !item.city_name))
+        );
+
+        ipPool.push({
+          country: item.country_code,
+          countryName: item.country_name || item.country_code,
+          city: item.city_name || 'All Cities',
+          ipType: 'premium',
+          ipTypeName: '原生IP',
+          defaultPrice: parseFloat(item.unit_price || '0'),
+          globalOverridePrice: globalOverride ? parseFloat(globalOverride.overridePrice.toString()) : null,
+          userOverridePrice: userOverride ? parseFloat(userOverride.overridePrice.toString()) : null,
+          stock: parseInt(item.inventory_num || '0'),
+        });
+      }
+    }
+
+    this.logger.log(`[Get User IP Pool] Loaded ${ipPool.length} IP regions for user ${userId}`);
+    return ipPool;
+  }
+
+  /**
+   * 批量更新用户级价格覆盖
+   * @param userId 用户ID
+   * @param updates 更新数组 [{ country, city, ipType, overridePrice }]
+   */
+  async batchUpdateUserPriceOverrides(
+    userId: number,
+    updates: Array<{ country: string; city: string; ipType: string; overridePrice: number | null }>
+  ) {
+    this.logger.log(`[Batch Update User Overrides] Processing ${updates.length} updates for user ${userId}`);
+
+    // 1. 找到static-shared和static-premium配置
+    const configs = await this.priceConfigRepo.find({
+      where: [
+        { productType: 'static-shared' },
+        { productType: 'static-premium' },
+      ],
+    });
+
+    const sharedConfig = configs.find(c => c.productType === 'static-shared');
+    const premiumConfig = configs.find(c => c.productType === 'static-premium');
+
+    if (!sharedConfig || !premiumConfig) {
+      throw new NotFoundException('Price config not found for static proxies');
+    }
+
+    const results = [];
+
+    // 2. 处理每个更新
+    for (const update of updates) {
+      try {
+        const config = update.ipType === 'premium' ? premiumConfig : sharedConfig;
+        
+        // 查找现有用户覆盖
+        const existing = await this.priceOverrideRepo.findOne({
+          where: {
+            userId,
+            priceConfigId: config.id,
+            countryCode: update.country,
+            cityName: update.city === 'All Cities' ? null : update.city,
+          },
+        });
+
+        if (update.overridePrice === null) {
+          // 删除覆盖
+          if (existing) {
+            await this.priceOverrideRepo.remove(existing);
+            results.push({
+              location: `${update.country}/${update.city}`,
+              success: true,
+              action: 'removed',
+            });
+          } else {
+            results.push({
+              location: `${update.country}/${update.city}`,
+              success: true,
+              action: 'no-change',
+            });
+          }
+        } else {
+          // 创建或更新覆盖
+          if (existing) {
+            existing.overridePrice = update.overridePrice as any;
+            await this.priceOverrideRepo.save(existing);
+            results.push({
+              location: `${update.country}/${update.city}`,
+              success: true,
+              action: 'updated',
+            });
+          } else {
+            const override = this.priceOverrideRepo.create({
+              userId, // 设置userId，标记为用户特定覆盖
+              priceConfigId: config.id,
+              countryCode: update.country,
+              cityName: update.city === 'All Cities' ? null : update.city,
+              overridePrice: update.overridePrice as any,
+              isActive: true,
+            });
+            await this.priceOverrideRepo.save(override);
+            results.push({
+              location: `${update.country}/${update.city}`,
+              success: true,
+              action: 'created',
+            });
+          }
+        }
+      } catch (error) {
+        results.push({
+          location: `${update.country}/${update.city}`,
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+
+    // 清除价格缓存
+    this.clearAllPriceCache();
+    this.logger.log(`[Batch Update User Overrides] Completed. Success: ${results.filter(r => r.success).length}/${results.length}`);
+
+    return {
+      message: 'User price overrides updated',
+      results,
+      summary: {
+        total: results.length,
+        success: results.filter(r => r.success).length,
+        failed: results.filter(r => !r.success).length,
+      },
+    };
+  }
 }
 

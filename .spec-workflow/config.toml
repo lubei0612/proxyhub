@@ -1,12 +1,12 @@
 # Spec Workflow Configuration
 
 # Project directory
-projectDir = "."
+projectDir = "D:\\Users\\Desktop\\proxyhub"
 
 # Dashboard settings
 port = 5678
 autoStartDashboard = false
 
 # Language
-lang = "en"
+lang = "zh"
 

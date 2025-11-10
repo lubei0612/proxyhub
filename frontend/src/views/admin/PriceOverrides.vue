@@ -668,4 +668,59 @@ onMounted(() => {
   justify-content: center;
   padding: 20px 0;
 }
+
+// 响应式样式
+@media (max-width: 768px) {
+  .price-overrides-container {
+    padding: 12px;
+
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+
+      .header-actions {
+        width: 100%;
+        flex-direction: column;
+
+        .el-button {
+          width: 100%;
+        }
+      }
+    }
+
+    .statistics-card .statistics-content {
+      flex-direction: column;
+      gap: 12px;
+
+      .stat-item {
+        width: 100%;
+      }
+    }
+
+    .filter-card .filter-content {
+      .filter-row {
+        flex-direction: column;
+        gap: 12px;
+
+        .filter-item {
+          width: 100%;
+
+          .el-radio-group {
+            display: flex;
+            flex-wrap: wrap;
+          }
+
+          .el-input {
+            width: 100%;
+          }
+        }
+      }
+    }
+
+    .cards-section .ip-cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
 </style>

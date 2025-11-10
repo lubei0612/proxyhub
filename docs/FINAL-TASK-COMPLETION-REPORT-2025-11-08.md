@@ -180,3 +180,8 @@ docker compose up -d --build
 **报告生成时间**: 2025-11-08 17:51  
 **最后提交**: `9d6300f` - Fix Docker build - add tsconfig.build.json and correct start path
 
+
+
+
+
+

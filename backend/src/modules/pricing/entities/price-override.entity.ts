@@ -33,6 +33,10 @@ export class PriceOverride {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  // 用户级价格覆盖：NULL表示全局覆盖，非NULL表示特定用户的覆盖
+  @Column({ name: 'user_id', nullable: true })
+  userId: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

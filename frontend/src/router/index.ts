@@ -93,7 +93,7 @@ const routes: RouteRecordRaw[] = [
           group: 'static-proxy',
         },
       },
-      // ✅ 专线代理（短视频/直播）
+      // ✅ 专线代理（短视频/直播） - 独立顶级菜单
       {
         path: 'proxy/dedicated',
         name: 'DedicatedProxy',
@@ -101,7 +101,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '专线代理',
           icon: 'Connection',
-          group: 'static-proxy',
+          group: 'dedicated-proxy', // 独立分组
         },
       },
       // 移动代理（占位）

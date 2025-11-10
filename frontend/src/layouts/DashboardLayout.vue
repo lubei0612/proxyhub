@@ -28,7 +28,7 @@
           <el-menu-item index="/proxy/dynamic/buy">动态住宅选购</el-menu-item>
         </el-sub-menu>
 
-        <!-- 静态住宅 -->
+        <!-- 静态住宅（只保留管理和选购，不包含专线代理） -->
         <el-sub-menu index="static-proxy">
           <template #title>
             <el-icon><House /></el-icon>
@@ -36,8 +36,13 @@
           </template>
           <el-menu-item index="/proxy/static/manage">静态住宅管理</el-menu-item>
           <el-menu-item index="/proxy/static/buy">静态住宅选购</el-menu-item>
-          <el-menu-item index="/proxy/dedicated">专线代理</el-menu-item>
         </el-sub-menu>
+
+        <!-- 专线代理（独立菜单项） -->
+        <el-menu-item index="/proxy/dedicated">
+          <el-icon><Connection /></el-icon>
+          <span>专线代理</span>
+        </el-menu-item>
 
         <!-- 移动代理（未开发） -->
         <el-menu-item index="/proxy/mobile" disabled>

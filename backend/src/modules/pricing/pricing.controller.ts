@@ -156,5 +156,30 @@ export class PricingController {
   async updateExchangeRate(@Body() dto: UpdateExchangeRateDto) {
     return this.pricingService.updateExchangeRate(dto);
   }
+
+  /**
+   * 获取用户级IP池（用于价格覆盖管理）
+   * @param userId 用户ID
+   */
+  @Get('user-ip-pool/:userId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async getUserIpPool(@Param('userId') userId: string) {
+    return this.pricingService.getUserIpPoolForPriceOverride(parseInt(userId));
+  }
+
+  /**
+   * 批量更新用户级价格覆盖
+   * @param userId 用户ID
+   */
+  @Post('user-overrides/:userId/batch')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async batchUpdateUserPriceOverrides(
+    @Param('userId') userId: string,
+    @Body() dto: { updates: any[] }
+  ) {
+    return this.pricingService.batchUpdateUserPriceOverrides(parseInt(userId), dto.updates);
+  }
 }
 

@@ -129,6 +129,30 @@ export function deductBalance(userId: string, amount: number, remark?: string) {
 }
 
 /**
+ * 获取用户级IP池（用于价格覆盖管理）
+ * @param userId 用户ID
+ */
+export function getUserIpPool(userId: number) {
+  return request({
+    url: `/price/user-ip-pool/${userId}`,
+    method: 'get',
+  });
+}
+
+/**
+ * 批量更新用户级价格覆盖
+ * @param userId 用户ID
+ * @param data 更新数据 { updates: [...] }
+ */
+export function updateUserPriceOverrides(userId: number, data: { updates: any[] }) {
+  return request({
+    url: `/price/user-overrides/${userId}/batch`,
+    method: 'post',
+    data,
+  });
+}
+
+/**
  * 获取用户购买的IP列表（管理员）
  */
 export function getUserIPs(userId: string) {

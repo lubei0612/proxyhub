@@ -431,6 +431,12 @@ onMounted(() => {
   .chart-wrapper {
     padding: 10px;
     min-height: 350px;
+    width: 100%;
+    
+    // 确保ECharts容器正确继承宽度
+    > * {
+      width: 100% !important;
+    }
   }
 }
 

@@ -120,3 +120,16 @@ export function purchaseStaticProxy(data: PurchaseStaticProxyRequest) {
   });
 }
 
+// ==================== 业务场景 ====================
+
+/**
+ * 获取业务场景列表
+ * 用于静态代理购买页面的场景筛选
+ */
+export function getBusinessList() {
+  return request({
+    url: '/proxy985/business-list',
+    method: 'get',
+  });
+}
+

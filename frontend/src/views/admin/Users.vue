@@ -122,6 +122,14 @@
               扣除余额
             </el-button>
             <el-button
+              type="primary"
+              size="small"
+              @click="openPriceOverrideModal(row)"
+            >
+              <el-icon><Money /></el-icon>
+              价格覆盖
+            </el-button>
+            <el-button
               :type="row.status === 'active' ? 'warning' : 'success'"
               size="small"
               @click="handleToggleStatus(row)"
@@ -212,6 +220,13 @@
       :user-name="selectedUserName"
     />
 
+    <UserPriceOverrideModal
+      v-model:visible="priceOverrideModalVisible"
+      :user-id="parseInt(selectedUserId) || 0"
+      :user-name="selectedUserName"
+      @saved="loadData"
+    />
+
     <!-- 赠送余额对话框 -->
     <el-dialog v-model="giftDialogVisible" title="赠送余额" width="500px">
       <el-form :model="giftForm" label-width="100px">
@@ -258,10 +273,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Search, Refresh, Plus } from '@element-plus/icons-vue';
+import { Search, Refresh, Plus, Money } from '@element-plus/icons-vue';
 import dayjs from 'dayjs';
 import { getAllUsers, updateUserRole, updateUserStatus, createUser, deleteUser } from '@/api/modules/admin';
 import UserIPModal from '@/components/UserIPModal.vue'; // ✅ 导入UserIPModal组件
+import UserPriceOverrideModal from '@/components/UserPriceOverrideModal.vue'; // 导入UserPriceOverrideModal组件
 
 const filters = ref({
   email: '',
@@ -289,6 +305,7 @@ const createUserForm = ref({
 
 // ✅ 用户IP和交易记录查看对话框
 const userIPModalVisible = ref(false);
+const priceOverrideModalVisible = ref(false);
 const selectedUserId = ref('');
 const selectedUserName = ref('');
 
@@ -542,6 +559,13 @@ const viewUserDetail = (user: any) => {
   selectedUserId.value = user.id.toString();
   selectedUserName.value = user.email;
   userIPModalVisible.value = true;
+};
+
+// 打开价格覆盖modal
+const openPriceOverrideModal = (user: any) => {
+  selectedUserId.value = user.id.toString();
+  selectedUserName.value = user.email;
+  priceOverrideModalVisible.value = true;
 };
 
 onMounted(() => {

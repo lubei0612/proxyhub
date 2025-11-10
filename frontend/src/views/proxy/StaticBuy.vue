@@ -67,27 +67,20 @@
           <!-- 业务场景选择 -->
           <div class="section">
             <h3>热门业务场景（可选）</h3>
-            <el-select v-model="businessScenario" placeholder="选择业务场景" clearable style="width: 100%">
-              <el-option label="Shopee" value="shopee">
-                <span>🛒 Shopee - 东南亚电商平台</span>
-              </el-option>
-              <el-option label="TikTok" value="tiktok">
-                <span>📱 TikTok - 短视频社交</span>
-              </el-option>
-              <el-option label="TikTok Shop" value="tiktok_shop">
-                <span>🛍️ TikTok Shop - 直播带货</span>
-              </el-option>
-              <el-option label="AliExpress" value="aliexpress">
-                <span>📦 AliExpress - 跨境电商</span>
-              </el-option>
-              <el-option label="Temu" value="temu">
-                <span>🎁 Temu - 社交电商</span>
-              </el-option>
-              <el-option label="YouTube" value="youtube">
-                <span>▶️ YouTube - 视频营销</span>
-              </el-option>
-              <el-option label="Amazon" value="amazon">
-                <span>📚 Amazon - 亚马逊电商</span>
+            <el-select 
+              v-model="businessScenario" 
+              placeholder="选择业务场景" 
+              clearable 
+              style="width: 100%"
+              :loading="businessScenariosLoading"
+            >
+              <el-option 
+                v-for="scenario in businessScenarios" 
+                :key="scenario.code"
+                :label="scenario.name" 
+                :value="scenario.code"
+              >
+                <span>{{ scenario.icon }} {{ scenario.name }}</span>
               </el-option>
             </el-select>
           </div>
@@ -260,6 +253,7 @@ import {
   purchaseStaticProxy, 
   getInventory as get985Inventory,
 } from '@/api/modules/proxy';
+import { getBusinessList } from '@/api/modules/proxy985';
 
 const router = useRouter();
 
@@ -308,6 +302,8 @@ const ipType = ref<'shared' | 'premium'>('shared');
 const duration = ref(30);
 const selectedContinent = ref('all');
 const businessScenario = ref('');
+const businessScenarios = ref<Array<{ code: string; name: string; icon: string }>>([]);
+const businessScenariosLoading = ref(false);
 const paymentMethod = ref('balance');
 const submitting = ref(false);
 
@@ -356,7 +352,7 @@ const loadAllPrices = async () => {
   
   try {
     // 调用985Proxy实时库存API
-    const response = await get985Inventory(ipType.value, duration.value);
+    const response = await get985Inventory(ipType.value, duration.value, businessScenario.value);
     
     // ✅ 修复：Axios拦截器已返回response.data，所以直接访问response.countries
     if (response && response.countries && response.countries.length > 0) {
@@ -593,8 +589,44 @@ const handleSubmit = async () => {
 };
 
 // 监听IP类型和时长变化，重新加载价格
+// 加载业务场景列表
+const loadBusinessScenarios = async () => {
+  try {
+    businessScenariosLoading.value = true;
+    const response = await getBusinessList();
+    
+    // 场景名称映射（图标和中文名称）
+    const scenarioMap: Record<string, { name: string; icon: string }> = {
+      shopee: { name: 'Shopee - 东南亚电商平台', icon: '🛒' },
+      tiktok: { name: 'TikTok - 短视频社交', icon: '📱' },
+      tiktok_shop: { name: 'TikTok Shop - 直播带货', icon: '🛍️' },
+      aliexpress: { name: 'AliExpress - 跨境电商', icon: '📦' },
+      temu: { name: 'Temu - 社交电商', icon: '🎁' },
+      youtube: { name: 'YouTube - 视频营销', icon: '▶️' },
+      amazon: { name: 'Amazon - 亚马逊电商', icon: '📚' },
+      instagram: { name: 'Instagram - 社交媒体', icon: '📷' },
+      facebook: { name: 'Facebook - 社交营销', icon: '👥' },
+      twitter: { name: 'Twitter - 社交平台', icon: '🐦' },
+    };
+
+    // 转换API返回的数据
+    if (response.data && Array.isArray(response.data)) {
+      businessScenarios.value = response.data.map((code: string) => ({
+        code,
+        name: scenarioMap[code]?.name || code,
+        icon: scenarioMap[code]?.icon || '🌐',
+      }));
+    }
+  } catch (error: any) {
+    console.error('[Business Scenarios] Failed to load:', error);
+    ElMessage.warning('业务场景列表加载失败，您仍可正常选购IP');
+  } finally {
+    businessScenariosLoading.value = false;
+  }
+};
+
 watch(
-  [ipType, duration],
+  [ipType, duration, businessScenario],
   () => {
     loadAllPrices();
   },
@@ -604,6 +636,9 @@ watch(
 onMounted(() => {
   // 初始化：从userStore获取用户余额
   // userBalance.value = userStore.user?.balance || 0;
+  
+  // 加载业务场景列表
+  loadBusinessScenarios();
 });
 </script>
 
