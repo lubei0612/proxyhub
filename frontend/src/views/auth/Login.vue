@@ -178,18 +178,18 @@ const handleLogin = async () => {
 
   loading.value = true;
   try {
-    await userStore.login({
+    const success = await userStore.userLogin({
       email: loginForm.email,
       password: loginForm.password,
     });
 
-    ElMessage.success('登录成功');
-    
-    // 根据角色跳转
-    if (userStore.user?.role === 'admin') {
-      router.push('/admin/dashboard');
-    } else {
-      router.push('/dashboard');
+    if (success) {
+      // 根据角色跳转
+      if (userStore.user?.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     }
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '登录失败');
