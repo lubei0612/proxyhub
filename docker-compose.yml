@@ -48,6 +48,8 @@ services:
       dockerfile: Dockerfile
     container_name: proxyhub-backend
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       DATABASE_HOST: postgres
@@ -72,6 +74,11 @@ services:
       MAIL_USER: ${MAIL_USER}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       MAIL_FROM: ${MAIL_FROM:-ProxyHub <noreply@proxyhub.com>}
+      # 备用邮件服务配置（Gmail）
+      MAIL_HOST_BACKUP: ${MAIL_HOST_BACKUP:-smtp.gmail.com}
+      MAIL_PORT_BACKUP: ${MAIL_PORT_BACKUP:-587}
+      MAIL_USER_BACKUP: ${MAIL_USER_BACKUP:-chenyuqi061245@gmail.com}
+      MAIL_PASSWORD_BACKUP: ${MAIL_PASSWORD_BACKUP:-vvdgyeerdtycwxka}
       # Telegram Bot配置
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-ProxyHubBot}
