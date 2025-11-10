@@ -58,12 +58,42 @@
           <Expand v-else />
         </el-icon>
         <div class="admin-title">管理后台</div>
+        
+        <!-- ✅ Task 2.3: 待处理事项徽章 -->
+        <el-badge :value="pendingTasks.total" :hidden="pendingTasks.total === 0" class="pending-badge">
+          <el-button type="info" size="small" @click="showPendingDetails = !showPendingDetails">
+            <el-icon><Bell /></el-icon>
+            待处理事项
+          </el-button>
+        </el-badge>
+
         <div class="admin-user">
           <LanguageSwitcher />
           <el-avatar :size="32" />
           <span>{{ userStore.user?.email }}</span>
         </div>
       </div>
+
+      <!-- 待处理事项详情弹窗 -->
+      <el-dialog v-model="showPendingDetails" title="待处理事项" width="500px">
+        <el-descriptions :column="1" border>
+          <el-descriptions-item label="待审核充值">
+            <el-tag type="warning">{{ pendingTasks.pendingRecharges }}</el-tag>
+            <el-button type="text" size="small" @click="router.push('/admin/recharges')">
+              查看
+            </el-button>
+          </el-descriptions-item>
+          <el-descriptions-item label="异常订单">
+            <el-tag type="danger">{{ pendingTasks.abnormalOrders }}</el-tag>
+            <el-button type="text" size="small" @click="router.push('/admin/orders')">
+              查看
+            </el-button>
+          </el-descriptions-item>
+          <el-descriptions-item label="系统通知">
+            <el-tag type="info">{{ pendingTasks.systemNotifications }}</el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-dialog>
 
       <div class="admin-content">
         <router-view />
@@ -76,6 +106,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import { useAdminPendingTasks } from '@/composables/useAdminPendingTasks';
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import {
   DataLine,
@@ -86,11 +117,16 @@ import {
   Back,
   Fold,
   Expand,
+  Bell,
 } from '@element-plus/icons-vue';
 
 const router = useRouter();
 const userStore = useUserStore();
 const isCollapsed = ref(false);
+const showPendingDetails = ref(false);
+
+// ✅ Task 2.3: 使用待处理事项composable
+const { pendingTasks } = useAdminPendingTasks();
 
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
@@ -182,6 +218,10 @@ const handleMenuSelect = (index: string) => {
     flex: 1;
     font-size: 18px;
     font-weight: 500;
+  }
+
+  .pending-badge {
+    margin-right: 20px;
   }
 
   .admin-user {

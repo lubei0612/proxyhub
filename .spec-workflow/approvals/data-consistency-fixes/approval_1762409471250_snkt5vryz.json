@@ -1,0 +1,12 @@
+{
+  "id": "approval_1762409471250_snkt5vryz",
+  "title": "数据一致性修复 - 需求规格",
+  "filePath": ".spec-workflow/specs/data-consistency-fixes/requirements.md",
+  "type": "document",
+  "status": "approved",
+  "createdAt": "2025-11-06T06:11:11.250Z",
+  "category": "spec",
+  "categoryName": "data-consistency-fixes",
+  "response": "通过仪表板批准",
+  "respondedAt": "2025-11-10T03:38:56.903Z"
+}

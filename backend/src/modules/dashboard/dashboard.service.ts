@@ -6,6 +6,8 @@ import { Order, OrderStatus } from '../order/entities/order.entity';
 import { StaticProxy, ProxyStatus } from '../proxy/static/entities/static-proxy.entity';
 import { Transaction, TransactionType } from '../billing/entities/transaction.entity';
 import { TrafficService } from '../traffic/traffic.service';
+import { Recharge } from '../billing/entities/recharge.entity';
+import { Notification } from '../notification/entities/notification.entity';
 
 @Injectable()
 export class DashboardService {
@@ -18,6 +20,10 @@ export class DashboardService {
     private staticProxyRepo: Repository<StaticProxy>,
     @InjectRepository(Transaction)
     private transactionRepo: Repository<Transaction>,
+    @InjectRepository(Recharge)
+    private rechargeRepo: Repository<Recharge>,
+    @InjectRepository(Notification)
+    private notificationRepo: Repository<Notification>,
     @Inject(forwardRef(() => TrafficService))
     private trafficService: TrafficService,
   ) {}
@@ -141,6 +147,42 @@ export class DashboardService {
       // 返回空数据避免前端报错
       return [];
     }
+  }
+
+  /**
+   * 获取管理员待处理事项数量
+   * ✅ Task 2.3: 实现待处理事项数据动态化
+   */
+  async getAdminPendingTasks() {
+    // 1. 查询待审核充值数量
+    const pendingRecharges = await this.rechargeRepo.count({
+      where: { status: 'pending' as any },
+    });
+
+    // 2. 查询异常订单数量（失败或取消的订单）
+    const abnormalOrders = await this.orderRepo.count({
+      where: [
+        { status: OrderStatus.FAILED },
+        { status: OrderStatus.CANCELLED },
+      ],
+    });
+
+    // 3. 查询未读系统通知数量
+    const systemNotifications = await this.notificationRepo.count({
+      where: {
+        type: 'system',
+        read: false,
+      },
+    });
+
+    const total = pendingRecharges + abnormalOrders + systemNotifications;
+
+    return {
+      pendingRecharges,
+      abnormalOrders,
+      systemNotifications,
+      total,
+    };
   }
 }
 

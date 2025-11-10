@@ -1,31 +1,18 @@
 # Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+npm-debug.log
+package-lock.json
 
 # Environment variables
 .env
 .env.local
 .env.*.local
-.env.development
-.env.production
+*.env
 
 # Build outputs
 dist/
 build/
 *.tsbuildinfo
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-
-# OS files
-.DS_Store
-Thumbs.db
-desktop.ini
 
 # IDE
 .vscode/
@@ -33,83 +20,42 @@ desktop.ini
 *.swp
 *.swo
 *~
-.project
-.classpath
-.settings/
 
-# Testing
-coverage/
-.nyc_output/
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sql.backup
+*.db
 
 # Temporary files
 *.tmp
 *.temp
-*.cache
-
-# Archives
-*.tar
+*.bak
 *.tar.gz
 *.zip
-*.rar
 
-# Database
-*.sqlite
-*.db
+# Test files
+*.test.ts.snap
 
-# Docker
-.dockerignore
+# Coverage
+coverage/
+.nyc_output/
 
-# Mac
-.DS_Store
-.AppleDouble
-.LSOverride
+# Docker volumes
+postgres-data/
+redis-data/
 
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
+# Compiled JavaScript
+*.js.map
 
-# Linux
-*~
-
-# Backup files
-*.bak
-*.backup
-*.old
-
-# Compiled files
-*.class
-*.pyc
-*.pyo
-
-# Package files
-*.egg
-*.egg-info/
-dist/
-build/
-*.whl
-
-# Deployment
-proxyhub-deploy.tar.gz
-*.tar.gz
-
-# Spec-workflow (if not using)
-.spec-workflow/
-
-# Frontend specific
-frontend/dist/
-frontend/node_modules/
-frontend/.cache/
-
-# Backend specific
-backend/dist/
-backend/node_modules/
-backend/.cache/
-
-# TypeScript
-*.tsbuildinfo
-
-# Misc
-.eslintcache
-.stylelintcache
+# Personal notes and temporary docs
+TODO.md
+NOTES.md
+*.draft.md

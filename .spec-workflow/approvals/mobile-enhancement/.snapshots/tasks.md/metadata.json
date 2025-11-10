@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/mobile-enhancement/tasks.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-10T03:46:42.947Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762746402922_sw60lwkfp",
+      "approvalTitle": "Tasks: Mobile Enhancement Implementation Plan - 54 Detailed Tasks"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-11-10T03:47:20.679Z",
+      "trigger": "approved",
+      "approvalId": "approval_1762746402922_sw60lwkfp",
+      "approvalTitle": "Tasks: Mobile Enhancement Implementation Plan - 54 Detailed Tasks"
+    }
+  ]
+}

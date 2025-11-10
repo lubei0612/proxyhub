@@ -1,0 +1,12 @@
+{
+  "id": "approval_1762755972559_mv6145442",
+  "title": "UI修复和API改进 - 需求文档",
+  "filePath": ".spec-workflow/specs/ui-fixes-and-api-improvements/requirements.md",
+  "type": "document",
+  "status": "approved",
+  "createdAt": "2025-11-10T06:26:12.559Z",
+  "category": "spec",
+  "categoryName": "ui-fixes-and-api-improvements",
+  "response": "通过仪表板批准",
+  "respondedAt": "2025-11-10T06:44:24.528Z"
+}

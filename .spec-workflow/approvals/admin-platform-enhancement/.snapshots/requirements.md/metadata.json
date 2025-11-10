@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/admin-platform-enhancement/requirements.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-07T08:37:36.250Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762504656208_83vu3z30g",
+      "approvalTitle": "Requirements Document - Admin Platform Enhancement"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-11-10T03:38:56.097Z",
+      "trigger": "approved",
+      "approvalId": "approval_1762504656208_83vu3z30g",
+      "approvalTitle": "Requirements Document - Admin Platform Enhancement"
+    }
+  ]
+}

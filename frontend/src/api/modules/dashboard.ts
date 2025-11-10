@@ -50,3 +50,14 @@ export function getTrafficTrend() {
   });
 }
 
+/**
+ * 获取管理员待处理事项数量
+ * ✅ Task 2.3: 实现待处理事项数据动态化
+ */
+export function getAdminPendingTasks() {
+  return request({
+    url: '/dashboard/admin-pending-tasks',
+    method: 'get',
+  });
+}
+

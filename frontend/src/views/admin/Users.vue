@@ -115,6 +115,13 @@
               取消管理员
             </el-button>
             <el-button
+              type="success"
+              size="small"
+              @click="handleAddBalance(row)"
+            >
+              充值余额
+            </el-button>
+            <el-button
               type="warning"
               size="small"
               @click="handleDeductBalance(row)"
@@ -566,6 +573,117 @@ const openPriceOverrideModal = (user: any) => {
   selectedUserId.value = user.id.toString();
   selectedUserName.value = user.email;
   priceOverrideModalVisible.value = true;
+};
+
+// 充值余额
+const handleAddBalance = async (user: any) => {
+  try {
+    const { value: amount } = await ElMessageBox.prompt('请输入充值金额（美元）', '充值余额', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputPattern: /^\d+(\.\d{1,2})?$/,
+      inputErrorMessage: '请输入有效的金额',
+      inputValue: '10',
+    });
+
+    if (!amount || parseFloat(amount) <= 0) {
+      ElMessage.warning('请输入有效的充值金额');
+      return;
+    }
+
+    await ElMessageBox.confirm(
+      `确认为用户 ${user.email} 充值 $${parseFloat(amount).toFixed(2)}？`,
+      '确认操作',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    // 调用后端API充值余额
+    const response = await fetch(`/api/v1/admin/users/${user.id}/add-balance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        amount: parseFloat(amount),
+        remark: '管理员充值',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || '充值失败');
+    }
+
+    ElMessage.success(`成功为 ${user.email} 充值 $${parseFloat(amount).toFixed(2)}`);
+    await loadData(); // 刷新用户列表
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error('充值失败：' + (error.message || '未知错误'));
+    }
+  }
+};
+
+// 扣除余额
+const handleDeductBalance = async (user: any) => {
+  try {
+    const { value: amount } = await ElMessageBox.prompt('请输入扣除金额（美元）', '扣除余额', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputPattern: /^\d+(\.\d{1,2})?$/,
+      inputErrorMessage: '请输入有效的金额',
+      inputValue: '1',
+    });
+
+    if (!amount || parseFloat(amount) <= 0) {
+      ElMessage.warning('请输入有效的扣除金额');
+      return;
+    }
+
+    if (parseFloat(amount) > parseFloat(user.balance || 0)) {
+      ElMessage.warning('扣除金额不能大于用户当前余额');
+      return;
+    }
+
+    await ElMessageBox.confirm(
+      `确认从用户 ${user.email} 扣除 $${parseFloat(amount).toFixed(2)}？`,
+      '确认操作',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    // 调用后端API扣除余额（需要后端添加新的API端点）
+    const response = await fetch(`/api/v1/admin/users/${user.id}/deduct-balance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        amount: parseFloat(amount),
+        remark: '管理员扣除',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || '扣除失败');
+    }
+
+    ElMessage.success(`成功从 ${user.email} 扣除 $${parseFloat(amount).toFixed(2)}`);
+    await loadData(); // 刷新用户列表
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error('扣除失败：' + (error.message || '未知错误'));
+    }
+  }
 };
 
 onMounted(() => {

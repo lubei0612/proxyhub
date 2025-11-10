@@ -254,6 +254,7 @@ import {
   getInventory as get985Inventory,
 } from '@/api/modules/proxy';
 import { getBusinessList } from '@/api/modules/proxy985';
+import { calculatePrice } from '@/api/modules/price';
 
 const router = useRouter();
 
@@ -345,7 +346,7 @@ const totalSelectedCount = computed(() => {
 });
 
 // 批量加载所有地区的价格
-// 加载实时库存和价格（985Proxy API）
+// 加载实时库存和价格（985Proxy API + 后端价格覆盖）
 const loadAllPrices = async () => {
   priceLoading.value = true;
   priceError.value = null;
@@ -362,10 +363,10 @@ const loadAllPrices = async () => {
         (countryData as any)[continent] = [];
       });
       
-      // 更新库存和价格数据
+      // 更新库存数据
+      const allLocations: any[] = [];
       (response.countries || []).forEach((countryItem: any) => {
         const countryCode = countryItem.countryCode;
-        const price = countryItem.price || 5; // 985Proxy返回的单价
         const stock = countryItem.stock || 0;
         
         // 如果有城市数据
@@ -374,9 +375,12 @@ const loadAllPrices = async () => {
             const cityName = cityItem.cityName;
             const cityStock = cityItem.stock || stock;
             
-            // 缓存价格
-            const key = getPriceCacheKey(countryCode, cityName, ipType.value);
-            priceCache.value.set(key, price);
+            // 收集地区信息（用于批量查询价格）
+            allLocations.push({
+              country_code: countryCode,
+              city_name: cityName,
+              count: 1, // 用于计算单价
+            });
             
             // 添加到对应大洲
             const continent = getContinent(countryCode);
@@ -392,8 +396,11 @@ const loadAllPrices = async () => {
           });
         } else {
           // 没有城市数据，只添加国家级数据
-          const key = getPriceCacheKey(countryCode, '', ipType.value);
-          priceCache.value.set(key, price);
+          allLocations.push({
+            country_code: countryCode,
+            city_name: '',
+            count: 1,
+          });
           
           const continent = getContinent(countryCode);
           if (continent && countryData[continent as keyof typeof countryData]) {
@@ -407,6 +414,33 @@ const loadAllPrices = async () => {
           }
         }
       });
+      
+      // 🎯 调用后端API获取价格（包含价格覆盖）
+      if (allLocations.length > 0) {
+        try {
+          const productType = ipType.value === 'premium' ? 'static-residential-native' : 'static-residential';
+          const priceResponse = await calculatePrice({
+            productType,
+            buyData: allLocations,
+            timePeriod: duration.value,
+          });
+          
+          // 缓存价格
+          if (priceResponse && priceResponse.breakdown) {
+            priceResponse.breakdown.forEach((item: any) => {
+              // location格式: "US/Los Angeles" 或 "US"
+              const [country, city] = item.location.split('/');
+              const key = getPriceCacheKey(country, city || '', ipType.value);
+              priceCache.value.set(key, item.unitPrice);
+              console.log(`[Price Cache] ${key} = $${item.unitPrice}`);
+            });
+            console.log(`[Price Cache] Cached ${priceResponse.breakdown.length} prices with user-specific overrides`);
+          }
+        } catch (priceError: any) {
+          console.error('[Price] Failed to load prices with overrides:', priceError);
+          ElMessage.warning('价格加载失败，使用默认价格');
+        }
+      }
     } else {
       ElMessage.warning('未获取到库存数据，请稍后重试');
     }
@@ -501,7 +535,7 @@ const handleSubmit = async () => {
 
     // ⚡ 优化：显示友好的进度提示
     ElMessage.info({
-      message: '🚀 正在向985Proxy购买IP，请稍候（预计3-6秒）...',
+      message: '🚀 正在购买IP，请稍候（预计3-6秒）...',
       duration: 0, // 不自动关闭
       showClose: false,
     });

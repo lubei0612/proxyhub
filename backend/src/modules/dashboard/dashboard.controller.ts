@@ -1,6 +1,8 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('dashboard')
@@ -46,6 +48,17 @@ export class DashboardController {
   @Get('traffic-trend')
   async getTrafficTrend(@CurrentUser() user: any) {
     return this.dashboardService.getTrafficTrend(user.id.toString());
+  }
+
+  /**
+   * 获取管理员待处理事项数量
+   * ✅ Task 2.3: 实现待处理事项数据动态化
+   */
+  @Get('admin-pending-tasks')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async getAdminPendingTasks() {
+    return this.dashboardService.getAdminPendingTasks();
   }
 }
 

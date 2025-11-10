@@ -1,14 +1,14 @@
 <template>
-  <div class="dashboard-container responsive-container">
-    <h1 class="text-responsive">仪表盘</h1>
+  <div class="dashboard-container">
+    <h1>仪表盘</h1>
 
     <!-- 概览卡片 -->
-    <el-row :gutter="20" class="stats-row grid-responsive">
+    <el-row :gutter="20" class="stats-row">
       <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon" style="background-color: #409eff">
-              <el-icon :size="30"><Connection /></el-icon>
+              <el-icon :size="28"><Connection /></el-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ overview.proxies?.total || 0 }}</div>
@@ -22,7 +22,7 @@
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon" style="background-color: #67c23a">
-              <el-icon :size="30"><CircleCheckFilled /></el-icon>
+              <el-icon :size="28"><CircleCheckFilled /></el-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ overview.proxies?.active || 0 }}</div>
@@ -36,7 +36,7 @@
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon" style="background-color: #e6a23c">
-              <el-icon :size="30"><ShoppingCart /></el-icon>
+              <el-icon :size="28"><ShoppingCart /></el-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">{{ overview.orders?.total || 0 }}</div>
@@ -50,7 +50,7 @@
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-icon" style="background-color: #f56c6c">
-              <el-icon :size="30"><Money /></el-icon>
+              <el-icon :size="28"><Money /></el-icon>
             </div>
             <div class="stat-info">
               <div class="stat-value">${{ parseFloat(overview.spending?.total || 0).toFixed(2) }}</div>
@@ -380,31 +380,37 @@ onMounted(() => {
     .stat-content {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
 
       .stat-icon {
-        width: 60px;
-        height: 60px;
+        width: 50px;
+        height: 50px;
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #fff;
+        flex-shrink: 0;
       }
 
       .stat-info {
         flex: 1;
+        min-width: 0; // 允许flex item缩小
 
         .stat-value {
-          font-size: 28px;
+          font-size: 24px;
           font-weight: bold;
           color: #303133;
-          margin-bottom: 5px;
+          margin-bottom: 4px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .stat-label {
-          font-size: 14px;
+          font-size: 13px;
           color: #909399;
+          white-space: nowrap;
         }
       }
     }

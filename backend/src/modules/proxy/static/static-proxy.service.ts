@@ -245,7 +245,7 @@ export class StaticProxyService {
   async purchaseStaticProxy(userId: string, dto: PurchaseStaticProxyDto) {
     this.logger.log(`[Purchase Static Proxy] User: ${userId}, Items: ${JSON.stringify(dto.items)}`);
 
-    // Calculate total price using PricingService
+    // Calculate total price using PricingService (with user-specific price overrides)
     const productType = dto.ipType === 'native' ? 'static-residential-native' : 'static-residential';
     const buyData = dto.items.map(item => ({
       country_code: item.country,
@@ -257,7 +257,7 @@ export class StaticProxyService {
       productType,
       buyData,
       timePeriod: dto.duration,
-    });
+    }, parseInt(userId));
 
     const totalPrice = priceResult.totalPrice;
     let totalQuantity = 0;
@@ -649,22 +649,18 @@ export class StaticProxyService {
         // 不阻止续费，只是警告
       }
 
-      // 3. 计算续费价格
-      const zone = process.env.PROXY_985_ZONE || '';
-      const static_proxy_type = proxy.ipType === 'native' ? 'premium' : 'shared';
+      // 3. 计算续费价格（使用PricingService，支持用户特定价格覆盖）
+      const productType = proxy.ipType === 'native' ? 'static-residential-native' : 'static-residential';
+      const priceResult = await this.pricingService.calculatePrice({
+        productType,
+        buyData: [{ country_code: proxy.country, city_name: proxy.cityName, count: 1 }],
+        timePeriod: duration,
+      }, parseInt(userId)); // ✅ 传递userId以应用用户特定价格覆盖
       
-      const priceResponse = await this.proxy985Service.calculatePrice({
-        action: 'renew',
-        time_period: duration,
-        zone,
-        renew_ip_list: [ip],
-      });
-
-      if (priceResponse.code !== 0) {
-        throw new BadRequestException(`价格计算失败: ${priceResponse.msg}`);
-      }
-
-      const renewalCost = parseFloat(priceResponse.data.pay_price || '0');
+      const renewalCost = priceResult.totalPrice;
+      
+      // 准备985Proxy续费所需的zone参数
+      const zone = process.env.PROXY_985_ZONE || '';
 
       // 4. 验证用户余额（支持赠送余额）
       const user = await queryRunner.manager.findOne(User, { 
@@ -862,13 +858,13 @@ export class StaticProxyService {
         throw new NotFoundException('代理不存在或无权操作');
       }
 
-      // Step 2: 计算续费金额（使用PricingService）
+      // Step 2: 计算续费金额（使用PricingService，支持用户特定价格覆盖）
       const productType = proxy.ipType === 'native' ? 'static-residential-native' : 'static-residential';
       const priceResult = await this.pricingService.calculatePrice({
         productType,
         buyData: [{ country_code: proxy.country, city_name: proxy.cityName, count: 1 }],
         timePeriod: duration,
-      });
+      }, parseInt(userId)); // ✅ 传递userId以应用用户特定价格覆盖
       const renewalPrice = priceResult.totalPrice;
 
       this.logger.log(`[Renew] Price: $${renewalPrice} (${duration} days)`);
@@ -884,11 +880,28 @@ export class StaticProxyService {
         throw new BadRequestException(`余额不足。当前余额: $${userBalance.toFixed(2)}, 需要: $${renewalPrice.toFixed(2)}`);
       }
 
-      // Step 4: 扣费
+      // Step 4: 调用985Proxy续费API
+      this.logger.log(`💰 [Renew] Calling 985Proxy API to renew IP: ${proxy.ip}`);
+      
+      const zone = process.env.PROXY_985_ZONE || '';
+      const renewResponse = await this.proxy985Service.renewStaticProxy({
+        zone,
+        time_period: duration,
+        renew_ip_list: [proxy.ip],
+        pay_type: 'balance',
+      });
+
+      if (renewResponse.code !== 0) {
+        throw new BadRequestException(`985Proxy续费失败: ${renewResponse.msg}`);
+      }
+
+      this.logger.log(`✅ [Renew] 985Proxy renewal successful!`);
+
+      // Step 5: 扣费
       user.balance = (userBalance - renewalPrice).toFixed(2) as any;
       await queryRunner.manager.save(User, user);
 
-      // Step 5: 更新代理到期时间
+      // Step 6: 更新代理到期时间
       const currentExpiry = new Date(proxy.expireTimeUtc);
       const now = new Date();
       // 如果当前未过期，从到期时间续费；如果已过期，从现在续费
@@ -896,7 +909,7 @@ export class StaticProxyService {
       proxy.expireTimeUtc = new Date(baseDate.getTime() + duration * 24 * 60 * 60 * 1000);
       await queryRunner.manager.save(StaticProxy, proxy);
 
-      // Step 6: 创建订单记录
+      // Step 7: 创建订单记录
       const orderNo = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       const order = queryRunner.manager.create(Order, {
         orderNo,
@@ -908,7 +921,7 @@ export class StaticProxyService {
       });
       await queryRunner.manager.save(Order, order);
 
-      // Step 7: 创建交易记录
+      // Step 8: 创建交易记录
       const transaction = queryRunner.manager.create(Transaction, {
         userId: parseInt(userId),
         transactionNo: `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -923,7 +936,7 @@ export class StaticProxyService {
       });
       await queryRunner.manager.save(Transaction, transaction);
 
-      // Step 8: 记录事件日志
+      // Step 9: 记录事件日志
       await this.eventLogService.createLog(
         parseInt(userId),
         'IP续费',

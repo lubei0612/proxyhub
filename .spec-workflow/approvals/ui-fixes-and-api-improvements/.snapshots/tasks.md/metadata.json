@@ -1,0 +1,22 @@
+{
+  "filePath": ".spec-workflow/specs/ui-fixes-and-api-improvements/tasks.md",
+  "currentVersion": 2,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-10T06:48:41.494Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762757321444_oelr3c3ll",
+      "approvalTitle": "UI修复和API改进 - 任务列表"
+    },
+    {
+      "version": 2,
+      "filename": "snapshot-002.json",
+      "timestamp": "2025-11-10T06:48:48.713Z",
+      "trigger": "approved",
+      "approvalId": "approval_1762757321444_oelr3c3ll",
+      "approvalTitle": "UI修复和API改进 - 任务列表"
+    }
+  ]
+}

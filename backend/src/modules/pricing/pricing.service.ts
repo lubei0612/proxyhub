@@ -153,57 +153,65 @@ export class PricingService implements OnModuleInit {
 
   /**
    * 计算价格（应用基础价格 + 覆盖价格）- 优化版本（带缓存）
+   * @param dto 价格计算参数
+   * @param userId 可选：用户ID，用于应用用户特定价格覆盖
    */
-  async calculatePrice(dto: CalculatePriceDto) {
-    this.logger.log(`[Calculate Price] Product: ${dto.productType}, Time: ${dto.timePeriod} days`);
+  async calculatePrice(dto: CalculatePriceDto, userId?: number) {
+    this.logger.log(`[Calculate Price] Product: ${dto.productType}, Time: ${dto.timePeriod} days, User: ${userId || 'N/A'}`);
 
-    // 1. 尝试从缓存获取价格配置
-    const cacheKey = `price:${dto.productType}`;
-    let priceData = this.priceCache.get(cacheKey);
-    
-    if (!priceData || Date.now() - priceData.timestamp > this.CACHE_TTL) {
-      this.logger.log(`[Cache Miss] Loading price data for ${dto.productType}`);
-      
-      // 2. 并行查询基础价格和覆盖价格（性能优化）
-      const [priceConfig, overrides] = await Promise.all([
-        this.priceConfigRepo.findOne({
-          where: { productType: dto.productType, isActive: true },
-        }),
-        this.priceOverrideRepo.find({
-          where: { isActive: true },
-        }),
-      ]);
+    // 1. 获取价格配置
+    const priceConfig = await this.priceConfigRepo.findOne({
+      where: { productType: dto.productType, isActive: true },
+    });
 
-      if (!priceConfig) {
-        throw new NotFoundException(`Price config not found for ${dto.productType}`);
-      }
-
-      priceData = {
-        priceConfig,
-        overrides,
-        timestamp: Date.now(),
-      };
-      
-      this.priceCache.set(cacheKey, priceData);
-      this.logger.log(`[Cache Updated] Price data cached for ${dto.productType}`);
-    } else {
-      this.logger.log(`[Cache Hit] Using cached price data for ${dto.productType}`);
+    if (!priceConfig) {
+      throw new NotFoundException(`Price config not found for ${dto.productType}`);
     }
 
-    // 3. 构建覆盖价格Map（O(1)查找，性能优化）
+    // 2. 查询价格覆盖（全局 + 用户特定）
+    const whereConditions: any[] = [
+      { priceConfigId: priceConfig.id, userId: null, isActive: true }, // 全局覆盖
+    ];
+    
+    if (userId) {
+      whereConditions.push({ priceConfigId: priceConfig.id, userId, isActive: true }); // 用户特定覆盖
+    }
+
+    const overrides = await this.priceOverrideRepo.find({
+      where: whereConditions,
+    });
+
+    this.logger.log(`[Calculate Price] Found ${overrides.length} overrides (${overrides.filter(o => o.userId === null).length} global, ${overrides.filter(o => o.userId === userId).length} user-specific)`);
+
+    // 3. 构建覆盖价格Map（优先级：用户特定 > 全局）
     const overrideMap = new Map<string, number>();
-    priceData.overrides
-      .filter((o: any) => o.priceConfigId === priceData.priceConfig.id)
+    
+    // 先添加全局覆盖
+    overrides
+      .filter((o: any) => o.userId === null)
       .forEach((o: any) => {
         const key = o.cityName 
           ? `${o.countryCode}:${o.cityName}`
           : o.countryCode;
         overrideMap.set(key, parseFloat(o.overridePrice as any));
       });
+    
+    // 再添加用户特定覆盖（会覆盖全局设置）
+    if (userId) {
+      overrides
+        .filter((o: any) => o.userId === userId)
+        .forEach((o: any) => {
+          const key = o.cityName 
+            ? `${o.countryCode}:${o.cityName}`
+            : o.countryCode;
+          overrideMap.set(key, parseFloat(o.overridePrice as any));
+          this.logger.log(`[Calculate Price] Applied user-specific override: ${key} = $${o.overridePrice}`);
+        });
+    }
 
     // 4. 并行计算所有项目价格（性能优化）
     const months = dto.timePeriod / 30;
-    const basePrice = parseFloat(priceData.priceConfig.basePrice as any);
+    const basePrice = parseFloat(priceConfig.basePrice as any);
     
     const breakdown = dto.buyData.map((item) => {
       // 查找价格（城市级 > 国家级 > 基础价格）
@@ -797,10 +805,10 @@ export class PricingService implements OnModuleInit {
           city: item.city_name || 'All Cities',
           ipType: 'shared',
           ipTypeName: '普通IP',
-          defaultPrice: parseFloat(item.unit_price || '0'),
+          defaultPrice: parseFloat(item.price || item.unit_price || '0'),
           globalOverridePrice: globalOverride ? parseFloat(globalOverride.overridePrice.toString()) : null,
           userOverridePrice: userOverride ? parseFloat(userOverride.overridePrice.toString()) : null,
-          stock: parseInt(item.inventory_num || '0'),
+          stock: parseInt(item.number || item.inventory_num || '0'),
         });
       }
     }
@@ -825,10 +833,10 @@ export class PricingService implements OnModuleInit {
           city: item.city_name || 'All Cities',
           ipType: 'premium',
           ipTypeName: '原生IP',
-          defaultPrice: parseFloat(item.unit_price || '0'),
+          defaultPrice: parseFloat(item.price || item.unit_price || '0'),
           globalOverridePrice: globalOverride ? parseFloat(globalOverride.overridePrice.toString()) : null,
           userOverridePrice: userOverride ? parseFloat(userOverride.overridePrice.toString()) : null,
-          stock: parseInt(item.inventory_num || '0'),
+          stock: parseInt(item.number || item.inventory_num || '0'),
         });
       }
     }

@@ -1,0 +1,12 @@
+{
+  "id": "approval_1762188207674_olvmaje7c",
+  "title": "需求文档：本地流程集成测试",
+  "filePath": ".spec-workflow/specs/local-flow-integration/requirements.md",
+  "type": "document",
+  "status": "approve",
+  "createdAt": "2025-11-03T16:43:27.674Z",
+  "category": "spec",
+  "categoryName": "local-flow-integration",
+  "response": "通过仪表板批准",
+  "respondedAt": "2025-11-06T02:19:40.633Z"
+}

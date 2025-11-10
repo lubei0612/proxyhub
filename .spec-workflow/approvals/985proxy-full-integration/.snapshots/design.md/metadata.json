@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/985proxy-full-integration/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-06T02:21:49.740Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762395709726_ksbhh5gaq",
+      "approvalTitle": "Design: 985Proxy Full API Integration"
+    }
+  ]
+}

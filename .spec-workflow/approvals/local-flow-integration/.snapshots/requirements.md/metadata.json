@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/local-flow-integration/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-03T16:43:27.687Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762188207674_olvmaje7c",
+      "approvalTitle": "需求文档：本地流程集成测试"
+    }
+  ]
+}

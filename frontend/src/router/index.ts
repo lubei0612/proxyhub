@@ -8,7 +8,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/auth/Auth.vue'),
+    component: () => import('@/views/auth/Login.vue'),
     meta: { 
       title: '登录',
       public: true 
@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/auth/Auth.vue'),
+    component: () => import('@/views/auth/Register.vue'),
     meta: { 
       title: '注册',
       public: true 

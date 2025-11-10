@@ -211,7 +211,7 @@
           :loading="purchasing"
           @click="handlePurchase"
         >
-          {{ purchasing ? '正在连接985Proxy...' : '确认购买' }}
+          {{ purchasing ? '正在处理...' : '确认购买' }}
         </el-button>
       </div>
     </template>

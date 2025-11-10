@@ -10,3 +10,5 @@ if ($envContent -match 'PROXY_985_API_KEY=(.+)') {
     Write-Host "❌ 未找到PROXY_985_API_KEY配置"
 }
 
+
+

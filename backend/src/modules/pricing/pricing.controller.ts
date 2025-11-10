@@ -15,6 +15,7 @@ import { PricingService } from './pricing.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CalculatePriceDto } from './dto/calculate-price.dto';
 import { CreatePriceOverrideDto, UpdatePriceOverrideDto } from './dto/create-price-override.dto';
 import { UpdatePriceConfigDto } from './dto/update-price-config.dto';
@@ -27,11 +28,12 @@ export class PricingController {
 
   /**
    * 计算价格（用户端）
+   * 会自动应用当前用户的价格覆盖
    */
   @Post('calculate')
   @UseGuards(JwtAuthGuard)
-  async calculatePrice(@Body() dto: CalculatePriceDto) {
-    return this.pricingService.calculatePrice(dto);
+  async calculatePrice(@Body() dto: CalculatePriceDto, @CurrentUser() user: any) {
+    return this.pricingService.calculatePrice(dto, user?.id);
   }
 
   /**

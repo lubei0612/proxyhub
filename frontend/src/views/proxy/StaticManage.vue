@@ -246,7 +246,7 @@
               type="primary"
               size="small"
               @click="handleRenew(row)"
-              :disabled="row.status === 'active' && !isExpiringSoon(row.expireTimeUtc)"
+              :disabled="row.status !== 'active'"
             >
               续费
             </el-button>

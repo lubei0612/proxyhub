@@ -1,10 +1,10 @@
 <template>
-  <div class="account-center-container responsive-container">
-    <h1 class="text-responsive">账户中心</h1>
+  <div class="account-center-container">
+    <h1>账户中心</h1>
 
-    <el-row :gutter="20" class="flex-responsive">
-      <!-- 左侧：账户信息 -->
-      <el-col :span="16">
+    <el-row :gutter="20">
+      <!-- 左侧：账户信息 (60%) -->
+      <el-col :span="14">
         <!-- 基本信息 -->
         <el-card shadow="hover" class="info-card">
           <template #header>
@@ -105,8 +105,8 @@
         </el-card>
       </el-col>
 
-      <!-- 右侧：快捷操作和客服 -->
-      <el-col :span="8">
+      <!-- 右侧：快捷操作和客服 (40%) -->
+      <el-col :span="10">
         <!-- 快捷操作 -->
         <el-card shadow="hover" class="quick-actions-card">
           <template #header>
@@ -316,12 +316,16 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .account-center-container {
+  max-width: 100%;
+  overflow-x: hidden;
+  
   h1 {
     margin: 0 0 20px 0;
     color: #303133;
     font-size: 24px;
     font-weight: 600;
   }
+
 
   .card-header {
     display: flex;
