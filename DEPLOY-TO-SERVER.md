@@ -57,14 +57,14 @@ ssh -i /path/to/your/key.pem root@YOUR_SERVER_IP
 
 ```bash
 # 下载并运行部署脚本
-bash <(curl -s https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/proxyhub/main/deploy-server.sh)
+bash <(curl -s https://raw.githubusercontent.com/lubei0612/proxyhub/master/deploy-server.sh)
 ```
 
 **或者分步执行：**
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/YOUR_GITHUB_USERNAME/proxyhub.git
+git clone https://github.com/lubei0612/proxyhub.git
 cd proxyhub
 
 # 2. 运行部署脚本

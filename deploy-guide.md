@@ -61,10 +61,10 @@ docker compose version
 
 ```bash
 # 1. 下载部署脚本
-wget https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/proxyhub/main/deploy-server.sh
+wget https://raw.githubusercontent.com/lubei0612/proxyhub/master/deploy-server.sh
 
 # 或使用 curl
-curl -O https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/proxyhub/main/deploy-server.sh
+curl -O https://raw.githubusercontent.com/lubei0612/proxyhub/master/deploy-server.sh
 
 # 2. 赋予执行权限
 chmod +x deploy-server.sh
@@ -90,7 +90,7 @@ bash deploy-server.sh
 
 ```bash
 # 克隆项目
-git clone YOUR_GITHUB_REPO_URL
+git clone https://github.com/lubei0612/proxyhub.git
 cd proxyhub
 ```
 

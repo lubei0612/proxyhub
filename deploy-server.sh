@@ -44,8 +44,8 @@ if [ -d "proxyhub" ]; then
     git pull origin main || git pull origin master
 else
     echo "克隆项目..."
-    # 替换为您的 GitHub 仓库地址
-    git clone YOUR_GITHUB_REPO_URL proxyhub
+    # ProxyHub GitHub 仓库
+    git clone https://github.com/lubei0612/proxyhub.git proxyhub
     cd proxyhub
 fi
 echo -e "${GREEN}✅ 代码获取完成${NC}"

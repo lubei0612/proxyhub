@@ -132,14 +132,14 @@ docker-compose logs -f
 
 ```bash
 # 一键部署
-bash <(curl -s https://raw.githubusercontent.com/YOUR_USERNAME/proxyhub/main/deploy-server.sh)
+bash <(curl -s https://raw.githubusercontent.com/lubei0612/proxyhub/master/deploy-server.sh)
 ```
 
 #### 2. 手动部署
 
 ```bash
 # 克隆代码
-git clone https://github.com/YOUR_USERNAME/proxyhub.git
+git clone https://github.com/lubei0612/proxyhub.git
 cd proxyhub
 
 # 配置环境
