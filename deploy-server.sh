@@ -54,40 +54,51 @@ echo ""
 # 配置环境变量
 echo -e "${YELLOW}[3/8] 配置环境变量...${NC}"
 if [ ! -f ".env" ]; then
-    # 优先使用服务器专用配置
-    if [ -f "server.env.template" ]; then
-        echo "使用服务器预配置..."
-        cp server.env.template .env
-        echo -e "${GREEN}✅ 已使用预配置的环境变量${NC}"
-    elif [ -f "env.production.template" ]; then
-        echo "使用生产环境配置模板..."
-        cp env.production.template .env
-        echo -e "${YELLOW}⚠️  请编辑 .env 文件，填入真实的配置信息！${NC}"
-        echo -e "${YELLOW}⚠️  必须配置项：${NC}"
-        echo "   - DATABASE_PASSWORD"
-        echo "   - JWT_SECRET (至少32字符)"
-        echo "   - PROXY_985_API_KEY"
-        echo "   - PROXY_985_ZONE"
-        echo "   - MAIL_USER / MAIL_PASSWORD"
-        echo "   - FRONTEND_URL"
-        echo "   - CORS_ORIGINS"
-        echo ""
-        read -p "是否现在编辑 .env 文件？(y/n) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            ${EDITOR:-nano} .env
-        else
-            echo -e "${RED}请手动编辑 .env 文件后再继续部署！${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${RED}❌ 未找到配置模板！${NC}"
-        exit 1
-    fi
+    echo "创建环境配置文件..."
+    cat > .env << 'ENVEOF'
+NODE_ENV=production
+LOG_LEVEL=info
+PORT=3000
+API_PREFIX=/api/v1
+
+DATABASE_HOST=postgres
+DATABASE_PORT=5432
+DATABASE_USER=postgres
+DATABASE_PASSWORD=ProxyHub2025_Secure_DB_Password
+DATABASE_NAME=proxyhub
+DATABASE_SYNC=false
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
+
+JWT_SECRET=WILL_BE_GENERATED
+JWT_EXPIRES_IN=2h
+JWT_REFRESH_EXPIRES_IN=7d
+
+PROXY_985_API_KEY=ne_hj06qomI-bmVfaGowNnFvbUk0YzIzMTc2MTQ1Nzk1Mw==
+PROXY_985_BASE_URL=https://open-api.985proxy.com
+PROXY_985_ZONE=6jd4ftbl7kv3
+PROXY_985_TEST_MODE=false
+
+MAIL_HOST=smtp.office365.com
+MAIL_PORT=587
+MAIL_USER=RobinsonKevin5468@outlook.com
+MAIL_PASSWORD=ugfqftyq60695
+MAIL_FROM=ProxyHub <noreply@proxyhub.com>
+
+MAIL_HOST_BACKUP=smtp.gmail.com
+MAIL_PORT_BACKUP=587
+MAIL_USER_BACKUP=chenyuqi061245@gmail.com
+MAIL_PASSWORD_BACKUP=vvdgyeerdtycwxka
+
+FRONTEND_URL=http://$(hostname -I | awk '{print $1}')
+CORS_ORIGINS=http://$(hostname -I | awk '{print $1}')
+ENVEOF
+    echo -e "${GREEN}✅ 环境配置文件已创建${NC}"
 else
     echo ".env 文件已存在"
 fi
-echo -e "${GREEN}✅ 环境变量配置完成${NC}"
 echo ""
 
 # 生成强 JWT_SECRET（如果需要）
