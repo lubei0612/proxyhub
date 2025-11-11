@@ -85,8 +85,8 @@ export const environmentSchema = Joi.object({
   MAIL_PASSWORD_BACKUP: Joi.string().allow('').optional(),
 
   // Telegram Configuration (Optional)
-  TELEGRAM_BOT_TOKEN: Joi.string().optional(),
-  TELEGRAM_BOT_USERNAME: Joi.string().optional(),
+  TELEGRAM_BOT_TOKEN: Joi.string().allow('').optional(),
+  TELEGRAM_BOT_USERNAME: Joi.string().allow('').optional(),
 
   // Frontend Configuration
   FRONTEND_URL: Joi.string().uri().default('http://localhost:8080'),
