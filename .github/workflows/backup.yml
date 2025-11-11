@@ -1,0 +1,24 @@
+name: Database Backup
+
+on:
+  schedule:
+    # 每天 UTC 18:00 (北京时间凌晨 02:00)
+    - cron: '0 18 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Execute Backup on Server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          cd ~/proxyhub
+          bash scripts/db-backup.sh
+          echo "✅ Backup completed successfully"
+
