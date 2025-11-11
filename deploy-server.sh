@@ -54,7 +54,12 @@ echo ""
 # 配置环境变量
 echo -e "${YELLOW}[3/8] 配置环境变量...${NC}"
 if [ ! -f ".env" ]; then
-    if [ -f "env.production.template" ]; then
+    # 优先使用服务器专用配置
+    if [ -f "server.env.template" ]; then
+        echo "使用服务器预配置..."
+        cp server.env.template .env
+        echo -e "${GREEN}✅ 已使用预配置的环境变量${NC}"
+    elif [ -f "env.production.template" ]; then
         echo "使用生产环境配置模板..."
         cp env.production.template .env
         echo -e "${YELLOW}⚠️  请编辑 .env 文件，填入真实的配置信息！${NC}"
@@ -76,7 +81,7 @@ if [ ! -f ".env" ]; then
             exit 1
         fi
     else
-        echo -e "${RED}❌ 未找到 .env.production 模板！${NC}"
+        echo -e "${RED}❌ 未找到配置模板！${NC}"
         exit 1
     fi
 else
