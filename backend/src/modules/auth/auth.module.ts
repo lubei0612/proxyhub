@@ -20,9 +20,10 @@ import { NotificationModule } from '../notification/notification.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'proxyhub-super-secret-key-change-in-production-2025',
+        // ✅ No default value - application will fail to start if JWT_SECRET is not configured
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '2h',
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '2h'),
         },
       }),
     }),

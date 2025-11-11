@@ -22,7 +22,7 @@
 
         <!-- 主标题 -->
         <div class="brand-title">
-          <h1>ProxyHub</h1>
+      <h1>ProxyHub</h1>
           <div class="brand-slogan">
             <span>安全</span>
             <span>快速</span>
@@ -83,20 +83,20 @@
             </el-form-item>
 
             <el-form-item label="移动电话" prop="phone">
-              <el-input
+          <el-input
                 v-model="registerForm.phone"
                 placeholder="请输入移动电话"
-                size="large"
-              />
-            </el-form-item>
+            size="large"
+          />
+        </el-form-item>
 
             <el-form-item label="电子邮箱" prop="email" required>
-              <el-input
+          <el-input
                 v-model="registerForm.email"
                 placeholder="请输入电子邮箱"
-                size="large"
-              />
-            </el-form-item>
+            size="large"
+          />
+        </el-form-item>
 
             <el-form-item label="验证码" prop="code">
               <div class="code-input-group">
@@ -117,22 +117,22 @@
             </el-form-item>
 
             <el-form-item label="密码" prop="password" required>
-              <el-input
-                v-model="registerForm.password"
+          <el-input
+            v-model="registerForm.password"
                 placeholder="请输入密码"
-                type="password"
-                size="large"
-                show-password
-              />
-            </el-form-item>
+            type="password"
+            size="large"
+            show-password
+          />
+        </el-form-item>
 
             <el-form-item label="邀请码（选填）" prop="inviteCode">
-              <el-input
+          <el-input
                 v-model="registerForm.inviteCode"
                 placeholder="请输入邀请码"
-                size="large"
-              />
-            </el-form-item>
+            size="large"
+          />
+        </el-form-item>
 
             <el-form-item>
               <el-checkbox v-model="registerForm.agree">
@@ -143,18 +143,18 @@
               </el-checkbox>
             </el-form-item>
 
-            <el-form-item>
-              <el-button
-                type="primary"
-                size="large"
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
                 class="submit-btn"
-                :loading="loading"
-                @click="handleRegister"
-              >
-                注册
-              </el-button>
-            </el-form-item>
-          </el-form>
+            :loading="loading"
+            @click="handleRegister"
+          >
+            注册
+          </el-button>
+        </el-form-item>
+      </el-form>
 
           <div class="form-footer">
             <router-link to="/login">返回登录</router-link>
@@ -165,7 +165,7 @@
           </p>
         </div>
       </div>
-    </div>
+      </div>
   </div>
 </template>
 
@@ -212,14 +212,14 @@ const handleSendCode = async () => {
     ElMessage.warning('请先输入邮箱');
     return;
   }
-
+  
   // 验证邮箱格式
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(registerForm.email)) {
     ElMessage.warning('请输入有效的邮箱地址');
     return;
   }
-
+  
   codeSending.value = true;
   try {
     await request({
@@ -253,26 +253,26 @@ const handleRegister = async () => {
     ElMessage.warning('请阅读并同意服务条款和购买政策');
     return;
   }
-
+  
   try {
     await formRef.value.validate();
   } catch {
     return;
   }
-
+  
   loading.value = true;
   try {
     await request({
       url: '/auth/register',
       method: 'post',
       data: {
-        email: registerForm.email,
-        password: registerForm.password,
+      email: registerForm.email,
+      password: registerForm.password,
         nickname: registerForm.nickname,
         phone: registerForm.phone,
       },
     });
-
+    
     ElMessage.success('注册成功，请登录');
     router.push('/login');
   } catch (error: any) {
@@ -320,7 +320,7 @@ const handleRegister = async () => {
       animation: breathe 3s ease-in-out infinite;
 
       .logo-svg {
-        width: 100%;
+  width: 100%;
         height: 100%;
         filter: drop-shadow(0 4px 12px rgba(74, 158, 255, 0.4));
       }
@@ -360,7 +360,7 @@ const handleRegister = async () => {
     .brand-slogan {
       display: flex;
       gap: 30px;
-      font-size: 32px;
+    font-size: 32px;
       font-weight: 300;
       color: rgba(255, 255, 255, 0.95);
       
@@ -377,7 +377,7 @@ const handleRegister = async () => {
           width: 1px;
           height: 24px;
           background: rgba(255, 255, 255, 0.3);
-        }
+  }
       }
     }
   }
@@ -456,13 +456,13 @@ const handleRegister = async () => {
       gap: 5px;
       color: #666;
       cursor: pointer;
-      font-size: 14px;
+    font-size: 14px;
 
       &:hover {
         color: #1677ff;
       }
-    }
   }
+}
 
   /* 表单包装器 */
   .form-wrapper {
@@ -476,7 +476,7 @@ const handleRegister = async () => {
     }
 
     /* 表单 */
-    .register-form {
+.register-form {
       :deep(.el-form-item__label) {
         font-weight: 500;
         color: #333;
@@ -492,7 +492,7 @@ const handleRegister = async () => {
         &.is-focus {
           box-shadow: 0 0 0 1px #1677ff inset;
         }
-      }
+}
 
       .code-input-group {
         display: flex;
@@ -535,16 +535,16 @@ const handleRegister = async () => {
     /* 表单底部 */
     .form-footer {
       text-align: center;
-      margin-top: 20px;
+  margin-top: 20px;
 
-      a {
+  a {
         color: #1677ff;
-        text-decoration: none;
+    text-decoration: none;
         font-size: 14px;
 
-        &:hover {
-          text-decoration: underline;
-        }
+    &:hover {
+      text-decoration: underline;
+    }
       }
     }
 

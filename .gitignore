@@ -59,3 +59,18 @@ redis-data/
 TODO.md
 NOTES.md
 *.draft.md
+
+# Sensitive files
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
+.env.backup
+
+# Spec workflow (if not needed in production)
+# .spec-workflow/
+
+# Archive folders (if not needed)
+docs-archive/
+docs-spec-workflow/

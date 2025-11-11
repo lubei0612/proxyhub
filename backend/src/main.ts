@@ -1,24 +1,28 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { ConfigValidator } from './common/security/config-validator';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { HelmetConfigurer } from './common/security/helmet-config';
+import { EnhancedCorsOptions } from './common/security/cors-config';
 
 async function bootstrap() {
+  // ✅ Validate configuration BEFORE creating the app
+  // This ensures application won't start with invalid or missing configuration
+  ConfigValidator.validateConfig();
+
   const app = await NestFactory.create(AppModule);
 
   // 全局前缀
   app.setGlobalPrefix('api/v1');
 
-  // CORS - 允许 localhost 和 127.0.0.1
-  app.enableCors({
-    origin: [
-      'http://localhost:8080',
-      'http://127.0.0.1:8080',
-      'http://localhost:8081',
-      'http://127.0.0.1:8081',
-    ],
-    credentials: true,
-  });
+  // ✅ Security headers with Helmet (applied BEFORE CORS)
+  app.use(helmet(HelmetConfigurer.getConfig()));
+
+  // ✅ Environment-aware CORS configuration
+  app.enableCors(EnhancedCorsOptions.getOptions());
 
   // 全局验证管道
   app.useGlobalPipes(
@@ -28,6 +32,10 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  // ✅ Global exception filter (registered AFTER ValidationPipe)
+  // Catches all exceptions and returns standardized error responses
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Swagger文档
   const config = new DocumentBuilder()

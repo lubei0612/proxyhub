@@ -145,7 +145,7 @@
       <div class="dialog-footer">
         <el-button @click="handleClose">关闭</el-button>
         <el-button type="primary" :icon="Download" @click="handleExport" :loading="exporting">
-          导出Excel
+          导出CSV
         </el-button>
       </div>
     </template>

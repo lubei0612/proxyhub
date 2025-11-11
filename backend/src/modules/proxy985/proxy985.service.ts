@@ -1,4 +1,5 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 
 @Injectable()
@@ -8,10 +9,11 @@ export class Proxy985Service {
   private readonly apiKey: string;
   private readonly baseURL: string;
 
-  constructor() {
-    // 从环境变量获取API Key和Base URL
-    this.apiKey = process.env.PROXY_985_API_KEY || 'ne_hj06qomI-bmVfaGowNnFvbUk0YzIzMTc2MTQ1Nzk1Mw==';
-    this.baseURL = process.env.PROXY_985_BASE_URL || 'https://open-api.985proxy.com';
+  constructor(private readonly configService: ConfigService) {
+    // ✅ Use ConfigService.getOrThrow to ensure API key is configured
+    // No default value - application will fail to start if not set
+    this.apiKey = this.configService.getOrThrow<string>('PROXY_985_API_KEY');
+    this.baseURL = this.configService.get<string>('PROXY_985_BASE_URL', 'https://open-api.985proxy.com');
 
     this.client = axios.create({
       baseURL: this.baseURL,

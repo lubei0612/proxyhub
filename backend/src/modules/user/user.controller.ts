@@ -11,6 +11,7 @@ import {
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -51,7 +52,7 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   async changePassword(
     @CurrentUser() user: any,
-    @Body() data: { oldPassword: string; newPassword: string },
+    @Body() data: ChangePasswordDto,
   ) {
     return this.userService.changePassword(
       user.id,

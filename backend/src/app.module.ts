@@ -40,11 +40,11 @@ import { SettingsModule } from './modules/settings/settings.module';
       logging: process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug',
     }),
 
-    // API限流
+    // API限流 - Using default in-memory storage (distributed Redis storage available in RedisThrottlerStorage)
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, // 60秒
-        limit: 100, // 100次请求
+        ttl: 60000, // 60 seconds (in milliseconds)
+        limit: 100, // 100 requests per TTL
       },
     ]),
 

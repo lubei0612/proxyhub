@@ -22,7 +22,7 @@
 
         <!-- 主标题 -->
         <div class="brand-title">
-          <h1>ProxyHub</h1>
+      <h1>ProxyHub</h1>
           <div class="brand-slogan">
             <span>安全</span>
             <span>快速</span>
@@ -92,23 +92,23 @@
             </button>
           </div>
 
-          <el-form :model="loginForm" class="login-form">
+      <el-form :model="loginForm" class="login-form">
             <el-form-item label="邮箱">
-              <el-input
-                v-model="loginForm.email"
+          <el-input
+            v-model="loginForm.email"
                 placeholder="m@example.com"
-                size="large"
-              />
-            </el-form-item>
+            size="large"
+          />
+        </el-form-item>
 
             <el-form-item label="密码" v-if="loginType === 'password'">
-              <el-input
-                v-model="loginForm.password"
+          <el-input
+            v-model="loginForm.password"
                 placeholder="请输入密码"
-                type="password"
-                size="large"
-                show-password
-              />
+            type="password"
+            size="large"
+            show-password
+          />
               <div class="forgot-password">
                 <a href="#">忘记密码？</a>
               </div>
@@ -127,20 +127,20 @@
 
             <el-form-item>
               <el-checkbox v-model="loginForm.remember">记住密码</el-checkbox>
-            </el-form-item>
+        </el-form-item>
 
-            <el-form-item>
-              <el-button
-                type="primary"
-                size="large"
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
                 class="submit-btn"
-                :loading="loading"
-                @click="handleLogin"
-              >
-                登录
-              </el-button>
-            </el-form-item>
-          </el-form>
+            :loading="loading"
+            @click="handleLogin"
+          >
+            登录
+          </el-button>
+        </el-form-item>
+      </el-form>
 
           <div class="form-footer">
             没有账号？<router-link to="/register">立即注册</router-link>
@@ -175,14 +175,14 @@ const handleLogin = async () => {
     ElMessage.warning('请输入邮箱和密码');
     return;
   }
-
+  
   loading.value = true;
   try {
     const success = await userStore.userLogin({
       email: loginForm.email,
       password: loginForm.password,
     });
-
+    
     if (success) {
       // 根据角色跳转
       if (userStore.user?.role === 'admin') {
@@ -236,7 +236,7 @@ const handleLogin = async () => {
       animation: breathe 3s ease-in-out infinite;
 
       .logo-svg {
-        width: 100%;
+  width: 100%;
         height: 100%;
         filter: drop-shadow(0 4px 12px rgba(74, 158, 255, 0.4));
       }
@@ -276,7 +276,7 @@ const handleLogin = async () => {
     .brand-slogan {
       display: flex;
       gap: 30px;
-      font-size: 32px;
+    font-size: 32px;
       font-weight: 300;
       color: rgba(255, 255, 255, 0.95);
       
@@ -293,7 +293,7 @@ const handleLogin = async () => {
           width: 1px;
           height: 24px;
           background: rgba(255, 255, 255, 0.3);
-        }
+  }
       }
     }
   }
@@ -436,7 +436,7 @@ const handleLogin = async () => {
     }
 
     /* 表单 */
-    .login-form {
+.login-form {
       :deep(.el-form-item__label) {
         font-weight: 500;
         color: #333;
@@ -475,7 +475,7 @@ const handleLogin = async () => {
 
         .el-input {
           flex: 1;
-        }
+}
 
         .el-button {
           flex-shrink: 0;
@@ -500,18 +500,18 @@ const handleLogin = async () => {
     /* 表单底部 */
     .form-footer {
       text-align: center;
-      margin-top: 20px;
+  margin-top: 20px;
       color: #666;
-      font-size: 14px;
+  font-size: 14px;
 
-      a {
+  a {
         color: #1677ff;
-        text-decoration: none;
-        margin-left: 5px;
+    text-decoration: none;
+    margin-left: 5px;
 
-        &:hover {
-          text-decoration: underline;
-        }
+    &:hover {
+      text-decoration: underline;
+    }
       }
     }
   }
