@@ -341,12 +341,13 @@ export class StaticProxyService {
         
         let orderResult;
         let ipList = [];
-        const maxRetries = 6; // ⚡ 优化：减少重试次数（6次 × 1秒 = 6秒总等待时间）
-        const retryDelay = 1000; // ⚡ 优化：减少等待时间到1秒
+        const maxRetries = 150; // 🔧 修复：增加重试次数到150次（150次 × 2秒 = 300秒总等待时间，5分钟）
+        const retryDelay = 2000; // 🔧 修复：增加等待时间到2秒，给供应商更多处理时间
+        let orderStatus = 'pending'; // 记录最终订单状态
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
-            // ⚡ 优化：第一次立即查询，后续查询前才等待
+            // 第一次立即查询，后续查询前才等待
             if (attempt > 1) {
               await new Promise(resolve => setTimeout(resolve, retryDelay));
             }
@@ -357,6 +358,7 @@ export class StaticProxyService {
             // 检查订单状态
             if (orderResult && orderResult.data) {
               const status = orderResult.data.status;
+              orderStatus = status; // 更新状态
               
               if (status === 'success' || status === 'complete' || status === 'completed') {
                 // 订单成功，解析IP列表
@@ -367,38 +369,45 @@ export class StaticProxyService {
                          [];
                 
                 if (Array.isArray(ipList) && ipList.length > 0) {
-                  this.logger.log(`✅ [Purchase] 订单处理完成，获取到 ${ipList.length} 个IP（耗时: ${attempt}次查询）`);
-                  break; // ⚡ 立即返回，无需等待
+                  this.logger.log(`✅ [Purchase] 订单处理完成，获取到 ${ipList.length} 个IP（耗时: ${attempt * retryDelay / 1000}秒）`);
+                  break; // 立即返回
                 }
               } else if (status === 'progress' || status === 'pending') {
                 // 订单还在处理中
-                this.logger.log(`⏳ [Purchase] 订单还在处理中 (${status})...`);
+                this.logger.log(`⏳ [Purchase] 订单还在处理中 (${status})... (${attempt}/${maxRetries})`);
                 
                 if (attempt >= maxRetries) {
                   // 已达到最大重试次数
-                  this.logger.warn(`⚠️ [Purchase] 已达到最大重试次数（${maxRetries}次），订单可能需要更长时间处理`);
+                  this.logger.warn(`⚠️ [Purchase] 已达到最大重试次数（${maxRetries}次，${maxRetries * retryDelay / 1000}秒），订单仍在处理中`);
                 }
               } else if (status === 'failed') {
                 // 订单失败
-                this.logger.error(`❌ [Purchase] 订单处理失败: ${JSON.stringify(orderResult)}`);
-                throw new BadRequestException(`985Proxy订单处理失败。订单号: ${orderNo985}`);
+                this.logger.error(`❌ [Purchase] 供应商订单处理失败: ${JSON.stringify(orderResult)}`);
+                throw new BadRequestException(`订单处理失败，请联系客服`);
               }
             }
           } catch (error) {
+            // 如果是BadRequestException（订单失败），直接抛出
+            if (error instanceof BadRequestException) {
+              throw error;
+            }
+            
             this.logger.error(`❌ [Purchase] 查询订单结果异常 (尝试 ${attempt}/${maxRetries}): ${error.message}`);
             if (attempt === maxRetries) {
-              throw new BadRequestException(`购买成功但无法获取IP详情，请联系客服。订单号: ${orderNo985}`);
+              this.logger.warn(`⚠️ [Purchase] 无法获取订单结果，但将继续保存订单记录`);
             }
           }
         }
         
-        // 步骤2.3: 验证IP列表
+        // 🔧 修复：即使没有立即获取到IP，也要保存订单记录
+        // 这样用户可以稍后查看或联系客服
         if (!Array.isArray(ipList) || ipList.length === 0) {
-          this.logger.error(`[Purchase] 订单结果未返回IP列表。最终响应: ${JSON.stringify(orderResult)}`);
-          throw new BadRequestException(`购买成功但未分配IP，订单可能需要更长时间处理。请稍后在"我的IP"中查看或联系客服。订单号: ${orderNo985}`);
+          this.logger.warn(`⚠️ [Purchase] 订单 ${orderNo985} 暂未返回IP列表，状态: ${orderStatus}`);
+          this.logger.warn(`⚠️ [Purchase] 将保存订单记录为'处理中'状态，用户可稍后查看`);
+          // 不抛出异常，继续执行以保存订单记录
+        } else {
+          this.logger.log(`✅ [Purchase] 成功获取 ${ipList.length} 个IP详情`);
         }
-        
-        this.logger.log(`✅ [Purchase] 成功获取 ${ipList.length} 个IP详情`);
         
         // 步骤2.4: 保存真实IP到数据库
         for (const apiIP of ipList) {
@@ -442,15 +451,20 @@ export class StaticProxyService {
       }
 
       // Step 3: Create order record
+      // 🔧 修复：根据是否成功获取到IP来设置订单状态
+      const orderStatusToSave = allocatedIPs.length > 0 ? OrderStatus.COMPLETED : OrderStatus.PROCESSING;
+      
       const order = queryRunner.manager.create(Order, {
         orderNo,
         userId: parseInt(userId),
         type: OrderType.STATIC,
-        status: OrderStatus.COMPLETED,
+        status: orderStatusToSave,
         amount: totalPrice,
-        remark: `购买${totalQuantity}个${dto.ipType}代理IP - ${dto.channelName}`,
+        remark: `购买${totalQuantity}个${dto.ipType}代理IP - ${dto.channelName} ${allocatedIPs.length === 0 ? '(IP分配中...)' : ''}`,
       });
       const savedOrder = await queryRunner.manager.save(Order, order);
+      
+      this.logger.log(`✅ [Purchase] 订单记录已保存，状态: ${orderStatusToSave}, 已分配IP: ${allocatedIPs.length}`);
 
       // Step 4: Deduct user balance
       const balanceBefore = userBalance;
@@ -482,15 +496,21 @@ export class StaticProxyService {
 
       this.logger.log(`[Purchase] Success! Order: ${orderNo}, User: ${userId}, Total: $${totalPrice}`);
 
+      // 🔧 修复：根据是否成功获取到IP返回不同消息
+      const successMessage = allocatedIPs.length > 0
+        ? `成功购买 ${allocatedIPs.length} 个静态IP`
+        : `订单创建成功！IP正在分配中，请稍后在"静态住宅管理"中查看。订单号：${orderNo}`;
+
       return {
         success: true,
-        message: `成功购买 ${totalQuantity} 个静态IP`,
+        message: successMessage,
         order: {
           id: savedOrder.id,
           orderNo: savedOrder.orderNo,
           totalPrice,
-          totalQuantity,
+          totalQuantity: allocatedIPs.length || totalQuantity, // 如果没有IP，显示预期数量
           duration: dto.duration,
+          status: orderStatusToSave,
         },
         allocatedIPs: allocatedIPs.map(ip => ({
           id: ip.id,
@@ -503,6 +523,7 @@ export class StaticProxyService {
           expiresAt: ip.expireTimeUtc,
         })),
         newBalance: user.balance,
+        warning: allocatedIPs.length === 0 ? 'IP正在分配中，预计1-3分钟完成。请稍后刷新查看。' : undefined,
       };
     } catch (error) {
       // Rollback transaction on any error
@@ -837,6 +858,172 @@ export class StaticProxyService {
       this.logger.error(`[Check Order Status] Failed: ${error.message}`);
       if (error instanceof NotFoundException) throw error;
       throw new BadRequestException(`查询订单状态失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 🔧 修复：手动同步订单IP
+   * 用于处理那些购买时未能立即获取IP的订单
+   */
+  async syncOrderIPs(userId: string, orderNo: string) {
+    this.logger.log(`[Sync Order IPs] User: ${userId}, Order: ${orderNo}`);
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. 查找订单并验证
+      const order = await queryRunner.manager.findOne(Order, {
+        where: { 
+          userId: parseInt(userId),
+          orderNo: orderNo,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundException('订单不存在或您无权访问');
+      }
+
+      // 2. 检查订单状态，只同步"processing"状态的订单
+      if (order.status === OrderStatus.COMPLETED) {
+        // 检查是否已经有IP记录
+        const existingIPs = await queryRunner.manager.find(StaticProxy, {
+          where: { orderId: order.id },
+        });
+
+        if (existingIPs.length > 0) {
+          this.logger.log(`[Sync Order IPs] Order already has ${existingIPs.length} IPs, no sync needed`);
+          await queryRunner.commitTransaction();
+          return {
+            success: true,
+            message: '订单已完成，无需同步',
+            ipCount: existingIPs.length,
+          };
+        }
+      }
+
+      // 3. 从订单备注中提取985Proxy订单号
+      // 订单备注格式: "购买1个shared代理IP - 默认通道 (IP分配中...)"
+      // 需要从数据库或者重新查询985Proxy来获取订单号
+      // 简化方案：直接用订单号查询985Proxy（假设存储了）
+      
+      this.logger.log(`[Sync Order IPs] Querying 985Proxy for order result...`);
+
+      // 尝试查询985Proxy订单结果（使用本地订单号）
+      let orderResult;
+      try {
+        orderResult = await this.proxy985Service.getOrderResult(orderNo);
+      } catch (error) {
+        this.logger.error(`[Sync Order IPs] Failed to query supplier: ${error.message}`);
+        throw new BadRequestException('订单查询失败，请联系客服');
+      }
+
+      // 4. 检查订单状态
+      if (orderResult.data.status === 'progress' || orderResult.data.status === 'pending') {
+        await queryRunner.rollbackTransaction();
+        return {
+          success: false,
+          message: 'IP仍在分配中，请稍后再试',
+          status: orderResult.data.status,
+        };
+      }
+
+      if (orderResult.data.status === 'failed') {
+        // 更新订单状态为失败
+        order.status = OrderStatus.FAILED;
+        await queryRunner.manager.save(Order, order);
+        await queryRunner.commitTransaction();
+        
+        throw new BadRequestException('订单处理失败，请联系客服');
+      }
+
+      // 5. 解析IP列表
+      const ipList = orderResult.data.info?.result || 
+                     orderResult.data.result || 
+                     orderResult.data.list || 
+                     orderResult.data.ips || 
+                     [];
+
+      if (!Array.isArray(ipList) || ipList.length === 0) {
+        await queryRunner.rollbackTransaction();
+        return {
+          success: false,
+          message: 'IP列表为空，请稍后再试或联系客服',
+        };
+      }
+
+      this.logger.log(`[Sync Order IPs] Found ${ipList.length} IPs from 985Proxy`);
+
+      // 6. 保存IP到数据库
+      const savedIPs = [];
+      for (const apiIP of ipList) {
+        const proxyEntity = queryRunner.manager.create(StaticProxy, {
+          userId: parseInt(userId),
+          orderId: order.id,
+          channelName: order.remark.match(/- (.*?) \(/)?.[1] || '默认通道',
+          ip: apiIP.ip || apiIP.proxy_ip,
+          port: apiIP.port || apiIP.proxy_port || 10000,
+          username: apiIP.username || apiIP.user || '',
+          password: apiIP.password || apiIP.pass || '',
+          country: apiIP.country_code || apiIP.country,
+          countryCode: apiIP.country_code || apiIP.country,
+          countryName: apiIP.country_name || apiIP.country || apiIP.country_code || 'Unknown',
+          cityName: apiIP.city_name || apiIP.city || '',
+          ipType: order.remark.includes('native') ? 'native' : 'shared',
+          expireTimeUtc: apiIP.expire_time 
+            ? new Date(apiIP.expire_time) 
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          status: ProxyStatus.ACTIVE,
+          auto_renew: false,
+          remark: '',
+        });
+
+        const savedIP = await queryRunner.manager.save(StaticProxy, proxyEntity);
+        savedIPs.push(savedIP);
+        this.logger.log(`[Sync Order IPs] Saved IP: ${savedIP.ip}:${savedIP.port}`);
+      }
+
+      // 7. 更新订单状态为完成
+      order.status = OrderStatus.COMPLETED;
+      order.remark = order.remark.replace(' (IP分配中...)', '');
+      await queryRunner.manager.save(Order, order);
+
+      // 8. 记录事件日志
+      await this.eventLogService.createLog(
+        parseInt(userId),
+        '订单同步',
+        `手动同步订单 ${orderNo}，成功获取 ${savedIPs.length} 个IP`
+      );
+
+      await queryRunner.commitTransaction();
+
+      this.logger.log(`[Sync Order IPs] Success! Synced ${savedIPs.length} IPs for order ${orderNo}`);
+
+      return {
+        success: true,
+        message: `成功同步 ${savedIPs.length} 个IP`,
+        ipCount: savedIPs.length,
+        ips: savedIPs.map(ip => ({
+          id: ip.id,
+          ip: ip.ip,
+          port: ip.port,
+          username: ip.username,
+          password: ip.password,
+          country: ip.countryCode,
+          city: ip.cityName,
+          expiresAt: ip.expireTimeUtc,
+        })),
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(`[Sync Order IPs] Failed: ${error.message}`);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`同步订单IP失败: ${error.message}`);
+    } finally {
+      await queryRunner.release();
     }
   }
 

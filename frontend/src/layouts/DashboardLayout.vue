@@ -44,11 +44,10 @@
           <span>专线代理</span>
         </el-menu-item>
 
-        <!-- 移动代理（未开发） -->
-        <el-menu-item index="/proxy/mobile" disabled>
+        <!-- 移动代理 -->
+        <el-menu-item index="/proxy/mobile">
           <el-icon><Iphone /></el-icon>
           <span>移动代理</span>
-          <el-tag size="small" type="info" style="margin-left: 10px">未开发</el-tag>
         </el-menu-item>
 
         <!-- 钱包充值 -->

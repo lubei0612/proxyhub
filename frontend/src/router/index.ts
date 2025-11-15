@@ -104,11 +104,11 @@ const routes: RouteRecordRaw[] = [
           group: 'dedicated-proxy', // 独立分组
         },
       },
-      // 移动代理（占位）
+      // 移动代理
       {
         path: 'proxy/mobile',
         name: 'MobileProxy',
-        component: () => import('@/views/proxy/MobilePlaceholder.vue'),
+        component: () => import('@/views/proxy/MobileProxy.vue'),
         meta: {
           title: '移动代理',
           icon: 'Cellphone',

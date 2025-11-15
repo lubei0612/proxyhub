@@ -176,6 +176,18 @@ export class StaticProxyController {
   }
 
   /**
+   * 🔧 修复：手动同步订单IP
+   * 用于处理那些购买时未能立即获取IP的订单
+   */
+  @Post('order/:orderNo/sync')
+  async syncOrderIPs(
+    @CurrentUser() user: any,
+    @Param('orderNo') orderNo: string,
+  ) {
+    return this.staticProxyService.syncOrderIPs(user.id, orderNo);
+  }
+
+  /**
    * 续费静态代理
    */
   @Post(':id/renew')

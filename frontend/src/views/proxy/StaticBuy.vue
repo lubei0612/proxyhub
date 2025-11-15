@@ -536,7 +536,7 @@ const handleSubmit = async () => {
 
     // ⚡ 优化：显示友好的进度提示
     ElMessage.info({
-      message: '🚀 正在购买IP，请稍候（预计3-6秒）...',
+      message: '🚀 正在为您分配IP，请稍候（预计1-3分钟）...',
       duration: 0, // 不自动关闭
       showClose: false,
     });

@@ -416,9 +416,9 @@ const handlePurchase = async () => {
         message: errorMessage + ' - 请减少购买数量或选择其他地区',
         duration: 5000,
       });
-    } else if (errorMessage.includes('985Proxy')) {
+    } else if (errorMessage.includes('供应商') || errorMessage.includes('系统')) {
       ElMessage.error({
-        message: errorMessage + ' - 请联系客服或稍后重试',
+        message: '系统繁忙，请稍后重试或联系客服',
         duration: 5000,
       });
     } else {

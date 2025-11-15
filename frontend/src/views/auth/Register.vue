@@ -98,24 +98,6 @@
           />
         </el-form-item>
 
-            <el-form-item label="验证码" prop="code">
-              <div class="code-input-group">
-                <el-input
-                  v-model="registerForm.code"
-                  placeholder="请输入验证码"
-                  size="large"
-                />
-                <el-button 
-                  type="primary" 
-                  size="large"
-                  :disabled="codeSending || countdown > 0"
-                  @click="handleSendCode"
-                >
-                  {{ countdown > 0 ? `${countdown}秒后重试` : '获取验证码' }}
-                </el-button>
-              </div>
-            </el-form-item>
-
             <el-form-item label="密码" prop="password" required>
           <el-input
             v-model="registerForm.password"
@@ -180,15 +162,12 @@ const router = useRouter();
 const formRef = ref();
 
 const loading = ref(false);
-const codeSending = ref(false);
-const countdown = ref(0);
 
 const registerForm = reactive({
   nickname: '',
   email: '',
   phone: '',
   password: '',
-  code: '',
   inviteCode: '',
   agree: false,
 });
@@ -205,47 +184,6 @@ const rules = {
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度至少6位', trigger: 'blur' },
   ],
-};
-
-const handleSendCode = async () => {
-  if (!registerForm.email) {
-    ElMessage.warning('请先输入邮箱');
-    return;
-  }
-  
-  // 验证邮箱格式
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(registerForm.email)) {
-    ElMessage.warning('请输入有效的邮箱地址');
-    return;
-  }
-  
-  codeSending.value = true;
-  try {
-    await request({
-      url: '/auth/send-code',
-      method: 'post',
-      data: {
-        email: registerForm.email,
-        type: 'register',
-      },
-    });
-
-    ElMessage.success('验证码已发送，请查收邮箱');
-    
-    // 开始倒计时
-    countdown.value = 60;
-    const timer = setInterval(() => {
-      countdown.value--;
-      if (countdown.value <= 0) {
-        clearInterval(timer);
-      }
-    }, 1000);
-  } catch (error: any) {
-    ElMessage.error(error.response?.data?.message || '发送验证码失败');
-  } finally {
-    codeSending.value = false;
-  }
 };
 
 const handleRegister = async () => {
@@ -493,21 +431,6 @@ const handleRegister = async () => {
           box-shadow: 0 0 0 1px #1677ff inset;
         }
 }
-
-      .code-input-group {
-        display: flex;
-        gap: 10px;
-
-        .el-input {
-          flex: 1;
-        }
-
-        .el-button {
-          flex-shrink: 0;
-          min-width: 120px;
-          white-space: nowrap;
-        }
-      }
 
       .link {
         color: #1677ff;
