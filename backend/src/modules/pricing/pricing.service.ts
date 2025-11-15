@@ -777,15 +777,31 @@ export class PricingService implements OnModuleInit {
       static_proxy_type: 'premium',
     });
 
-    // 2. 获取所有价格覆盖（全局和用户特定）
+    // 2. 获取价格配置
+    const configs = await this.priceConfigRepo.find({
+      where: [
+        { productType: 'static-shared' },
+        { productType: 'static-premium' },
+      ],
+    });
+
+    const sharedConfig = configs.find(c => c.productType === 'static-shared');
+    const premiumConfig = configs.find(c => c.productType === 'static-premium');
+
+    if (!sharedConfig || !premiumConfig) {
+      throw new Error('Price config not found for static proxies');
+    }
+
+    // 3. 获取所有价格覆盖（全局和用户特定）
     const allOverrides = await this.priceOverrideRepo.find({
       where: [
         { userId: null }, // 全局覆盖
         { userId }, // 用户特定覆盖
       ],
+      relations: ['priceConfig'],
     });
 
-    // 3. 构建IP池数据
+    // 4. 构建IP池数据
     const ipPool = [];
 
     // 处理共享IP
@@ -793,11 +809,13 @@ export class PricingService implements OnModuleInit {
       for (const item of sharedInventory.data) {
         const globalOverride = allOverrides.find(
           o => o.userId === null && 
+               o.priceConfigId === sharedConfig.id &&
                o.countryCode === item.country_code && 
                (o.cityName === item.city_name || (!o.cityName && !item.city_name))
         );
         const userOverride = allOverrides.find(
           o => o.userId === userId && 
+               o.priceConfigId === sharedConfig.id &&
                o.countryCode === item.country_code && 
                (o.cityName === item.city_name || (!o.cityName && !item.city_name))
         );
@@ -821,11 +839,13 @@ export class PricingService implements OnModuleInit {
       for (const item of premiumInventory.data) {
         const globalOverride = allOverrides.find(
           o => o.userId === null && 
+               o.priceConfigId === premiumConfig.id &&
                o.countryCode === item.country_code && 
                (o.cityName === item.city_name || (!o.cityName && !item.city_name))
         );
         const userOverride = allOverrides.find(
           o => o.userId === userId && 
+               o.priceConfigId === premiumConfig.id &&
                o.countryCode === item.country_code && 
                (o.cityName === item.city_name || (!o.cityName && !item.city_name))
         );
