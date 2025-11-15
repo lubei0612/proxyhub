@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus';
 // 创建axios实例
 const request: AxiosInstance = axios.create({
   baseURL: '/api/v1', // 硬编码相对路径，经过Vite代理
-  timeout: 15000,
+  timeout: 360000, // 6分钟超时，确保购买操作有足够时间完成IP分配
   headers: {
     'Content-Type': 'application/json',
   },
