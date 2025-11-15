@@ -790,8 +790,11 @@ export class StaticProxyService {
       });
       await queryRunner.manager.save(transaction);
 
-      // 8. 更新IP过期时间（新过期时间 = 当前过期时间 + duration）
-      const newExpiresAt = new Date(expiresAt.getTime() + duration * 24 * 60 * 60 * 1000);
+      // 8. 更新IP过期时间
+      // 如果IP未过期，从到期时间续费；如果已过期，从现在续费
+      const now = new Date();
+      const baseDate = expiresAt > now ? expiresAt : now;
+      const newExpiresAt = new Date(baseDate.getTime() + duration * 24 * 60 * 60 * 1000);
       proxy.expireTimeUtc = newExpiresAt;
       await queryRunner.manager.save(proxy);
 

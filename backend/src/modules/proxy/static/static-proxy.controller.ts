@@ -8,6 +8,8 @@ import {
   Param,
   Query,
   UseGuards,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { StaticProxyService } from './static-proxy.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
@@ -26,8 +28,8 @@ export class StaticProxyController {
   @Get('list')
   async getUserProxies(
     @CurrentUser() user: any,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('status') status?: string,
     @Query('ip') ip?: string,
     @Query('channel') channel?: string,
@@ -88,7 +90,7 @@ export class StaticProxyController {
   @Get('inventory')
   async getInventory(
     @Query('ipType') ipType: string = 'shared', 
-    @Query('duration') duration: number = 30,
+    @Query('duration', new DefaultValuePipe(30), ParseIntPipe) duration: number,
     @Query('businessScenario') businessScenario?: string
   ) {
     return this.staticProxyService.getInventory(ipType, duration, businessScenario);
@@ -136,8 +138,8 @@ export class StaticProxyController {
   @Get('my-ips')
   async getMyIPs(
     @CurrentUser() user: any,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ) {
     return this.staticProxyService.listMyIPs(user.id, page, limit);
   }
