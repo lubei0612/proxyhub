@@ -13,6 +13,7 @@ import { StaticProxyService } from './static-proxy.service';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { PurchaseStaticProxyDto } from './dto/purchase-static-proxy.dto';
+import { RenewProxyDto } from './dto/renew-proxy.dto';
 
 @Controller('proxy/static')
 @UseGuards(JwtAuthGuard)
@@ -159,9 +160,9 @@ export class StaticProxyController {
   async renewIPVia985(
     @CurrentUser() user: any,
     @Param('ip') ip: string,
-    @Body() data: { duration: number },
+    @Body() dto: RenewProxyDto,
   ) {
-    return this.staticProxyService.renewIPVia985Proxy(user.id, ip, data.duration);
+    return this.staticProxyService.renewIPVia985Proxy(user.id, ip, dto.duration);
   }
 
   /**
@@ -194,9 +195,9 @@ export class StaticProxyController {
   async renewProxy(
     @CurrentUser() user: any,
     @Param('id') proxyId: string,
-    @Body() data: { duration: number },
+    @Body() dto: RenewProxyDto,
   ) {
-    return this.staticProxyService.renewProxy(user.id, proxyId, data.duration);
+    return this.staticProxyService.renewProxy(user.id, proxyId, dto.duration);
   }
 
   /**

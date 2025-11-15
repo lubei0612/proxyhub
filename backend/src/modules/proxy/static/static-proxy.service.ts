@@ -245,6 +245,16 @@ export class StaticProxyService {
   async purchaseStaticProxy(userId: string, dto: PurchaseStaticProxyDto) {
     this.logger.log(`[Purchase Static Proxy] User: ${userId}, Items: ${JSON.stringify(dto.items)}`);
 
+    // Validate items
+    if (!dto.items || dto.items.length === 0) {
+      throw new BadRequestException('购买项目不能为空');
+    }
+
+    const totalQuantity = dto.items.reduce((sum, item) => sum + item.quantity, 0);
+    if (totalQuantity === 0) {
+      throw new BadRequestException('购买数量不能为0');
+    }
+
     // Calculate total price using PricingService (with user-specific price overrides)
     // ✅ 修复：使用正确的 productType 值匹配数据库
     const productType = dto.ipType === 'premium' ? 'static-premium' : 'static-shared';
@@ -261,10 +271,6 @@ export class StaticProxyService {
     }, parseInt(userId));
 
     const totalPrice = priceResult.totalPrice;
-    let totalQuantity = 0;
-    for (const item of dto.items) {
-      totalQuantity += item.quantity;
-    }
 
     this.logger.log(`[Purchase] Total Price: $${totalPrice} (${totalQuantity} IPs, ${dto.duration} days)`);
 
@@ -274,8 +280,13 @@ export class StaticProxyService {
     await queryRunner.startTransaction();
 
     try {
-      // Step 1: Validate user balance
-      const user = await queryRunner.manager.findOne(User, { where: { id: parseInt(userId) } });
+      // Step 1: Validate user balance (with row lock to prevent race conditions)
+      const user = await queryRunner.manager
+        .createQueryBuilder(User, 'user')
+        .where('user.id = :userId', { userId: parseInt(userId) })
+        .setLock('pessimistic_write') // FOR UPDATE lock
+        .getOne();
+        
       if (!user) {
         throw new BadRequestException('用户不存在');
       }
@@ -685,10 +696,12 @@ export class StaticProxyService {
       // 准备985Proxy续费所需的zone参数
       const zone = process.env.PROXY_985_ZONE || '';
 
-      // 4. 验证用户余额（支持赠送余额）
-      const user = await queryRunner.manager.findOne(User, { 
-        where: { id: parseInt(userId) } 
-      });
+      // 4. 验证用户余额（支持赠送余额，使用行锁防止并发问题）
+      const user = await queryRunner.manager
+        .createQueryBuilder(User, 'user')
+        .where('user.id = :userId', { userId: parseInt(userId) })
+        .setLock('pessimistic_write') // FOR UPDATE lock
+        .getOne();
       
       if (!user) {
         throw new NotFoundException('用户不存在');
@@ -1059,8 +1072,13 @@ export class StaticProxyService {
 
       this.logger.log(`[Renew] Price: $${renewalPrice} (${duration} days)`);
 
-      // Step 3: 验证用户余额
-      const user = await queryRunner.manager.findOne(User, { where: { id: parseInt(userId) } });
+      // Step 3: 验证用户余额（使用行锁防止并发问题）
+      const user = await queryRunner.manager
+        .createQueryBuilder(User, 'user')
+        .where('user.id = :userId', { userId: parseInt(userId) })
+        .setLock('pessimistic_write') // FOR UPDATE lock
+        .getOne();
+        
       if (!user) {
         throw new BadRequestException('用户不存在');
       }
