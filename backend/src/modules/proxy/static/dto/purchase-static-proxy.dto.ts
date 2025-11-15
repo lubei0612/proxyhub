@@ -1,5 +1,6 @@
 import { IsString, IsArray, IsNumber, IsOptional, ValidateNested, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsMultipleOf30 } from '../../../../common/validators/duration.validator';
 
 class PurchaseItem {
   @IsString()
@@ -28,7 +29,8 @@ export class PurchaseStaticProxyDto {
   @IsNumber()
   @Min(30, { message: '购买时长至少为30天' })
   @Max(365, { message: '购买时长不能超过365天' })
-  duration: number; // in days
+  @IsMultipleOf30()
+  duration: number; // in days (必须是30的倍数，如：30、60、90、180、360)
 
   @IsArray()
   @ValidateNested({ each: true })
