@@ -7,6 +7,8 @@ import {
   Param,
   Query,
   UseGuards,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -36,8 +38,8 @@ export class BillingController {
   @Get('recharges')
   async getUserRecharges(
     @CurrentUser() user: any,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ) {
     return this.billingService.getUserRecharges(user.id, page, limit);
   }
@@ -48,8 +50,8 @@ export class BillingController {
   @Get('transactions')
   async getUserTransactions(
     @CurrentUser() user: any,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('type') type?: string,
     @Query('category') category?: string,
   ) {
@@ -77,8 +79,8 @@ export class BillingController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   async getAllRecharges(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('status') status?: string,
   ) {
     const filters = status ? { status } : undefined;

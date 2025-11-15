@@ -8,6 +8,8 @@ import {
   Param,
   Query,
   UseGuards,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -25,8 +27,8 @@ export class AdminController {
    */
   @Get('users')
   async getAllUsers(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('role') role?: string,
     @Query('status') status?: string,
   ) {
@@ -103,7 +105,7 @@ export class AdminController {
    * 获取最近订单
    */
   @Get('recent-orders')
-  async getRecentOrders(@Query('limit') limit: number = 5) {
+  async getRecentOrders(@Query('limit', new DefaultValuePipe(5), ParseIntPipe) limit: number) {
     return this.adminService.getRecentOrders(limit);
   }
 
@@ -141,7 +143,7 @@ export class AdminController {
    * 获取收入趋势（用于管理后台图表）
    */
   @Get('revenue-trend')
-  async getRevenueTrend(@Query('days') days: number = 7) {
+  async getRevenueTrend(@Query('days', new DefaultValuePipe(7), ParseIntPipe) days: number) {
     return this.adminService.getRevenueTrend(days);
   }
 

@@ -5,6 +5,8 @@ import {
   Patch,
   Query,
   UseGuards,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -23,8 +25,8 @@ export class OrderController {
   @Get()
   async getUserOrders(
     @CurrentUser() user: any,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('status') status?: string,
     @Query('type') type?: string,
   ) {
@@ -50,8 +52,8 @@ export class OrderController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   async getAllOrders(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('status') status?: string,
     @Query('type') type?: string,
   ) {
