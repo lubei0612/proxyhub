@@ -270,7 +270,7 @@ export class StaticProxyService {
       timePeriod: dto.duration,
     }, parseInt(userId));
 
-    const totalPrice = priceResult.totalPrice;
+    let totalPrice = priceResult.totalPrice; // 🔧 改为let，允许后续使用985Proxy实际金额覆盖
 
     this.logger.log(`[Purchase] Total Price: $${totalPrice} (${totalQuantity} IPs, ${dto.duration} days)`);
 
@@ -381,6 +381,14 @@ export class StaticProxyService {
                 
                 if (Array.isArray(ipList) && ipList.length > 0) {
                   this.logger.log(`✅ [Purchase] 订单处理完成，获取到 ${ipList.length} 个IP（耗时: ${attempt * retryDelay / 1000}秒）`);
+                  
+                  // 🔧 获取985Proxy实际支付金额
+                  const actualPayPrice = parseFloat(orderResult.data.info?.pay_price || orderResult.data.info?.total_price || '0');
+                  if (actualPayPrice > 0 && actualPayPrice !== totalPrice) {
+                    this.logger.warn(`⚠️ [Purchase] 价格不一致！预计: $${totalPrice}, 实际: $${actualPayPrice} - 将使用实际金额`);
+                    totalPrice = actualPayPrice; // 使用985Proxy实际扣费金额
+                  }
+                  
                   break; // 立即返回
                 }
               } else if (status === 'progress' || status === 'pending') {
