@@ -126,9 +126,10 @@ export class PricingService implements OnModuleInit {
    */
   private async ensureDefaultPriceConfigs() {
     try {
+      // ✅ 修复：使用正确的 productType 值匹配数据库
       const defaultConfigs = [
-        { productType: 'static-residential', basePrice: 5.00 },
-        { productType: 'static-residential-native', basePrice: 8.00 }, // 修改为与inventory API一致
+        { productType: 'static-shared', basePrice: 5.00 },
+        { productType: 'static-premium', basePrice: 8.00 },
       ];
 
       for (const config of defaultConfigs) {
@@ -567,9 +568,10 @@ export class PricingService implements OnModuleInit {
       // 为每个IP池项目匹配默认价格和覆盖价格
       const ipPoolWithPrices = ipPool.map((item) => {
         // 根据IP类型选择正确的价格配置
+        // ✅ 修复：使用正确的 productType 值匹配数据库
         const productType = (item.ipType === 'premium' || item.ipType === 'native')
-          ? 'static-residential-native'
-          : 'static-residential';
+          ? 'static-premium'
+          : 'static-shared';
         
         const priceConfig = priceConfigs.find(c => c.productType === productType);
         const defaultPrice = priceConfig 
@@ -663,9 +665,10 @@ export class PricingService implements OnModuleInit {
     for (const update of updates) {
       try {
         // 根据IP类型确定产品类型
+        // ✅ 修复：使用正确的 productType 值匹配数据库
         const productType = (update.ipType === 'premium' || update.ipType === 'native')
-          ? 'static-residential-native'
-          : 'static-residential';
+          ? 'static-premium'
+          : 'static-shared';
         
         this.logger.log(`[Batch Update] ${update.country}/${update.city} (${update.ipType}) -> ${productType}`);
         

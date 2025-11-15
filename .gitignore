@@ -79,3 +79,10 @@ secrets/
 # Archive folders (if not needed)
 docs-archive/
 docs-spec-workflow/
+
+# Debug scripts (development only)
+debug-scripts/
+
+# Factory AI
+.factory/
+.cursor/

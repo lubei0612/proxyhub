@@ -1,0 +1,141 @@
+========================================
+  ProxyHub 服务器部署指令清单
+========================================
+
+【前提】服务器已安装 Docker 和 Docker Compose
+
+========================================
+第一步：克隆项目
+========================================
+
+git clone https://github.com/lubei0612/proxyhub.git
+cd proxyhub
+
+========================================
+第二步：配置环境变量
+========================================
+
+cp .env.example .env
+nano .env
+
+【必须修改这些参数】
+- DATABASE_PASSWORD=你的强密码
+- JWT_SECRET=至少32个字符的随机字符串
+- PROXY_985_API_KEY=你的985Proxy_API密钥
+- PROXY_985_ZONE=你的Zone_ID
+
+【生成JWT密钥】
+openssl rand -base64 48
+
+保存并退出（Ctrl+X, Y, Enter）
+
+========================================
+第三步：一键部署
+========================================
+
+chmod +x deploy.sh
+./deploy.sh
+
+等待3-5分钟，脚本会自动完成所有部署步骤
+
+========================================
+第四步：验证部署
+========================================
+
+# 检查容器状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+
+# 访问服务
+浏览器打开: http://你的服务器IP
+
+========================================
+默认测试账号
+========================================
+
+管理员:
+  邮箱: admin@proxyhub.com
+  密码: admin123456
+
+普通用户:
+  邮箱: test@proxyhub.com
+  密码: test123456
+
+⚠️ 部署后立即修改默认密码！
+
+========================================
+常用管理命令
+========================================
+
+# 查看所有容器状态
+docker-compose ps
+
+# 查看日志（所有服务）
+docker-compose logs -f
+
+# 查看特定服务日志
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# 重启服务
+docker-compose restart
+
+# 停止服务
+docker-compose down
+
+# 更新代码后重新部署
+git pull origin main
+docker-compose -f docker-compose.prod.yml up -d --build
+
+========================================
+配置HTTPS（生产环境必需）
+========================================
+
+# 安装Nginx和Certbot
+sudo apt install nginx certbot python3-certbot-nginx
+
+# 配置Nginx反向代理
+sudo nano /etc/nginx/sites-available/proxyhub
+
+# 申请SSL证书
+sudo certbot --nginx -d yourdomain.com
+
+详细步骤参见: SERVER-QUICK-DEPLOY.md
+
+========================================
+故障排查
+========================================
+
+# 端口被占用
+sudo lsof -i :80
+sudo lsof -i :3000
+
+# 查看详细错误
+docker-compose logs backend
+docker-compose logs postgres
+
+# 完全重置（谨慎！）
+docker-compose down -v
+docker-compose up -d --build
+
+========================================
+数据备份（重要！）
+========================================
+
+# 备份数据库
+docker exec proxyhub-postgres pg_dump -U postgres proxyhub > backup_$(date +%Y%m%d).sql
+
+# 恢复数据库
+cat backup_20231115.sql | docker exec -i proxyhub-postgres psql -U postgres proxyhub
+
+========================================
+获取帮助
+========================================
+
+详细文档: docs/DEPLOYMENT-CHECKLIST.md
+快速部署: SERVER-QUICK-DEPLOY.md
+GitHub: https://github.com/lubei0612/proxyhub
+
+========================================

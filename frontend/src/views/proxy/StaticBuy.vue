@@ -418,7 +418,8 @@ const loadAllPrices = async () => {
       // 🎯 调用后端API获取价格（包含价格覆盖）
       if (allLocations.length > 0) {
         try {
-          const productType = ipType.value === 'premium' ? 'static-residential-native' : 'static-residential';
+          // ✅ 修复：使用正确的 productType 值匹配数据库
+          const productType = ipType.value === 'premium' ? 'static-premium' : 'static-shared';
           const priceResponse = await calculatePrice({
             productType,
             buyData: allLocations,

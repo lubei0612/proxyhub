@@ -18,6 +18,7 @@ import { DynamicProxyModule } from './modules/proxy/dynamic/dynamic-proxy.module
 import { NotificationModule } from './modules/notification/notification.module';
 import { TrafficModule } from './modules/traffic/traffic.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { SettingsModule } from './modules/settings/settings.module';
     NotificationModule,
     TrafficModule,
     SettingsModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [

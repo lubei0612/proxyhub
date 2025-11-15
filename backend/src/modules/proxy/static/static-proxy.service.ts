@@ -131,7 +131,7 @@ export class StaticProxyService {
           purpose_web: businessScenario // 传递业务场景用于筛选
         }),
         this.pricingService.getPriceOverridesForInventory(
-          static_proxy_type === 'premium' ? 'static-residential-native' : 'static-residential'
+          static_proxy_type === 'premium' ? 'static-premium' : 'static-shared'
         ),
       ]);
 
@@ -246,7 +246,8 @@ export class StaticProxyService {
     this.logger.log(`[Purchase Static Proxy] User: ${userId}, Items: ${JSON.stringify(dto.items)}`);
 
     // Calculate total price using PricingService (with user-specific price overrides)
-    const productType = dto.ipType === 'native' ? 'static-residential-native' : 'static-residential';
+    // ✅ 修复：使用正确的 productType 值匹配数据库
+    const productType = dto.ipType === 'native' ? 'static-premium' : 'static-shared';
     const buyData = dto.items.map(item => ({
       country_code: item.country,
       city_name: item.city,
@@ -650,7 +651,8 @@ export class StaticProxyService {
       }
 
       // 3. 计算续费价格（使用PricingService，支持用户特定价格覆盖）
-      const productType = proxy.ipType === 'native' ? 'static-residential-native' : 'static-residential';
+      // ✅ 修复：使用正确的 productType 值匹配数据库
+      const productType = proxy.ipType === 'native' ? 'static-premium' : 'static-shared';
       const priceResult = await this.pricingService.calculatePrice({
         productType,
         buyData: [{ country_code: proxy.country, city_name: proxy.cityName, count: 1 }],
@@ -859,7 +861,8 @@ export class StaticProxyService {
       }
 
       // Step 2: 计算续费金额（使用PricingService，支持用户特定价格覆盖）
-      const productType = proxy.ipType === 'native' ? 'static-residential-native' : 'static-residential';
+      // ✅ 修复：使用正确的 productType 值匹配数据库
+      const productType = proxy.ipType === 'native' ? 'static-premium' : 'static-shared';
       const priceResult = await this.pricingService.calculatePrice({
         productType,
         buyData: [{ country_code: proxy.country, city_name: proxy.cityName, count: 1 }],
