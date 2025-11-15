@@ -23,7 +23,7 @@ export class PurchaseStaticProxyDto {
   scenario?: string;
 
   @IsString()
-  ipType: string; // 'native' or 'shared'
+  ipType: string; // 'premium' (原生) or 'shared' (普通)
 
   @IsNumber()
   @Min(30, { message: '购买时长至少为30天' })

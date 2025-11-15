@@ -122,7 +122,7 @@ export class StaticProxyService {
 
     try {
       // 支持前端传递 'native' 或 'premium' 两种格式
-      const static_proxy_type = (ipType === 'native' || ipType === 'premium') ? 'premium' : 'shared';
+      const static_proxy_type = ipType === 'premium' ? 'premium' : 'shared';
       
       // 并行获取库存和价格覆盖
       const [response, priceOverrides] = await Promise.all([
@@ -193,7 +193,7 @@ export class StaticProxyService {
     this.logger.log(`[Calculate Price] Items: ${JSON.stringify(dto.items)}`);
 
     try {
-      const static_proxy_type = dto.ipType === 'native' ? 'premium' : 'shared';
+      const static_proxy_type = dto.ipType === 'premium' ? 'premium' : 'shared';
       const buy_data = dto.items.map(item => ({
         country_code: item.country,
         city_name: item.city || '',
@@ -247,7 +247,7 @@ export class StaticProxyService {
 
     // Calculate total price using PricingService (with user-specific price overrides)
     // ✅ 修复：使用正确的 productType 值匹配数据库
-    const productType = dto.ipType === 'native' ? 'static-premium' : 'static-shared';
+    const productType = dto.ipType === 'premium' ? 'static-premium' : 'static-shared';
     const buyData = dto.items.map(item => ({
       country_code: item.country,
       city_name: item.city,
@@ -302,7 +302,7 @@ export class StaticProxyService {
 
       // 🚀 生产模式：调用真实985Proxy API
       const zone = process.env.PROXY_985_ZONE || 'your_zone_id_here';
-      const proxyType = dto.ipType === 'native' ? 'premium' : 'shared';
+      const proxyType = dto.ipType === 'premium' ? 'premium' : 'shared';
       
       this.logger.log(`💰 [Purchase] 调用985Proxy API购买 ${totalQuantity} 个IP（会扣费）`);
       this.logger.log(`[Purchase] Zone: ${zone}, Type: ${proxyType}, Amount: $${totalPrice}`);
@@ -488,7 +488,7 @@ export class StaticProxyService {
       await this.eventLogService.createLog(
         parseInt(userId),
         'IP购买',
-        `购买${totalQuantity}个静态IP (${dto.ipType === 'native' ? '原生' : '普通'}), 金额: $${totalPrice.toFixed(2)}, 时长: ${dto.duration}天`
+        `购买${totalQuantity}个静态IP (${dto.ipType === 'premium' ? '原生' : '普通'}), 金额: $${totalPrice.toFixed(2)}, 时长: ${dto.duration}天`
       );
 
       // Commit transaction
@@ -673,7 +673,7 @@ export class StaticProxyService {
 
       // 3. 计算续费价格（使用PricingService，支持用户特定价格覆盖）
       // ✅ 修复：使用正确的 productType 值匹配数据库
-      const productType = proxy.ipType === 'native' ? 'static-premium' : 'static-shared';
+      const productType = proxy.ipType === 'premium' ? 'static-premium' : 'static-shared';
       const priceResult = await this.pricingService.calculatePrice({
         productType,
         buyData: [{ country_code: proxy.country, city_name: proxy.cityName, count: 1 }],
@@ -970,7 +970,7 @@ export class StaticProxyService {
           countryCode: apiIP.country_code || apiIP.country,
           countryName: apiIP.country_name || apiIP.country || apiIP.country_code || 'Unknown',
           cityName: apiIP.city_name || apiIP.city || '',
-          ipType: order.remark.includes('native') ? 'native' : 'shared',
+          ipType: (order.remark.includes('premium') || order.remark.includes('原生')) ? 'premium' : 'shared',
           expireTimeUtc: apiIP.expire_time 
             ? new Date(apiIP.expire_time) 
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -1049,7 +1049,7 @@ export class StaticProxyService {
 
       // Step 2: 计算续费金额（使用PricingService，支持用户特定价格覆盖）
       // ✅ 修复：使用正确的 productType 值匹配数据库
-      const productType = proxy.ipType === 'native' ? 'static-premium' : 'static-shared';
+      const productType = proxy.ipType === 'premium' ? 'static-premium' : 'static-shared';
       const priceResult = await this.pricingService.calculatePrice({
         productType,
         buyData: [{ country_code: proxy.country, city_name: proxy.cityName, count: 1 }],
