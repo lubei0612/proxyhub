@@ -450,7 +450,7 @@ export class StaticProxyService {
             remark: '', // 备注为空，由客户自己填写
           });
 
-          const savedIP = await queryRunner.manager.save(StaticProxy, proxyEntity);
+          const savedIP = await queryRunner.manager.save(proxyEntity);
           allocatedIPs.push(savedIP);
           
           this.logger.log(`✅ [Purchase] 保存IP: ${savedIP.ip}:${savedIP.port}`);
@@ -481,7 +481,7 @@ export class StaticProxyService {
         amount: totalPrice,
         remark: `购买${totalQuantity}个${dto.ipType}代理IP - ${dto.channelName} ${allocatedIPs.length === 0 ? '(IP分配中...)' : ''}`,
       });
-      const savedOrder = await queryRunner.manager.save(Order, order);
+      const savedOrder = await queryRunner.manager.save(order);
       
       this.logger.log(`✅ [Purchase] 订单记录已保存，订单ID: ${savedOrder.id}, 状态: ${orderStatusToSave}, 已分配IP: ${allocatedIPs.length}`);
       
@@ -500,7 +500,7 @@ export class StaticProxyService {
       const balanceBefore = userBalance;
       const balanceAfter = userBalance - totalPrice;
       user.balance = balanceAfter.toFixed(2) as any;
-      await queryRunner.manager.save(User, user);
+      await queryRunner.manager.save(user);
 
       // Step 5: Create billing transaction record
       const transaction = queryRunner.manager.create(Transaction, {
@@ -512,7 +512,7 @@ export class StaticProxyService {
         balanceAfter: balanceAfter,
         remark: `购买静态住宅代理IP - ${dto.channelName} (${totalQuantity} 个IP, ${dto.duration} 天)`,
       });
-      await queryRunner.manager.save(Transaction, transaction);
+      await queryRunner.manager.save(transaction);
 
       // Step 6: 记录事件日志
       await this.eventLogService.createLog(
@@ -967,7 +967,7 @@ export class StaticProxyService {
       if (orderResult.data.status === 'failed') {
         // 更新订单状态为失败
         order.status = OrderStatus.FAILED;
-        await queryRunner.manager.save(Order, order);
+        await queryRunner.manager.save(order);
         await queryRunner.commitTransaction();
         
         throw new BadRequestException('订单处理失败，请联系客服');
@@ -1014,7 +1014,7 @@ export class StaticProxyService {
           remark: '',
         });
 
-        const savedIP = await queryRunner.manager.save(StaticProxy, proxyEntity);
+        const savedIP = await queryRunner.manager.save(proxyEntity);
         savedIPs.push(savedIP);
         this.logger.log(`[Sync Order IPs] Saved IP: ${savedIP.ip}:${savedIP.port}`);
       }
@@ -1022,7 +1022,7 @@ export class StaticProxyService {
       // 7. 更新订单状态为完成
       order.status = OrderStatus.COMPLETED;
       order.remark = order.remark.replace(' (IP分配中...)', '');
-      await queryRunner.manager.save(Order, order);
+      await queryRunner.manager.save(order);
 
       // 8. 记录事件日志
       await this.eventLogService.createLog(
@@ -1129,7 +1129,7 @@ export class StaticProxyService {
 
       // Step 5: 扣费
       user.balance = (userBalance - renewalPrice).toFixed(2) as any;
-      await queryRunner.manager.save(User, user);
+      await queryRunner.manager.save(user);
 
       // Step 6: 更新代理到期时间
       const currentExpiry = new Date(proxy.expireTimeUtc);
@@ -1137,7 +1137,7 @@ export class StaticProxyService {
       // 如果当前未过期，从到期时间续费；如果已过期，从现在续费
       const baseDate = currentExpiry > now ? currentExpiry : now;
       proxy.expireTimeUtc = new Date(baseDate.getTime() + duration * 24 * 60 * 60 * 1000);
-      await queryRunner.manager.save(StaticProxy, proxy);
+      await queryRunner.manager.save(proxy);
 
       // Step 7: 创建订单记录
       const orderNo = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -1149,7 +1149,7 @@ export class StaticProxyService {
         amount: renewalPrice,
         remark: `续费静态IP: ${proxy.ip} (${duration}天)`,
       });
-      await queryRunner.manager.save(Order, order);
+      await queryRunner.manager.save(order);
 
       // Step 8: 创建交易记录
       const transaction = queryRunner.manager.create(Transaction, {
@@ -1164,7 +1164,7 @@ export class StaticProxyService {
         relatedType: 'renewal',
         category: 'expense',
       });
-      await queryRunner.manager.save(Transaction, transaction);
+      await queryRunner.manager.save(transaction);
 
       // Step 9: 记录事件日志
       await this.eventLogService.createLog(
