@@ -495,12 +495,22 @@ export class StaticProxyService {
       }
       
       this.logger.log(`✅ [Purchase] 开始扣除用户余额和创建交易记录`);  // 🔧 Added: 调试日志
+      this.logger.log(`[Purchase] 余额扣除前: $${userBalance}, 扣除金额: $${totalPrice}`);
 
       // Step 4: Deduct user balance
       const balanceBefore = userBalance;
       const balanceAfter = userBalance - totalPrice;
-      user.balance = balanceAfter.toFixed(2) as any;
-      await queryRunner.manager.save(user);
+      user.balance = parseFloat(balanceAfter.toFixed(2));  // 🔧 Fixed: 转换为数字
+      
+      this.logger.log(`[Purchase] 余额扣除后: $${user.balance}`);
+      
+      try {
+        await queryRunner.manager.save(user);
+        this.logger.log(`✅ [Purchase] 用户余额已扣除`);
+      } catch (error) {
+        this.logger.error(`❌ [Purchase] 保存用户余额失败: ${error.message}`);
+        throw error;
+      }
 
       // Step 5: Create billing transaction record
       const transaction = queryRunner.manager.create(Transaction, {
@@ -512,17 +522,37 @@ export class StaticProxyService {
         balanceAfter: balanceAfter,
         remark: `购买静态住宅代理IP - ${dto.channelName} (${totalQuantity} 个IP, ${dto.duration} 天)`,
       });
-      await queryRunner.manager.save(transaction);
+      
+      try {
+        await queryRunner.manager.save(transaction);
+        this.logger.log(`✅ [Purchase] 交易记录已创建`);
+      } catch (error) {
+        this.logger.error(`❌ [Purchase] 保存交易记录失败: ${error.message}`);
+        throw error;
+      }
 
       // Step 6: 记录事件日志
-      await this.eventLogService.createLog(
-        parseInt(userId),
-        'IP购买',
-        `购买${totalQuantity}个静态IP (${dto.ipType === 'premium' ? '原生' : '普通'}), 金额: $${totalPrice.toFixed(2)}, 时长: ${dto.duration}天`
-      );
+      try {
+        await this.eventLogService.createLog(
+          parseInt(userId),
+          'IP购买',
+          `购买${totalQuantity}个静态IP (${dto.ipType === 'premium' ? '原生' : '普通'}), 金额: $${totalPrice.toFixed(2)}, 时长: ${dto.duration}天`
+        );
+        this.logger.log(`✅ [Purchase] 事件日志已记录`);
+      } catch (error) {
+        this.logger.error(`❌ [Purchase] 记录事件日志失败: ${error.message}`);
+        throw error;
+      }
 
       // Commit transaction
-      await queryRunner.commitTransaction();
+      this.logger.log(`[Purchase] 准备提交事务...`);
+      try {
+        await queryRunner.commitTransaction();
+        this.logger.log(`🎉 [Purchase] 事务提交成功！购买流程完成！`);
+      } catch (error) {
+        this.logger.error(`❌ [Purchase] 事务提交失败: ${error.message}`);
+        throw error;
+      }
 
       this.logger.log(`[Purchase] Success! Order: ${orderNo}, User: ${userId}, Total: $${totalPrice}`);
 
@@ -794,7 +824,7 @@ export class StaticProxyService {
       // 6. 扣除余额
       const balanceBefore = renewBalance;
       const balanceAfter = renewBalance - renewalCost;
-      user.balance = balanceAfter.toFixed(2) as any;
+      user.balance = parseFloat(balanceAfter.toFixed(2));  // 🔧 Fixed: 转换为数字
       await queryRunner.manager.save(user);
 
       // 7. 创建交易记录
@@ -1128,7 +1158,7 @@ export class StaticProxyService {
       this.logger.log(`✅ [Renew] 985Proxy renewal successful!`);
 
       // Step 5: 扣费
-      user.balance = (userBalance - renewalPrice).toFixed(2) as any;
+      user.balance = parseFloat((userBalance - renewalPrice).toFixed(2));  // 🔧 Fixed: 转换为数字
       await queryRunner.manager.save(user);
 
       // Step 6: 更新代理到期时间
