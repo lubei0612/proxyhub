@@ -646,7 +646,7 @@ const calculateRenewPrice = async () => {
     let total = 0;
     for (const proxy of renewingProxies.value) {
       // 获取基础单价（默认值，实际价格由后端PricingService计算）
-      const baseUnitPrice = proxy.ipType === 'native' || proxy.ipType === 'premium' ? 8 : 5;
+      const baseUnitPrice = proxy.ipType === 'premium' ? 8 : 5;
       const months = renewDuration.value / 30;
       total += baseUnitPrice * months;
     }

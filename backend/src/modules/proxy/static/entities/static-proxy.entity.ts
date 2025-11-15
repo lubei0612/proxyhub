@@ -57,7 +57,7 @@ export class StaticProxy {
   cityName: string;
 
   @Column({ name: 'ip_type', length: 20 })
-  ipType: string; // 'normal' | 'native'
+  ipType: string; // 'shared' (普通) | 'premium' (原生)
 
   @Column({ length: 20, default: 'active' })
   status: string; // 'active' | 'released' | 'expired'
