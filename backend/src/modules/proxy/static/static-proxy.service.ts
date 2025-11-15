@@ -469,7 +469,7 @@ export class StaticProxyService {
         throw new BadRequestException('购买失败：未收到985Proxy响应');
       }
 
-      // Step 3: Create order record
+      // Step 3: Create order record FIRST (so we can associate IPs with it)
       // 🔧 修复：根据是否成功获取到IP来设置订单状态
       const orderStatusToSave = allocatedIPs.length > 0 ? OrderStatus.COMPLETED : OrderStatus.PROCESSING;
       
@@ -483,7 +483,18 @@ export class StaticProxyService {
       });
       const savedOrder = await queryRunner.manager.save(Order, order);
       
-      this.logger.log(`✅ [Purchase] 订单记录已保存，状态: ${orderStatusToSave}, 已分配IP: ${allocatedIPs.length}`);
+      this.logger.log(`✅ [Purchase] 订单记录已保存，订单ID: ${savedOrder.id}, 状态: ${orderStatusToSave}, 已分配IP: ${allocatedIPs.length}`);
+      
+      // 🔧 CRITICAL FIX: Update all allocated IPs to associate with the order
+      if (allocatedIPs.length > 0) {
+        for (const ip of allocatedIPs) {
+          ip.orderId = savedOrder.id;
+          await queryRunner.manager.save(ip);  // 🔧 Fixed: 直接保存实例，不需要传Entity类
+        }
+        this.logger.log(`✅ [Purchase] 已关联 ${allocatedIPs.length} 个IP到订单 ${savedOrder.id}`);
+      }
+      
+      this.logger.log(`✅ [Purchase] 开始扣除用户余额和创建交易记录`);  // 🔧 Added: 调试日志
 
       // Step 4: Deduct user balance
       const balanceBefore = userBalance;
